@@ -1,0 +1,86 @@
+{
+  "$comment": [
+    "SOURCE OF TRUTH for resistance calculation. See docs/adr/0004-domain-model-and-resistance.md",
+    "",
+    "Model: resistance = (bodyweight + vestLb) * bodyFraction + barLb + boardWeightLb,",
+    "       all multiplied by sin(angleDeg), then by pulleyFactor (0.5 for cable exercises).",
+    "",
+    "angleDeg values are the incline angle at each rail notch, level 1 (shallowest) first.",
+    "boardWeightLb is the effective mass of the glideboard assembly riding the incline. It was",
+    "DERIVED, not published: regressing each row of Total Gym's published resistance charts",
+    "against bodyweight yields slope == sin(angleDeg) and a constant non-zero intercept;",
+    "intercept / sin(angleDeg) is stable across all levels of a given profile and equals the",
+    "board mass. Accuracy is +/- ~1 lb because the published charts round to whole pounds.",
+    "",
+    "Both implementations (C# TotalGymLogBook.Domain and client/src/resistance.ts) must read",
+    "this file. Parity is enforced by tests/ against data/resistance-expected.json."
+  ],
+  "formulaVersion": 1,
+  "profiles": [
+    {
+      "id": "rail-6",
+      "levelCount": 6,
+      "angleDeg": [6.0, 10.2, 14.4, 18.4, 22.3, 26.0],
+      "boardWeightLb": 23.0,
+      "angleSource": "published",
+      "verified": true,
+      "notes": "Published slopes agree with regressed slopes at every level."
+    },
+    {
+      "id": "rail-8",
+      "levelCount": 8,
+      "angleDeg": [5.2, 8.0, 10.9, 13.8, 16.7, 19.6, 22.6, 25.8],
+      "boardWeightLb": 23.0,
+      "angleSource": "published",
+      "verified": true,
+      "notes": "Published slopes agree with regressed slopes at every level."
+    },
+    {
+      "id": "rail-10",
+      "levelCount": 10,
+      "angleDeg": [5.2, 7.5, 9.5, 11.8, 13.9, 16.3, 18.4, 20.8, 23.3, 25.8],
+      "boardWeightLb": 15.5,
+      "angleSource": "derived",
+      "verified": false,
+      "notes": [
+        "DO NOT trust the published 10-level angle column. It reads 5.2, 10.6, 12.5, 14.3, 16.2,",
+        "18.0, 19.9, 21.8, 23.8, 25.8 -- which is the 12-level angle list with two entries deleted,",
+        "and it does not reproduce the chart's own resistance numbers. Level 5 is printed as 16.2",
+        "deg (sin 0.279) but its resistance row regresses to a slope of 0.240 (13.9 deg).",
+        "First and last levels match; the middle is misaligned, consistent with an editing error",
+        "in Total Gym's PDF.",
+        "The angleDeg values here are back-solved from the chart's resistance columns via",
+        "asin(slope), which yields a smooth, physically plausible progression.",
+        "Needs confirmation by tape measure on a real 10-level machine before shipping."
+      ]
+    },
+    {
+      "id": "rail-12",
+      "levelCount": 12,
+      "angleDeg": [5.2, 7.0, 8.8, 10.6, 12.5, 14.3, 16.2, 18.0, 19.9, 21.8, 23.8, 26.0],
+      "boardWeightLb": 23.0,
+      "angleSource": "published",
+      "verified": true,
+      "notes": "Published slopes agree with regressed slopes at every level. Total Gym FIT."
+    },
+    {
+      "id": "rail-14",
+      "levelCount": 14,
+      "angleDeg": [6.6, 8.0, 9.3, 10.8, 12.1, 13.6, 15.0, 16.5, 17.9, 19.4, 20.9, 22.4, 23.9, 25.5],
+      "boardWeightLb": 19.8,
+      "angleSource": "published",
+      "verified": true,
+      "notes": [
+        "Published slopes agree with regressed slopes at every level. Total Gym FIT Anniversary.",
+        "Lighter glideboard than the 6/8/12 profiles -- confirms boardWeightLb belongs on the",
+        "profile rather than being a global constant.",
+        "Angle spacing linearizes load: steps are a near-uniform ~4.9 lb at 180 lb bodyweight."
+      ]
+    }
+  ],
+  "constants": {
+    "pulleyFactorCable": 0.5,
+    "pulleyFactorDirect": 1.0,
+    "$pulleyComment": "Total Gym's charts state: 'If the pulley cables are used in the exercise, use 50% of the charted numbers.'"
+  }
+}
