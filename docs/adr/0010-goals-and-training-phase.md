@@ -55,14 +55,72 @@ What changes is not the training style but four other things:
 
 | Goal | Reps | Proximity to failure | Rest | Progression lever | Progress metric |
 |---|---|---|---|---|---|
-| Hypertrophy | 6–20 | close (0–3 RIR) | 60–120 s | load, then reps | weekly sets per muscle |
-| Strength | 3–6 | 1–3 RIR, rarely failure | 2–5 min | load | absolute load |
+| Hypertrophy | 6–20 | close (0–3 RIR) | 60–120 s | **reps, then load** | absolute load |
+| Strength | 3–6 | 1–3 RIR, rarely failure | 2–5 min | reps, then load | absolute load |
 | Aerobic | 15–30+ | moderate | 30–60 s | density | work ÷ time |
 | Rehab | as prescribed | well short | as needed | range of motion | consistency |
 
 **The progress metric is a function of goal and phase**, which resolves the tension found in
 [0004](0004-domain-model-and-resistance.md): a weight-loss user's home screen foregrounds session
 frequency, total work, streaks, and bodyweight trend — not load.
+
+> **Corrected 2026-07-30 during implementation.** This table originally said the hypertrophy
+> lever was "load, then reps" and its progress metric was "weekly sets per muscle". Both were
+> wrong:
+>
+> - **The order is reps, then load.** Double progression — work up the rep range at a fixed
+>   load, then step the load and reset to the bottom. On this machine a level step is ~5 lb and
+>   8–10%, so stepping load first would crater reps every cycle.
+> - **Weekly sets per muscle is not a progression metric.** Set count is a *programme*
+>   parameter: it changes when experience or recovery capacity changes, not session to session.
+>   See "Volume is programming, not progression" below.
+
+## Volume is programming, not progression
+
+Reps and load move every session. Sets move when the programme changes. Conflating them puts a
+slow-moving parameter under a fast-moving algorithm, so `ProgressionEngine` deliberately does not
+touch set count — it has three levers (reps, level, added weight), and volume is tracked
+separately by `VolumeLedger` as a monitored metric.
+
+### Sets are counted fractionally per muscle
+
+Total Gym work is unusually compound, so a raw set count is meaningless. One set of chest press
+is 1.0 for chest but 0.5 each for triceps and front delts. Counting indirect work at full weight
+badly overstates arm volume; counting it at zero hides real work. `MuscleInvolvement` carries the
+fraction (1.0 direct, 0.5 indirect).
+
+### There is no upper bound
+
+Weekly targets scale with experience and have a floor but **no ceiling**:
+
+| | Recommended weekly sets per muscle |
+|---|---|
+| Minimum effective dose (all levels) | **4** |
+| Novice | 8 |
+| Intermediate | 14 |
+| Advanced | 20 |
+
+Four sets is a genuine floor rather than a conservative guess — meta-analysis puts meaningful
+hypertrophy below five sets weekly — and the dose-response keeps climbing well past any figure
+this app could justify enforcing.
+
+**No ceiling is a deliberate product decision**, for two reasons. The app cannot observe recovery
+(sleep, stress, joint health, life load), so it is in no position to tell anyone they are doing
+too much. And under-training, not over-training, is overwhelmingly the failure mode in a home-gym
+population. The ledger reports gaps and neglect; it never warns about excess.
+
+### How the deficit rule survives this
+
+[Above](#weight-loss-is-a-phase-not-a-training-style) commits to being *more conservative about
+volume in a deficit*. With no ceiling, that cannot mean a cap. It resolves as: **a deficit stops
+recommending increases rather than imposing a limit** — the recommended target scales down (never
+below the effective dose), and the trainee holds volume steady while recovery capacity is reduced.
+
+### Experience level is inferred, not asked
+
+Same principle as phase. Someone with three weeks of logs is a novice regardless of what they
+claim, and training age is derivable from weeks logged, consistency, and how quickly progression
+has stalled. Available as an advanced override alongside the phase override.
 
 ## Phase is inferred, never asked
 
@@ -92,13 +150,44 @@ The second delivers the entire relative-load insight with no technical terms.
 
 ### Guardrails on the inference
 
-- **Require enough data.** A few weigh-ins over a couple of weeks minimum, using the smoothed
+- **Require enough data.** At least 3 weigh-ins spanning 14 days, using the smoothed
   bodyweight from [0004](0004-domain-model-and-resistance.md). Until then phase is `Unknown` and
   the coach behaves neutrally — no compensation, no expectation-setting. Confidently wrong is far
   worse than silent.
-- **Hysteresis on transitions.** Different thresholds to enter and exit a phase, and require the
-  trend to persist a few weeks. Otherwise advice flips week to week and users stop believing it.
-  Same debounce thinking as [0006](0006-rep-sources.md), on a much slower signal.
+- **Hysteresis on transitions.** Different thresholds to enter (0.25 lb/wk) and exit
+  (0.10 lb/wk) a phase. Otherwise advice flips week to week and users stop believing it. Same
+  debounce thinking as [0006](0006-rep-sources.md), on a much slower signal.
+- **Require statistical significance.** *Added 2026-07-30 during implementation — see below.*
+  The fitted rate must also exceed **2 standard errors**, or the phase stays `Maintenance`.
+
+#### Why a rate threshold alone is not enough
+
+A test with realistic ±3 lb daily weight noise on a *genuinely stable* user kept coming back
+`Surplus`. That wasn't a bad test — the threshold was sitting on the noise floor.
+
+Fitting a slope to 30 daily readings with ±3 lb of noise gives a standard error of
+**0.257 lb/week**. The entry threshold was 0.25. Simulated over 20,000 trials, a weight-stable
+user would be assigned a phase **33% of the time** — and hysteresis then makes it *worse*, because
+having entered spuriously they'd be held there.
+
+The fix is to require the rate to be distinguishable from flat, not merely large:
+
+| Significance gate | False positives on stable weight | Real 1 lb/wk cut detected |
+|---|---|---|
+| none (rate only) | 33% | ~100% |
+| 1.5 × SE | 13% | 99% |
+| **2.0 × SE** | **~6%** | **~95%** |
+| 2.5 × SE | 1% | lower |
+
+2.0 is the chosen operating point. Missing a real cut is the worse error — the compensation rule
+never fires and the user watches their numbers fall with no explanation — so the gate is set to
+stay comfortably sensitive to genuine trends.
+
+**This has a nice property:** more frequent weigh-ins shrink the standard error, so consistency
+is rewarded with faster, more confident phase detection. That is a better incentive than nagging.
+
+Both error rates are pinned by Monte Carlo tests in `BodyweightTrendTests`, so tuning the
+constant cannot silently regress either direction.
 
 This also gives an honest reason to prompt for weigh-ins — *"a current weight keeps your resistance
 numbers accurate"* — rather than nagging about the scale.
