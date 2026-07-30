@@ -33,16 +33,29 @@ that is where all the interesting logic lives.
 
 ```json
 {
-  "devDependencies": { "typescript": "^5", "esbuild": "^0.25" },
+  "devDependencies": {
+    "esbuild": "^0.25",        // bundler
+    "typescript": "^5",        // type checking only; esbuild does the transpiling
+    "vitest": "^3",            // tests
+    "@types/node": "^26",      // node: imports in tests
+    "fake-indexeddb": "^6"     // a real IDB implementation for tests, not a stub
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "esbuild src/main.ts --bundle --format=esm --minify --outfile=../TotalGymLogBook.Web/wwwroot/dist/shell.js",
-    "watch": "npm run build -- --watch"
+    "build": "esbuild src/main.ts --bundle --format=esm --minify --target=es2022 --outfile=../TotalGymLogBook.Web/wwwroot/dist/shell.js",
+    "watch": "npm run build -- --watch",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm run test"
   }
 }
 ```
 
-Two dev dependencies, one config file (`tsconfig.json`), zero plugins.
+**Two of these ship nothing; three are test-only.** The build path is still just esbuild plus
+`tsc --noEmit`, one config file (`tsconfig.json`), and zero plugins. `vitest`, `@types/node`, and
+`fake-indexeddb` exist solely for the test run and never reach the bundle.
+
+*(This block originally listed only `typescript` and `esbuild`. Updated as the test dependencies
+were added, so it reflects the real file rather than the intention.)*
 
 **`tsc --noEmit` is mandatory in CI.** esbuild strips types without checking them — it compiles
 code with type errors happily.

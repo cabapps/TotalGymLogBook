@@ -10,8 +10,25 @@
 // Registering the custom elements is the point of importing this module -- index.html loads
 // it as a side effect, and <tg-app-shell> upgrades as soon as it evaluates.
 import './shell/app-shell.js';
+import { installBridge } from './db/bridge.js';
+
+// Publish the read-only data bridge before Blazor.start() runs, so [JSImport] can resolve it
+// the moment the runtime comes up (docs/adr/0003).
+installBridge();
 
 export { AppShell } from './shell/app-shell.js';
+
+export * as db from './db/repository.js';
+export { exportBackup, exportBackupJson, importBackup, clearAllData } from './db/backup.js';
+export { onChange, type ChangeEvent } from './db/events.js';
+export { MODULE_NAME as DB_BRIDGE_MODULE, installBridge } from './db/bridge.js';
+export type {
+  BodyweightRecord,
+  MachineRecord,
+  SessionRecord,
+  SetLogRecord,
+  SettingsRecord,
+} from './db/schema.js';
 
 export {
   FORMULA_VERSION,
