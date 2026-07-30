@@ -22,6 +22,23 @@ export * as db from './db/repository.js';
 export { exportBackup, exportBackupJson, importBackup, clearAllData } from './db/backup.js';
 export { onChange, type ChangeEvent } from './db/events.js';
 export { MODULE_NAME as DB_BRIDGE_MODULE, installBridge } from './db/bridge.js';
+
+// These must be NAMED EXPORTS of the bundle entry point, because Blazor reaches them via
+// JSHost.ImportAsync("tglb-db", "dist/shell.js") and then [JSImport("<name>", "tglb-db")].
+// JSImport resolves against the imported module's exports; publishing on globalThis is only a
+// console-debugging convenience. See docs/adr/0003.
+export {
+  getActiveSessionJson,
+  getBodyweightReadingsJson,
+  getExerciseHistoryJson,
+  getHistoriesJson,
+  getRecentSetsJson,
+  getSessionSetsJson,
+  getSettingsJson,
+  listMachinesJson,
+  listSessionsJson,
+  subscribeToChanges,
+} from './db/bridge.js';
 export type {
   BodyweightRecord,
   MachineRecord,

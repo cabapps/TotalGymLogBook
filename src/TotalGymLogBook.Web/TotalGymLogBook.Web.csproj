@@ -32,7 +32,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- This app only ever runs in a browser, so calling the [SupportedOSPlatform("browser")]
+         members of TotalGymLogBook.Interop is safe. Declaring it satisfies CA1416 properly
+         rather than suppressing a warning that would be real in any other host. -->
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\TotalGymLogBook.Domain\TotalGymLogBook.Domain.csproj" />
+    <ProjectReference Include="..\TotalGymLogBook.Interop\TotalGymLogBook.Interop.csproj" />
   </ItemGroup>
 
   <!-- ============================================================
@@ -58,22 +66,15 @@
     <ClientSource Include="$(ClientDir)tsconfig.json" />
   </ItemGroup>
 
-  <Target Name="RestoreClient"
-          Condition="'$(SkipClientBuild)' != 'true' AND !Exists('$(ClientDir)node_modules')">
+  <Target Name="RestoreClient" Condition="'$(SkipClientBuild)' != 'true' AND !Exists('$(ClientDir)node_modules')">
     <Message Importance="high" Text="Installing client dependencies..." />
     <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(ClientDir)" />
     <!-- npm 12 blocks postinstall scripts by default; esbuild needs its to fetch the platform
          binary. Non-fatal because older npm has no such command. -->
-    <Exec Command="npm install-scripts approve esbuild" WorkingDirectory="$(ClientDir)"
-          ContinueOnError="true" />
+    <Exec Command="npm install-scripts approve esbuild" WorkingDirectory="$(ClientDir)" ContinueOnError="true" />
   </Target>
 
-  <Target Name="BuildClient"
-          DependsOnTargets="RestoreClient"
-          BeforeTargets="BeforeBuild"
-          Condition="'$(SkipClientBuild)' != 'true'"
-          Inputs="@(ClientSource)"
-          Outputs="$(ClientBundle)">
+  <Target Name="BuildClient" DependsOnTargets="RestoreClient" BeforeTargets="BeforeBuild" Condition="'$(SkipClientBuild)' != 'true'" Inputs="@(ClientSource)" Outputs="$(ClientBundle)">
     <Exec Command="npm run build" WorkingDirectory="$(ClientDir)" />
   </Target>
 
@@ -85,8 +86,7 @@
   </ItemGroup>
 
   <Target Name="CopyDomainData" BeforeTargets="BeforeBuild">
-    <Copy SourceFiles="@(DomainData)" DestinationFolder="$(MSBuildProjectDirectory)/wwwroot/data/"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(DomainData)" DestinationFolder="$(MSBuildProjectDirectory)/wwwroot/data/" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

@@ -198,6 +198,18 @@ export function newId(): string {
   return globalThis.crypto.randomUUID();
 }
 
+/**
+ * The LOCAL calendar date of an instant.
+ *
+ * Deliberately not `toISOString().slice(0, 10)`, which is UTC. Someone training at 8pm in
+ * Chicago has a timestamp of 01:00 UTC the following day, so a UTC date files that set under
+ * tomorrow -- splitting one evening workout across two dates, and shifting it out of the
+ * trailing window the volume ledger counts.
+ *
+ * "Which day did I train?" is always a local-calendar question.
+ */
 export function toIsoDate(instant: Instant): IsoDate {
-  return new Date(instant).toISOString().slice(0, 10);
+  const d = new Date(instant);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }

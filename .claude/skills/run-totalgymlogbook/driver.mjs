@@ -137,7 +137,7 @@ async function main() {
   let blazorOk = true;
   try {
     await page.waitForFunction(
-      () => document.querySelector('#blazor-root')?.textContent?.includes('Load ladder'),
+      () => document.querySelector('#blazor-root')?.textContent?.includes('Your next set'),
       { timeout: 60_000 },
     );
   } catch {
@@ -145,26 +145,82 @@ async function main() {
   }
   check('Blazor booted and rendered', blazorOk);
 
-  const rows = await page.locator('#blazor-root tbody tr').count().catch(() => 0);
-  check('load ladder has 14 rows', rows === 14, `${rows} rows`);
-  await page.screenshot({ path: join(SHOTS, '02-full.png'), fullPage: true });
+  // The <h2> renders before the logbook read completes, so waiting on it is not enough --
+  // wait for the component to settle into one of its two terminal states.
+  await page
+    .waitForSelector('#empty-state, #rec-load', { timeout: 30_000 })
+    .catch(() => undefined);
 
-  // ---- Cross-language agreement: both tiers compute the same number ----
-  const blazorL8 = await page
-    .locator('#blazor-root tbody tr')
-    .nth(7)
-    .locator('td')
-    .nth(2)
-    .innerText()
-    .catch(() => '');
-  check(
-    'TypeScript and C# agree at level 8',
-    lb0?.trim() === blazorL8.trim(),
-    `shell=${lb0} blazor=${blazorL8}`,
-  );
+  const emptyState = await page.locator('#empty-state').count();
+  check('empty logbook shows the empty state', emptyState === 1, `${emptyState} found`);
+  await page.screenshot({ path: join(SHOTS, '02-empty.png'), fullPage: true });
 
-  // ---- Interact: move the level slider ----
-  console.log('\nInteraction:');
+  // ---- The full round trip: TypeScript writes -> IndexedDB -> change bus -> Blazor reads ----
+  //
+  // This is the check the whole architecture exists to make possible. The shell's data layer
+  // owns the write path; Blazor never opens IndexedDB, it re-reads through the bridge when the
+  // change event fires (docs/adr/0003).
+  console.log('\nRound trip (TS writes, Blazor reads):');
+
+  const seeded = await page.evaluate(async () => {
+    // Same module instance index.html already loaded -- ES modules are cached by URL.
+    const m = await import('/dist/shell.js');
+    await m.db.clearAllData?.().catch?.(() => {});
+
+    const session = await m.db.startSession({ machineId: 'm1', bodyweightSmoothedLb: 180 });
+    const day = 86_400_000;
+
+    // Three sets at level 8, 12 reps -- the rep ceiling, so the coach should step the load.
+    for (let i = 0; i < 3; i++) {
+      await m.db.logSet({
+        sessionId: session.id,
+        exerciseId: 'chest-press',
+        ts: Date.now() - 3 * day,
+        reps: 12,
+        level: 8,
+        bodyweightRawLb: 180,
+        bodyweightSmoothedLb: 180,
+        angleDeg: 16.5,
+        boardWeightLb: 19.8,
+        pulleyFactor: 1,
+        bodyFraction: 1,
+        vestLb: 0,
+        barLb: 0,
+        directLoadLb: 0,
+        computedLb: 56.7,
+        formulaVersion: 1,
+      });
+    }
+    return (await m.db.getExerciseHistory('chest-press')).length;
+  });
+
+  check('shell wrote sets to IndexedDB', seeded === 3, `${seeded} sets`);
+
+  // Blazor must pick this up from the change bus without a reload.
+  let picked = true;
+  try {
+    await page.waitForFunction(
+      () => document.querySelector('#rec-load')?.textContent?.trim(),
+      { timeout: 30_000 },
+    );
+  } catch {
+    picked = false;
+  }
+  check('Blazor re-read on the change event (no reload)', picked);
+
+  const recLoad = (await page.locator('#rec-load').innerText().catch(() => '')).replace(/\s*lb$/, '');
+  const recWhy = await page.locator('#rec-why').innerText().catch(() => '');
+  const logged = await page.locator('#fact-logged').innerText().catch(() => '');
+
+  // Logged 12 reps at 56.7 lb on level 8, so the engine steps to level 9 -> 61.4 lb.
+  check('coach recommended the next rung', recLoad.startsWith('61.4'), `${recLoad} lb`);
+  check('rationale references the rep ceiling', /12 reps/.test(recWhy), recWhy.slice(0, 72) + '…');
+  check('set count round-tripped', /3 sets/.test(logged), logged);
+
+  await page.screenshot({ path: join(SHOTS, '03-recommendation.png'), fullPage: true });
+
+  // ---- Interact with the instant tier ----
+  console.log('\nInteraction (instant tier):');
   await shellEval(page, (el) => {
     const s = el.shadowRoot.getElementById('level');
     s.value = '14';
@@ -197,7 +253,7 @@ async function main() {
   );
   check('vest hint explains the discount', /contributes/.test(hint), hint);
 
-  await page.screenshot({ path: join(SHOTS, '03-interacted.png'), fullPage: true });
+  await page.screenshot({ path: join(SHOTS, '04-interacted.png'), fullPage: true });
 
   console.log('\nConsole:');
   check('no console errors', errors.length === 0, errors.join(' | '));

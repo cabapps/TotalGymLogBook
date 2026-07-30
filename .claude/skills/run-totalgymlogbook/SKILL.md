@@ -150,6 +150,27 @@ survived `dotnet publish`, which is a real failure mode
   (`MSB4025: The project file could not be loaded`) points at the line but not the cause. That
   file has long prose comments; use a semicolon or comma instead of an em-dash.
 
+- **`JSHost.ImportAsync` resolves its URL relative to `_framework/`, not the app base.**
+  `"./dist/shell.js"` silently becomes `/_framework/dist/shell.js` and 404s. The failure
+  surfaces as an opaque `AggregateException_ctor_DefaultMessage (TypeError: Failed to fetch
+  dynamically imported module)` during startup — it names neither the path nor the caller. Use
+  `"../dist/shell.js"`, which is also correct under subpath hosting since `_framework` always
+  sits one level below the base.
+
+- **Anything Blazor imports must be a named export of `main.ts`.** `[JSImport]` resolves
+  against the imported module's exports, so a function `bridge.ts` declares but `main.ts`
+  doesn't re-export is invisible, with no build-time error.
+
+- **C# marshals an absent argument as `null`, not `undefined`.** A TypeScript guard written
+  `foo === undefined` therefore lets `null` straight through — and `IDBKeyRange.lowerBound(null)`
+  throws `DataError: Failed to execute 'lowerBound' on 'IDBKeyRange': The parameter is not a
+  valid key`. Use `== null` on anything reachable from the bridge. Unit tests never catch this,
+  because they pass real values.
+
+- **`Infinity` is not a valid IndexedDB key.** Only finite numbers, strings, dates, binary, and
+  arrays of those. Using `±Infinity` as range sentinels throws the same opaque `DataError` at
+  runtime; use `0` and `Number.MAX_SAFE_INTEGER`.
+
 ## Troubleshooting
 
 - **`Executable doesn't exist at .../chromium_headless_shell-<N>/...`**: Playwright version vs.
