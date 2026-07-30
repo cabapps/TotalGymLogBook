@@ -7,6 +7,9 @@ artifacts/
 # Node
 node_modules/
 
+# Run-driver output (the driver itself IS committed; its screenshots are not)
+.claude/skills/run-totalgymlogbook/screenshots/
+
 # Generated into the Blazor project's wwwroot at build time. See docs/adr/0009.
 #   dist/ - esbuild output
 #   data/ - copied from the repo's data/, which is the single source of truth
