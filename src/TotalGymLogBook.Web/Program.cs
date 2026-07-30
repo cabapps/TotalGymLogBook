@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using TotalGymLogBook.Domain;
+using TotalGymLogBook.Domain.Training;
+using TotalGymLogBook.Interop;
 using TotalGymLogBook.Web;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
@@ -22,4 +25,15 @@ using (var http = new HttpClient { BaseAddress = new Uri(builder.HostEnvironment
     builder.Services.AddSingleton(RailProfileTable.Parse(json));
 }
 
-await builder.Build().RunAsync();
+// Reads through the TypeScript bridge. TypeScript owns IndexedDB exclusively (docs/adr/0003),
+// so this is the only route from .NET to the logbook, and it is read-only.
+builder.Services.AddSingleton<Logbook>();
+builder.Services.AddSingleton<ProgressionEngine>();
+
+var host = builder.Build();
+
+// Import the bundle and subscribe to the change bus before the first render, so components
+// never have to special-case "bridge not ready yet".
+await host.Services.GetRequiredService<Logbook>().InitialiseAsync();
+
+await host.RunAsync();

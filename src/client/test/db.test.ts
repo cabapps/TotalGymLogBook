@@ -310,3 +310,42 @@ describe('backup', () => {
     expect(parsed.records[Store.SetLogs]).toHaveLength(1);
   });
 });
+
+describe('local calendar dates', () => {
+  it('files a set under the LOCAL day, not the UTC day', async () => {
+    // 8pm on 1 March in a UTC-5 zone is already 2 March in UTC. Deriving the workout date
+    // from UTC would split an evening session across two dates and shift it out of the
+    // volume ledger's trailing window.
+    const evening = new Date(2026, 2, 1, 20, 0, 0).getTime(); // local 1 Mar, 20:00
+    const logged = await repo.logSet(setInput({ ts: evening }));
+
+    expect(logged.on).toBe('2026-03-01');
+  });
+
+  it('agrees with the date the user would name at any hour of the day', async () => {
+    for (const hour of [0, 6, 12, 18, 23]) {
+      const ts = new Date(2026, 5, 15, hour, 30).getTime();
+      expect(toIsoDate(ts)).toBe('2026-06-15');
+    }
+  });
+});
+
+describe('argument shapes the C# bridge actually sends', () => {
+  // C# marshals an absent argument as null, not undefined. Guarding with `=== undefined`
+  // lets null through to IDBKeyRange, which rejects it with an opaque
+  // "DataError: Failed to execute 'lowerBound' on 'IDBKeyRange'" at runtime -- invisible to
+  // any test that only ever passes a real value.
+  it('tolerates null where an optional range bound is expected', async () => {
+    await repo.recordBodyweight('2026-03-01', 180);
+
+    await expect(repo.getBodyweightReadings(null)).resolves.toHaveLength(1);
+    await expect(repo.listSessions(null)).resolves.toEqual([]);
+    await expect(repo.getExerciseHistory('chest-press', null)).resolves.toEqual([]);
+  });
+
+  it('uses finite key bounds, since Infinity is not a valid IndexedDB key', async () => {
+    await repo.logSet(setInput());
+    // Would throw DataError if the bound were built from +/-Infinity.
+    await expect(repo.getExerciseHistory('chest-press')).resolves.toHaveLength(1);
+  });
+});

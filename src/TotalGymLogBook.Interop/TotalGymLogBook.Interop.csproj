@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- browser-wasm is required for [JSImport]. This is exactly why docs/adr/0009 forbids
+         Domain from referencing this project: doing so would drag the domain tests onto a
+         browser test runner instead of the desktop runtime, where they run in milliseconds. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TotalGymLogBook.Domain\TotalGymLogBook.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <SupportedPlatform Include="browser" />
+  </ItemGroup>
+
+</Project>

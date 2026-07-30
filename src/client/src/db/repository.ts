@@ -108,8 +108,8 @@ export async function findOrphanedSessions(olderThanHours = 6): Promise<SessionR
   return alive(rows).filter((s) => s.startedAt < cutoff);
 }
 
-export async function listSessions(sinceMs?: Instant): Promise<SessionRecord[]> {
-  const range = sinceMs === undefined ? undefined : IDBKeyRange.lowerBound(sinceMs);
+export async function listSessions(sinceMs?: Instant | null): Promise<SessionRecord[]> {
+  const range = sinceMs == null ? undefined : IDBKeyRange.lowerBound(sinceMs);
   const rows = await transact(Store.Sessions, 'readonly', (tx) =>
     getAllFromIndex<SessionRecord>(tx, Store.Sessions, 'by-startedAt', range),
   );
@@ -178,10 +178,13 @@ export async function getSessionSets(sessionId: string): Promise<SetLogRecord[]>
 /** History for one exercise, newest last. What the progression engine reads. */
 export async function getExerciseHistory(
   exerciseId: string,
-  sinceMs?: Instant,
+  sinceMs?: Instant | null,
 ): Promise<SetLogRecord[]> {
-  const lower = [exerciseId, sinceMs ?? -Infinity] as [string, number];
-  const upper = [exerciseId, Infinity] as [string, number];
+  // Infinity is NOT a valid IndexedDB key -- only finite numbers, strings, dates, binary, and
+  // arrays of those. Using +/-Infinity as sentinels throws DataError at runtime, which unit
+  // tests miss whenever they pass a real timestamp.
+  const lower = [exerciseId, sinceMs ?? 0] as [string, number];
+  const upper = [exerciseId, Number.MAX_SAFE_INTEGER] as [string, number];
 
   const rows = await transact(Store.SetLogs, 'readonly', (tx) =>
     getAllFromIndex<SetLogRecord>(
@@ -230,8 +233,13 @@ export async function recordBodyweight(on: IsoDate, lb: number): Promise<Bodywei
   return record;
 }
 
-export async function getBodyweightReadings(sinceOn?: IsoDate): Promise<BodyweightRecord[]> {
-  const range = sinceOn === undefined ? undefined : IDBKeyRange.lowerBound(sinceOn);
+export async function getBodyweightReadings(
+  sinceOn?: IsoDate | null,
+): Promise<BodyweightRecord[]> {
+  // `== null` deliberately, to catch BOTH null and undefined. C# marshals an absent argument
+  // as null, and `=== undefined` would let it through to IDBKeyRange, which rejects null as an
+  // invalid key with an opaque DataError.
+  const range = sinceOn == null ? undefined : IDBKeyRange.lowerBound(sinceOn);
   const rows = await transact(Store.Bodyweight, 'readonly', (tx) =>
     getAllFromIndex<BodyweightRecord>(tx, Store.Bodyweight, 'by-on', range),
   );
