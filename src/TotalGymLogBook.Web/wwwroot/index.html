@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Total Gym Logbook</title>
+    <base href="/" />
+    <meta name="description" content="Track your Total Gym workouts. Free, works offline, your data stays on your device." />
+    <meta name="theme-color" content="#111418" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <link href="manifest.webmanifest" rel="manifest" />
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+
+    <!-- docs/adr/0003: critical CSS is inlined so first paint needs zero round trips.
+         Everything else is deferred. -->
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #ffffff; --fg: #111418; --muted: #5c6672; --accent: #0b6bcb;
+            --surface: #f4f6f8; --border: #d8dee4;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root { --bg: #111418; --fg: #e8ecf0; --muted: #9aa5b1; --accent: #4c9aff;
+                    --surface: #1a1f26; --border: #2b323b; }
+        }
+        * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+        body {
+            background: var(--bg); color: var(--fg);
+            font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            -webkit-text-size-adjust: 100%;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right)
+                     env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+        #app { min-height: 100dvh; }
+        /* Blazor renders into its own root, outside the shell. docs/adr/0003 rule 5. */
+        #blazor-root:empty::before {
+            content: ""; display: block; height: 1px;
+        }
+        #blazor-error-ui {
+            display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+            background: #fde047; color: #111418; padding: .75rem 1rem;
+            box-shadow: 0 -1px 4px rgb(0 0 0 / .3);
+        }
+        #blazor-error-ui .dismiss { cursor: pointer; float: right; }
+    </style>
+</head>
+
+<body>
+    <!-- Painted and interactive before the .NET runtime exists. docs/adr/0003. -->
+    <div id="app">
+        <tg-app-shell></tg-app-shell>
+        <div id="blazor-root"></div>
+    </div>
+
+    <div id="blazor-error-ui">
+        An unhandled error has occurred.
+        <a href="." class="reload">Reload</a>
+        <span class="dismiss">🗙</span>
+    </div>
+
+    <!-- The instant tier. Registers custom elements and opens IndexedDB. -->
+    <script type="module" src="dist/shell.js"></script>
+
+    <!--
+      docs/adr/0003 step 3: autostart="false" and start Blazor MANUALLY after the shell has
+      painted. Autostart contends with first paint for the main thread, which is the whole
+      thing this architecture exists to avoid.
+    -->
+    <script src="_framework/blazor.webassembly#[.{fingerprint}].js" autostart="false"></script>
+    <script type="module">
+        // Yield to the shell's first paint, then boot the runtime. Everything Blazor renders
+        // is progressive enhancement over an already-usable app.
+        const startBlazor = () => Blazor.start().catch(e => console.error('Blazor failed to start', e));
+
+        if (document.readyState === 'complete') {
+            requestIdleCallback?.(startBlazor, { timeout: 1000 }) ?? setTimeout(startBlazor, 0);
+        } else {
+            window.addEventListener('load', () =>
+                requestIdleCallback?.(startBlazor, { timeout: 1000 }) ?? setTimeout(startBlazor, 0));
+        }
+    </script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });
+        }
+    </script>
+</body>
+
+</html>

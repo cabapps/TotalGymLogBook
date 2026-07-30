@@ -1,0 +1,7 @@
+@inherits LayoutComponentBase
+
+@* docs/adr/0003: Blazor owns only the region inside #blazor-root. Navigation, the tab bar,
+   and the set logger are web components living outside it. *@
+<article class="tg-derived">
+    @Body
+</article>

@@ -1,0 +1,69 @@
+{
+  "$comment": [
+    "Azure Static Web Apps configuration. See docs/adr/0002 and docs/adr/0008.",
+    "",
+    "VERIFIED against .NET 10.0.300 published output, which differs from older Blazor guidance:",
+    "  - There is NO blazor.boot.json. Do not add a rule for it.",
+    "  - Every _framework asset is content-fingerprinted (dotnet.native.f749u69f30.wasm), so",
+    "    those CAN be cached immutably and forever.",
+    "  - Version tracking moved to service-worker-assets.js, which carries a version string and",
+    "    a SHA-256 per asset. That file is NOT fingerprinted, so it is now the file that must",
+    "    never be stale-cached.",
+    "",
+    "The three unfingerprinted entry points below are the whole recovery path. If a CDN pins",
+    "any of them, users are stuck on a stale build with no way out."
+  ],
+
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/_framework/*",
+      "/data/*",
+      "/dist/*",
+      "/*.{css,js,mjs,wasm,dll,dat,pdb,json,webmanifest,br,gz,png,svg,ico,woff,woff2}"
+    ]
+  },
+
+  "routes": [
+    {
+      "route": "/index.html",
+      "headers": { "Cache-Control": "no-cache" }
+    },
+    {
+      "route": "/service-worker.js",
+      "headers": { "Cache-Control": "no-cache" }
+    },
+    {
+      "route": "/service-worker-assets.js",
+      "headers": { "Cache-Control": "no-cache" }
+    },
+    {
+      "$comment": "Content-fingerprinted, so immutable is safe and correct.",
+      "route": "/_framework/*",
+      "headers": { "Cache-Control": "public, max-age=31536000, immutable" }
+    },
+    {
+      "$comment": "docs/adr/0009 gives the client bundle a stable unhashed name, and index.html loads it on first paint before any service worker controls the page. Cheap to revalidate at 8 KB.",
+      "route": "/dist/*",
+      "headers": { "Cache-Control": "no-cache" }
+    },
+    {
+      "route": "/data/*",
+      "headers": { "Cache-Control": "no-cache" }
+    }
+  ],
+
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "geolocation=(), camera=(), microphone=(), payment=()"
+  },
+
+  "mimeTypes": {
+    ".json": "application/json",
+    ".wasm": "application/wasm",
+    ".webmanifest": "application/manifest+json",
+    ".dat": "application/octet-stream",
+    ".blat": "application/octet-stream"
+  }
+}

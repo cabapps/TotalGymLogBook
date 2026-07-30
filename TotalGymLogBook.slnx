@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TotalGymLogBook.Domain/TotalGymLogBook.Domain.csproj" />
+    <Project Path="src/TotalGymLogBook.Web/TotalGymLogBook.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/Domain.Tests/">
+    <Project Path="tests/Domain.Tests/TotalGymLogBook.Domain.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/GenerateExpected/GenerateExpected.csproj" />
+  </Folder>
+</Solution>

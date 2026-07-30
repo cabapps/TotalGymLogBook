@@ -1,0 +1,54 @@
+{
+  "$comment": [
+    "Validation fixture, NOT a golden file. These are resistance figures transcribed from Total",
+    "Gym's published resistance chart PDFs (TG_ResistanceChart_{6,8,10,12,14}Levels.pdf).",
+    "",
+    "They exist to prove the physical model in docs/adr/0004 -- specifically the DERIVED",
+    "boardWeightLb values -- reproduces reality. If a change to the formula or to a profile's",
+    "board weight makes these drift, the model is wrong, not the fixture.",
+    "",
+    "Facts are not copyrightable (17 U.S.C. 102(b); Feist v. Rural Telephone, 1991). We ship a",
+    "formula, not their tables; these numbers are here only as a test oracle.",
+    "",
+    "Tolerance must allow ~1.5 lb: the charts round to whole pounds, and boardWeightLb is",
+    "itself derived from those rounded figures.",
+    "",
+    "Note rail-10: its published ANGLE column is corrupt (see 0004), but its RESISTANCE columns",
+    "are self-consistent, which is what let the angles be back-solved. These rows therefore",
+    "still make a valid oracle."
+  ],
+  "bodyweightLb": [50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240, 250],
+  "samples": [
+    { "profileId": "rail-14", "level": 14, "publishedLb": [30, 34, 39, 43, 47, 52, 56, 60, 65, 69, 73, 77, 82, 86, 90, 95, 99, 103, 108, 112, 116] },
+    { "profileId": "rail-14", "level": 13, "publishedLb": [28, 32, 36, 41, 45, 49, 53, 57, 61, 65, 69, 73, 77, 81, 85, 89, 93, 97, 101, 105, 109] },
+    { "profileId": "rail-14", "level": 12, "publishedLb": [27, 30, 34, 38, 42, 46, 50, 53, 57, 61, 65, 69, 72, 76, 80, 84, 88, 91, 95, 99, 103] },
+    { "profileId": "rail-14", "level": 11, "publishedLb": [25, 29, 32, 36, 39, 43, 46, 50, 54, 57, 61, 64, 68, 71, 75, 78, 82, 86, 89, 93, 96] },
+    { "profileId": "rail-14", "level": 10, "publishedLb": [23, 27, 30, 33, 37, 40, 43, 47, 50, 53, 56, 60, 63, 66, 70, 73, 76, 80, 83, 86, 90] },
+    { "profileId": "rail-14", "level": 9,  "publishedLb": [22, 25, 28, 31, 34, 37, 40, 43, 46, 49, 52, 55, 58, 61, 65, 68, 71, 74, 77, 80, 83] },
+    { "profileId": "rail-14", "level": 8,  "publishedLb": [20, 23, 26, 28, 31, 34, 37, 40, 43, 45, 48, 51, 54, 57, 60, 62, 65, 68, 71, 74, 77] },
+    { "profileId": "rail-14", "level": 7,  "publishedLb": [18, 21, 23, 26, 28, 31, 34, 36, 39, 41, 44, 47, 49, 52, 54, 57, 60, 62, 65, 67, 70] },
+    { "profileId": "rail-14", "level": 6,  "publishedLb": [16, 19, 21, 24, 26, 28, 31, 33, 35, 38, 40, 42, 45, 47, 49, 52, 54, 56, 59, 61, 63] },
+    { "profileId": "rail-14", "level": 5,  "publishedLb": [15, 17, 19, 21, 23, 25, 27, 29, 31, 34, 36, 38, 40, 42, 44, 46, 48, 50, 52, 55, 57] },
+    { "profileId": "rail-14", "level": 4,  "publishedLb": [13, 15, 17, 19, 21, 22, 24, 26, 28, 30, 32, 34, 36, 37, 39, 41, 43, 45, 47, 49, 51] },
+    { "profileId": "rail-14", "level": 3,  "publishedLb": [11, 13, 15, 16, 18, 19, 21, 23, 24, 26, 27, 29, 31, 32, 34, 36, 37, 39, 40, 42, 44] },
+    { "profileId": "rail-14", "level": 2,  "publishedLb": [10, 11, 13, 14, 15, 17, 18, 19, 21, 22, 24, 25, 26, 28, 29, 31, 32, 33, 35, 36, 38] },
+    { "profileId": "rail-14", "level": 1,  "publishedLb": [8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 20, 21, 22, 23, 24, 25, 26, 28, 29, 30, 31] },
+
+    { "profileId": "rail-12", "level": 12, "publishedLb": [32, 36, 41, 45, 50, 54, 58, 63, 67, 71, 76, 80, 85, 89, 93, 98, 102, 107, 111, 115, 120] },
+    { "profileId": "rail-12", "level": 8,  "publishedLb": [23, 26, 29, 32, 35, 38, 41, 44, 47, 50, 53, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84] },
+    { "profileId": "rail-12", "level": 6,  "publishedLb": [18, 21, 23, 25, 28, 30, 33, 35, 38, 40, 43, 45, 48, 50, 53, 55, 58, 60, 62, 65, 67] },
+    { "profileId": "rail-12", "level": 1,  "publishedLb": [7, 8, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 17, 18, 19, 20, 21, 22, 23, 24, 25] },
+
+    { "profileId": "rail-10", "level": 10, "publishedLb": [28, 33, 37, 41, 46, 50, 55, 59, 63, 68, 72, 76, 81, 85, 89, 94, 98, 102, 107, 111, 115] },
+    { "profileId": "rail-10", "level": 5,  "publishedLb": [16, 18, 21, 23, 25, 28, 30, 33, 35, 38, 40, 42, 45, 47, 50, 52, 55, 57, 59, 62, 64] },
+    { "profileId": "rail-10", "level": 1,  "publishedLb": [6, 7, 8, 9, 10, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 20, 21, 22, 23, 24] },
+
+    { "profileId": "rail-8", "level": 8, "publishedLb": [32, 36, 40, 45, 49, 54, 58, 62, 67, 71, 75, 80, 84, 88, 93, 97, 101, 106, 110, 114, 119] },
+    { "profileId": "rail-8", "level": 5, "publishedLb": [21, 24, 27, 30, 32, 35, 38, 41, 44, 47, 50, 53, 55, 58, 61, 64, 67, 70, 73, 76, 78] },
+    { "profileId": "rail-8", "level": 1, "publishedLb": [7, 8, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 17, 18, 19, 20, 21, 22, 23, 24, 25] },
+
+    { "profileId": "rail-6", "level": 6, "publishedLb": [32, 36, 41, 45, 49, 54, 58, 63, 67, 71, 76, 80, 85, 89, 93, 98, 102, 106, 111, 115, 120] },
+    { "profileId": "rail-6", "level": 3, "publishedLb": [18, 21, 23, 26, 28, 31, 33, 35, 38, 40, 43, 45, 48, 50, 53, 55, 58, 60, 63, 65, 68] },
+    { "profileId": "rail-6", "level": 1, "publishedLb": [8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28] }
+  ]
+}

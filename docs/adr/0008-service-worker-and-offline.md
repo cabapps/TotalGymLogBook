@@ -41,15 +41,34 @@ broken by adding runtime-caching rules that overlap `_framework`.
 
 ### Azure SWA configuration
 
-Blazor's framework files are not content-hash-named (`dotnet.wasm`, `YourApp.dll`); versioning
-flows entirely through `blazor.boot.json`. Therefore:
+> **Corrected 2026-07-30 against real .NET 10.0.300 publish output.** This section originally
+> said framework files are not content-hash-named and that versioning flows through
+> `blazor.boot.json`. That was true of older Blazor and is **wrong for .NET 10**. Verified
+> facts:
+>
+> - **There is no `blazor.boot.json`.** Don't write cache rules for it.
+> - **Every `_framework` asset is content-fingerprinted** — `dotnet.native.f749u69f30.wasm`,
+>   `TotalGymLogBook.Domain.g4lkut7sah.wasm`. They can be cached immutably forever.
+> - **Version tracking lives in `service-worker-assets.js`**, which carries a version string
+>   and a SHA-256 per asset (48 of them, including `dist/shell.js` and
+>   `data/rail-profiles.json`). It is *not* fingerprinted, so it is now the file that must
+>   never be stale-cached.
+
+The unfingerprinted entry points are the entire recovery path:
 
 ```
-Cache-Control: no-cache  →  index.html, blazor.boot.json, service-worker.js
+Cache-Control: no-cache   →  index.html, service-worker.js, service-worker-assets.js
+Cache-Control: immutable  →  _framework/*   (content-addressed, safe forever)
+Cache-Control: no-cache   →  dist/*, data/* (stable names by 0009, loaded before SW control)
 ```
 
-If the CDN long-caches any of those three, users are pinned to a stale build with **no recovery
-path**. Everything else can cache freely because the SW gates it.
+If the CDN pins any of the first three, users are stuck on a stale build with **no recovery
+path**.
+
+`dist/shell.js` deserves a note: the SW *does* precache it with integrity checking, and Blazor's
+published worker fetches with `cache: 'no-cache'`, so SW updates are safe regardless. But
+`index.html` loads it directly on first paint, before any worker controls the page — so it stays
+revalidated. At 8 KB that costs nothing.
 
 ```json
 "navigationFallback": {
