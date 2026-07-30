@@ -55,14 +55,72 @@ What changes is not the training style but four other things:
 
 | Goal | Reps | Proximity to failure | Rest | Progression lever | Progress metric |
 |---|---|---|---|---|---|
-| Hypertrophy | 6–20 | close (0–3 RIR) | 60–120 s | load, then reps | weekly sets per muscle |
-| Strength | 3–6 | 1–3 RIR, rarely failure | 2–5 min | load | absolute load |
+| Hypertrophy | 6–20 | close (0–3 RIR) | 60–120 s | **reps, then load** | absolute load |
+| Strength | 3–6 | 1–3 RIR, rarely failure | 2–5 min | reps, then load | absolute load |
 | Aerobic | 15–30+ | moderate | 30–60 s | density | work ÷ time |
 | Rehab | as prescribed | well short | as needed | range of motion | consistency |
 
 **The progress metric is a function of goal and phase**, which resolves the tension found in
 [0004](0004-domain-model-and-resistance.md): a weight-loss user's home screen foregrounds session
 frequency, total work, streaks, and bodyweight trend — not load.
+
+> **Corrected 2026-07-30 during implementation.** This table originally said the hypertrophy
+> lever was "load, then reps" and its progress metric was "weekly sets per muscle". Both were
+> wrong:
+>
+> - **The order is reps, then load.** Double progression — work up the rep range at a fixed
+>   load, then step the load and reset to the bottom. On this machine a level step is ~5 lb and
+>   8–10%, so stepping load first would crater reps every cycle.
+> - **Weekly sets per muscle is not a progression metric.** Set count is a *programme*
+>   parameter: it changes when experience or recovery capacity changes, not session to session.
+>   See "Volume is programming, not progression" below.
+
+## Volume is programming, not progression
+
+Reps and load move every session. Sets move when the programme changes. Conflating them puts a
+slow-moving parameter under a fast-moving algorithm, so `ProgressionEngine` deliberately does not
+touch set count — it has three levers (reps, level, added weight), and volume is tracked
+separately by `VolumeLedger` as a monitored metric.
+
+### Sets are counted fractionally per muscle
+
+Total Gym work is unusually compound, so a raw set count is meaningless. One set of chest press
+is 1.0 for chest but 0.5 each for triceps and front delts. Counting indirect work at full weight
+badly overstates arm volume; counting it at zero hides real work. `MuscleInvolvement` carries the
+fraction (1.0 direct, 0.5 indirect).
+
+### There is no upper bound
+
+Weekly targets scale with experience and have a floor but **no ceiling**:
+
+| | Recommended weekly sets per muscle |
+|---|---|
+| Minimum effective dose (all levels) | **4** |
+| Novice | 8 |
+| Intermediate | 14 |
+| Advanced | 20 |
+
+Four sets is a genuine floor rather than a conservative guess — meta-analysis puts meaningful
+hypertrophy below five sets weekly — and the dose-response keeps climbing well past any figure
+this app could justify enforcing.
+
+**No ceiling is a deliberate product decision**, for two reasons. The app cannot observe recovery
+(sleep, stress, joint health, life load), so it is in no position to tell anyone they are doing
+too much. And under-training, not over-training, is overwhelmingly the failure mode in a home-gym
+population. The ledger reports gaps and neglect; it never warns about excess.
+
+### How the deficit rule survives this
+
+[Above](#weight-loss-is-a-phase-not-a-training-style) commits to being *more conservative about
+volume in a deficit*. With no ceiling, that cannot mean a cap. It resolves as: **a deficit stops
+recommending increases rather than imposing a limit** — the recommended target scales down (never
+below the effective dose), and the trainee holds volume steady while recovery capacity is reduced.
+
+### Experience level is inferred, not asked
+
+Same principle as phase. Someone with three weeks of logs is a novice regardless of what they
+claim, and training age is derivable from weeks logged, consistency, and how quickly progression
+has stalled. Available as an advanced override alongside the phase override.
 
 ## Phase is inferred, never asked
 
