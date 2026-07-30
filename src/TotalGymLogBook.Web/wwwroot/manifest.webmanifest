@@ -1,0 +1,28 @@
+{
+  "name": "Total Gym Logbook",
+  "short_name": "Logbook",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#111418",
+  "theme_color": "#111418",
+  "description": "Track your Total Gym workouts. Free, works offline, and your data never leaves your device. Not affiliated with, endorsed by, or sponsored by Total Gym Fitness LLC.",
+  "categories": ["health", "fitness", "lifestyle"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    }
+  ]
+}

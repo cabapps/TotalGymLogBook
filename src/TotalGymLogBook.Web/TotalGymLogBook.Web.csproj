@@ -1,0 +1,92 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- docs/adr/0002: boot time is the metric that matters, not throughput. AOT roughly
+         doubles-to-triples payload size for runtime speed this app never needs; the heaviest
+         computation is a progression algorithm over a few thousand rows. -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <RunAOTCompilation>false</RunAOTCompilation>
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- docs/adr/0008: the service worker is the ONLY cache layer. Leaving Blazor's own boot
+         resource cache on gives two caches with independent lifetimes, which is the source of
+         nearly every Blazor PWA integrity failure. -->
+    <BlazorCacheBootResources>false</BlazorCacheBootResources>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.8" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\TotalGymLogBook.Domain\TotalGymLogBook.Domain.csproj" />
+  </ItemGroup>
+
+  <!-- ============================================================
+       Client build (docs/adr/0009)
+
+       THE SHARP EDGE: Blazor's static web asset pipeline collects wwwroot contents early. If
+       esbuild output lands in wwwroot/dist/ after that collection, everything works under
+       `dotnet run` and the files are silently ABSENT after `dotnet publish`, which reads as
+       a deployment problem when it is a build-ordering problem.
+
+       Hooking BeforeTargets="BeforeBuild" puts the files on disk before collection. Proven by
+       tests/publish-smoke.sh, which greps the publish output; run it in CI so an SDK upgrade
+       that reorders these targets fails loudly instead of shipping a broken bundle.
+       ============================================================ -->
+  <PropertyGroup>
+    <ClientDir>$(MSBuildProjectDirectory)/../client/</ClientDir>
+    <ClientBundle>$(MSBuildProjectDirectory)/wwwroot/dist/shell.js</ClientBundle>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ClientSource Include="$(ClientDir)src/**/*.ts" />
+    <ClientSource Include="$(ClientDir)package.json" />
+    <ClientSource Include="$(ClientDir)tsconfig.json" />
+  </ItemGroup>
+
+  <Target Name="RestoreClient"
+          Condition="'$(SkipClientBuild)' != 'true' AND !Exists('$(ClientDir)node_modules')">
+    <Message Importance="high" Text="Installing client dependencies..." />
+    <Exec Command="npm ci --no-audit --no-fund" WorkingDirectory="$(ClientDir)" />
+    <!-- npm 12 blocks postinstall scripts by default; esbuild needs its to fetch the platform
+         binary. Non-fatal because older npm has no such command. -->
+    <Exec Command="npm install-scripts approve esbuild" WorkingDirectory="$(ClientDir)"
+          ContinueOnError="true" />
+  </Target>
+
+  <Target Name="BuildClient"
+          DependsOnTargets="RestoreClient"
+          BeforeTargets="BeforeBuild"
+          Condition="'$(SkipClientBuild)' != 'true'"
+          Inputs="@(ClientSource)"
+          Outputs="$(ClientBundle)">
+    <Exec Command="npm run build" WorkingDirectory="$(ClientDir)" />
+  </Target>
+
+  <!-- Domain data is the single source of truth in data/. Copy rather than duplicate, so the
+       C# tests, the TypeScript tests, and the shipped app all read identical bytes.
+       docs/adr/0009. -->
+  <ItemGroup>
+    <DomainData Include="$(MSBuildProjectDirectory)/../../data/rail-profiles.json" />
+  </ItemGroup>
+
+  <Target Name="CopyDomainData" BeforeTargets="BeforeBuild">
+    <Copy SourceFiles="@(DomainData)" DestinationFolder="$(MSBuildProjectDirectory)/wwwroot/data/"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

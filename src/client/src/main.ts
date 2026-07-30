@@ -7,6 +7,12 @@
  * TotalGymLogBook.Domain and arrives when the runtime does.
  */
 
+// Registering the custom elements is the point of importing this module -- index.html loads
+// it as a side effect, and <tg-app-shell> upgrades as soon as it evaluates.
+import './shell/app-shell.js';
+
+export { AppShell } from './shell/app-shell.js';
+
 export {
   FORMULA_VERSION,
   OUTPUT_DECIMALS,

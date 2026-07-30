@@ -1,6 +1,7 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/TotalGymLogBook.Domain/TotalGymLogBook.Domain.csproj" />
+    <Project Path="src/TotalGymLogBook.Web/TotalGymLogBook.Web.csproj" />
   </Folder>
   <Folder Name="/tests/" />
   <Folder Name="/tests/Domain.Tests/">

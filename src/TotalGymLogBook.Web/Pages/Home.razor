@@ -1,0 +1,76 @@
+@page "/"
+@using TotalGymLogBook.Domain
+@inject RailProfileTable Profiles
+
+@*
+    The capable tier (docs/adr/0003). Everything here is DERIVED from the same data the shell
+    already rendered, and it arrives whenever the runtime finishes booting. The shell above is
+    fully usable before this exists -- that is the entire architectural bet.
+*@
+
+<h2>Load ladder <span class="tag">derived tier &middot; .NET</span></h2>
+<p class="note">
+    Computed in <code>TotalGymLogBook.Domain</code> for a @Bodyweight lb trainee on the
+    @_profile.LevelCount-notch rail. This is the kind of work that belongs in Blazor: it reads
+    the whole ladder, diffs it, and reasons about progression.
+</p>
+
+<table>
+    <thead>
+        <tr><th>Level</th><th>Angle</th><th>Load</th><th>Step</th><th>Step %</th></tr>
+    </thead>
+    <tbody>
+        @for (var level = 1; level <= _profile.LevelCount; level++)
+        {
+            var lb = Load(level);
+            var step = level == 1 ? (double?)null : lb - Load(level - 1);
+            var pct = step is null ? (double?)null : step / Load(level - 1) * 100;
+
+            <tr>
+                <td>@level</td>
+                <td>@_profile.AngleForLevel(level).ToString("0.0")&deg;</td>
+                <td><strong>@lb.ToString("0.0")</strong></td>
+                <td>@(step is null ? "—" : "+" + step.Value.ToString("0.0"))</td>
+                <td class="@(pct > 15 ? "coarse" : "")">
+                    @(pct is null ? "—" : pct.Value.ToString("0.0") + "%")
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<p class="note">
+    Steps are near-uniform in pounds but not in percentage — highlighted rows are jumps over
+    15%, where the coach should micro-step with added weight instead of a level change
+    (docs/adr/0004).
+</p>
+
+<style>
+    .tg-derived { max-width: 34rem; margin: 0 auto; padding: 0 1rem 3rem; }
+    .tg-derived h2 { font-size: 1.05rem; margin: 2rem 0 .25rem; }
+    .tag {
+        display: inline-block; font-size: .6875rem; letter-spacing: .04em; text-transform: uppercase;
+        background: #6b7280; color: #fff; border-radius: 999px; padding: .15rem .5rem;
+        vertical-align: middle;
+    }
+    .tg-derived .note { color: var(--muted); font-size: .8125rem; }
+    .tg-derived table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    .tg-derived th, .tg-derived td {
+        text-align: right; padding: .3rem .5rem; border-bottom: 1px solid var(--border);
+        font-size: .875rem;
+    }
+    .tg-derived th:first-child, .tg-derived td:first-child { text-align: left; }
+    .tg-derived th { color: var(--muted); font-weight: 500; font-size: .75rem; }
+    .tg-derived td.coarse { color: #d97706; font-weight: 600; }
+</style>
+
+@code {
+    private const double Bodyweight = 180;
+
+    private RailProfile _profile = default!;
+
+    protected override void OnInitialized() => _profile = Profiles.ForLevelCount(14);
+
+    private double Load(int level) => ResistanceCalculator.Compute(
+        _profile, new ResistanceInputs { BodyweightLb = Bodyweight, Level = level });
+}
