@@ -1,13 +1,26 @@
 namespace TotalGymLogBook.Domain.Training;
 
-/// <summary>One completed working set, as recorded.</summary>
+/// <summary>
+/// One completed working set, as recorded.
+///
+/// <see cref="PulleyFactor"/> and <see cref="BodyFraction"/> come from the frozen snapshot on
+/// the stored row (docs/adr/0004). They are here because a load ladder built without them
+/// describes a different exercise: chest press through the cable at level 8 is 28.4 lb, while
+/// the same notch pressed directly off the board is 56.7 lb. Recommending against the wrong
+/// ladder tells the trainee to double their load.
+/// </summary>
 public sealed record SetRecord(
     DateOnly On,
     int Reps,
     double ComputedLb,
     int Level,
     double VestLb = 0,
-    double BarLb = 0);
+    double BarLb = 0,
+    double PulleyFactor = 1.0,
+    double BodyFraction = 1.0)
+{
+    public bool UsesPulley => PulleyFactor < 1.0;
+}
 
 public sealed record ExerciseHistory(string ExerciseId, IReadOnlyList<SetRecord> Sets)
 {

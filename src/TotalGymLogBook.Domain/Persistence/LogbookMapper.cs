@@ -62,7 +62,11 @@ public static class LogbookMapper
         ComputedLb: dto.ComputedLb,
         Level: dto.Level,
         VestLb: dto.VestLb,
-        BarLb: dto.BarLb);
+        BarLb: dto.BarLb,
+        // Carried through so the coach can rebuild the ladder for the RIGHT exercise. Older
+        // rows written before these were snapshotted default to 1.0, which is the direct case.
+        PulleyFactor: dto.PulleyFactor == 0 ? 1.0 : dto.PulleyFactor,
+        BodyFraction: dto.BodyFraction == 0 ? 1.0 : dto.BodyFraction);
 
     public static ExerciseHistory ToExerciseHistory(string exerciseId, IEnumerable<SetLogDto> sets) =>
         new(exerciseId, sets.Where(IsLive).OrderBy(s => s.Ts).Select(ToSetRecord).ToList());
