@@ -92,13 +92,44 @@ The second delivers the entire relative-load insight with no technical terms.
 
 ### Guardrails on the inference
 
-- **Require enough data.** A few weigh-ins over a couple of weeks minimum, using the smoothed
+- **Require enough data.** At least 3 weigh-ins spanning 14 days, using the smoothed
   bodyweight from [0004](0004-domain-model-and-resistance.md). Until then phase is `Unknown` and
   the coach behaves neutrally — no compensation, no expectation-setting. Confidently wrong is far
   worse than silent.
-- **Hysteresis on transitions.** Different thresholds to enter and exit a phase, and require the
-  trend to persist a few weeks. Otherwise advice flips week to week and users stop believing it.
-  Same debounce thinking as [0006](0006-rep-sources.md), on a much slower signal.
+- **Hysteresis on transitions.** Different thresholds to enter (0.25 lb/wk) and exit
+  (0.10 lb/wk) a phase. Otherwise advice flips week to week and users stop believing it. Same
+  debounce thinking as [0006](0006-rep-sources.md), on a much slower signal.
+- **Require statistical significance.** *Added 2026-07-30 during implementation — see below.*
+  The fitted rate must also exceed **2 standard errors**, or the phase stays `Maintenance`.
+
+#### Why a rate threshold alone is not enough
+
+A test with realistic ±3 lb daily weight noise on a *genuinely stable* user kept coming back
+`Surplus`. That wasn't a bad test — the threshold was sitting on the noise floor.
+
+Fitting a slope to 30 daily readings with ±3 lb of noise gives a standard error of
+**0.257 lb/week**. The entry threshold was 0.25. Simulated over 20,000 trials, a weight-stable
+user would be assigned a phase **33% of the time** — and hysteresis then makes it *worse*, because
+having entered spuriously they'd be held there.
+
+The fix is to require the rate to be distinguishable from flat, not merely large:
+
+| Significance gate | False positives on stable weight | Real 1 lb/wk cut detected |
+|---|---|---|
+| none (rate only) | 33% | ~100% |
+| 1.5 × SE | 13% | 99% |
+| **2.0 × SE** | **~6%** | **~95%** |
+| 2.5 × SE | 1% | lower |
+
+2.0 is the chosen operating point. Missing a real cut is the worse error — the compensation rule
+never fires and the user watches their numbers fall with no explanation — so the gate is set to
+stay comfortably sensitive to genuine trends.
+
+**This has a nice property:** more frequent weigh-ins shrink the standard error, so consistency
+is rewarded with faster, more confident phase detection. That is a better incentive than nagging.
+
+Both error rates are pinned by Monte Carlo tests in `BodyweightTrendTests`, so tuning the
+constant cannot silently regress either direction.
 
 This also gives an honest reason to prompt for weigh-ins — *"a current weight keeps your resistance
 numbers accurate"* — rather than nagging about the scale.
