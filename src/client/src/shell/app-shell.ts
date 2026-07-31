@@ -19,10 +19,13 @@ import type { RailProfile } from '../resistance.js';
 import type { SetLogger } from './set-logger.js';
 import type { SessionList } from './session-list.js';
 import type { RestTimer } from './rest-timer.js';
+import type { WeighIn } from './weigh-in.js';
+import { smoothedLb, toReadings } from '../bodyweight.js';
 
 import './set-logger.js';
 import './session-list.js';
 import './rest-timer.js';
+import './weigh-in.js';
 
 const DEFAULT_REST_SECONDS = 90;
 
@@ -59,7 +62,10 @@ export class AppShell extends HTMLElement {
   #catalog?: ExerciseCatalog;
   #profiles?: RailProfileTable;
   #profile?: RailProfile;
+  /** Smoothed -- what the resistance calculation uses (docs/adr/0004). */
   #bodyweightLb = 0;
+  /** Raw latest scale reading, snapshotted alongside for auditability. */
+  #bodyweightRawLb = 0;
   #session?: SessionRecord;
 
   constructor() {
@@ -91,7 +97,7 @@ export class AppShell extends HTMLElement {
     }
 
     this.#profile = this.#profiles!.get(machine.railProfileId);
-    this.#bodyweightLb = latest.lb;
+    await this.#refreshBodyweight();
 
     // docs/adr/0005: never auto-close an orphan (discards data) and never auto-resume
     // (pollutes today). Ask.
@@ -103,11 +109,23 @@ export class AppShell extends HTMLElement {
 
     this.#session = await db.startSession({
       machineId: machine.id,
-      bodyweightRawLb: latest.lb,
-      bodyweightSmoothedLb: latest.lb,
+      bodyweightRawLb: this.#bodyweightRawLb,
+      bodyweightSmoothedLb: this.#bodyweightLb,
     });
 
     this.#renderWorkout();
+  }
+
+  /**
+   * Recomputes the smoothed weight. The raw reading is stored for auditability, but the EMA is
+   * what computes: a 3 lb water swing must not rewrite every load figure the user sees.
+   */
+  async #refreshBodyweight(): Promise<void> {
+    const readings = toReadings(await db.getBodyweightReadings());
+    const latest = readings[readings.length - 1];
+
+    this.#bodyweightRawLb = latest?.lb ?? this.#bodyweightRawLb;
+    this.#bodyweightLb = smoothedLb(readings) ?? this.#bodyweightRawLb;
   }
 
   // ---------------------------------------------------------------- onboarding
@@ -201,10 +219,11 @@ export class AppShell extends HTMLElement {
     this.#root.innerHTML = `
       <div class="bar">
         <h1>Log a set</h1>
-        <small>${this.#bodyweightLb.toFixed(1)} lb &middot; ${this.#profile!.levelCount} notches</small>
+        <small><span id="bwLabel">${this.#bodyweightLb.toFixed(1)} lb</span> &middot; ${this.#profile!.levelCount} notches</small>
       </div>
 
       <tg-rest-timer id="timer" hidden></tg-rest-timer>
+      <tg-weigh-in id="weight"></tg-weigh-in>
       <tg-set-logger id="logger"></tg-set-logger>
       <tg-session-list id="list"></tg-session-list>
 
@@ -219,12 +238,23 @@ export class AppShell extends HTMLElement {
       catalog: this.#catalog!,
       profile: this.#profile!,
       bodyweightLb: this.#bodyweightLb,
+      bodyweightRawLb: this.#bodyweightRawLb,
       sessionId: this.#session!.id,
     });
     list.configure({ catalog: this.#catalog!, sessionId: this.#session!.id });
 
     // Logging a set starts the rest clock. The list updates itself off the change bus.
     logger.addEventListener('set-logged', () => timer.start(DEFAULT_REST_SECONDS));
+
+    // A weigh-in changes every load figure, so push the new value straight into the logger
+    // rather than rebuilding it -- rebuilding would lose the in-flight rep count.
+    const weight = this.#root.getElementById('weight') as WeighIn;
+    weight.addEventListener('weighed-in', async () => {
+      await this.#refreshBodyweight();
+      logger.setBodyweight(this.#bodyweightLb, this.#bodyweightRawLb);
+      this.#root.getElementById('bwLabel')!.textContent =
+        `${this.#bodyweightLb.toFixed(1)} lb`;
+    });
 
     this.#root.getElementById('finish')!.addEventListener('click', async () => {
       await db.endSession(this.#session!.id);

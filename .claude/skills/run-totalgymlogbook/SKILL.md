@@ -67,7 +67,8 @@ only the server it started.
 | `PORT=5300` | use a different port (default 5232) |
 
 Screenshots → `.claude/skills/run-totalgymlogbook/screenshots/` — `01-onboarding.png`,
-`02-logger.png`, `03-session.png` (after logging, correcting, deleting), `04-coach.png`.
+`02-logger.png`, `03-session.png` (after logging, correcting, deleting), `04-weighin.png`,
+`05-coach.png`.
 
 The driver starts from a FRESH browser context each run, so it always sees onboarding first.
 That is deliberate: the empty-logbook path is the one every new user hits.
@@ -89,6 +90,9 @@ Rest timer:
 More sets and a correction:
   PASS  a mistyped set can be corrected            8 reps
   PASS  a set can be deleted                       2 rows
+Weigh-in:
+  PASS  shows the smoothed trend                   raw 186 -> trend 181.5 lb
+  PASS  load follows the smoothed weight           moved 0.20 lb (raw 6 lb would be ~0.72)
 Derived tier (Blazor reads the logbook):
   PASS  coach produced a recommendation            30.7 lb
   PASS  recommendation is a sane step              28.4 -> 30.7 lb (x1.08)
@@ -108,6 +112,12 @@ error regardless of the numbers involved.
 ([docs/adr/0005](../../../docs/adr/0005-session-state-ownership.md)). A decrementing counter
 passes every other check and fails only this one.
 
+**One trap worth knowing if you extend the weigh-in checks.** Bodyweight stores one row per
+calendar day, so a second entry today REPLACES rather than accumulating. A smoothing assertion
+written against a single reading passes vacuously — the EMA of one value is that value. The
+driver seeds nine prior days through `db.recordBodyweight` before asserting, so there is
+actually something to damp.
+
 ## Run (human path)
 
 ```bash
@@ -124,8 +134,8 @@ lsof -ti:5232 -sTCP:LISTEN | xargs -r kill
 ## Test
 
 ```bash
-dotnet test                                    # 133 xUnit
-cd src/client && npm run check                 # tsc --noEmit + 55 vitest
+dotnet test                                    # 137 xUnit
+cd src/client && npm run check                 # tsc --noEmit + 73 vitest
 tests/publish-smoke.sh                         # 13 checks on real publish output
 ```
 

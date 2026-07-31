@@ -197,6 +197,60 @@ async function main() {
 
   await page.screenshot({ path: join(SHOTS, '03-session.png'), fullPage: true });
 
+  // ---- Weigh-in: smoothing feeds the load calculation (docs/adr/0004) ----
+  console.log('\nWeigh-in:');
+  const coverage0 = await page.locator('tg-weigh-in #coverage').innerText();
+  check('prompts for more weigh-ins before calling a trend', /more weigh-in/.test(coverage0), coverage0);
+
+  const loadBefore = Number(await page.locator('tg-set-logger #load').innerText());
+
+  // Onboarding already recorded today's weight, so the form is collapsed behind a link --
+  // deliberate, since re-prompting someone who already weighed in today is just noise.
+  const collapsed = await page.locator('tg-weigh-in #toggle').count();
+  check('collapses once weighed in today', collapsed === 1);
+  if (collapsed) await page.locator('tg-weigh-in #toggle').click();
+
+  // Smoothing needs a HISTORY to smooth. Onboarding recorded one reading today, and a second
+  // entry today replaces it rather than accumulating (one row per calendar day), so seed a
+  // week of prior days first -- otherwise there is nothing for the EMA to damp and the check
+  // would pass vacuously.
+  await page.evaluate(async () => {
+    const m = await import('/dist/shell.js');
+    const day = 86_400_000;
+    for (let i = 9; i >= 1; i--) {
+      const d = new Date(Date.now() - i * day);
+      const on = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      await m.db.recordBodyweight(on, 180);
+    }
+  });
+
+  // A 6 lb jump on the scale against nine steady days.
+  await page.fill('tg-weigh-in #lb', '186');
+  await page.locator('tg-weigh-in button[type=submit]').click();
+  await page.waitForTimeout(600);
+
+  const shown = await page.locator('tg-weigh-in .now').innerText();
+  check('shows the raw reading', shown.startsWith('186'), shown.replace(/\s+/g, ''));
+
+  const trendText = await page.locator('tg-weigh-in .smoothed').innerText().catch(() => '');
+  const trendLb = Number(trendText.replace(/[^\d.]/g, ''));
+  check(
+    'shows the smoothed trend alongside the raw reading',
+    trendLb > 180 && trendLb < 184,
+    `raw 186 -> trend ${trendLb} lb`,
+  );
+
+  const loadAfter = Number(await page.locator('tg-set-logger #load').innerText());
+  check('a weigh-in updates the load readout', loadAfter !== loadBefore, `${loadBefore} -> ${loadAfter} lb`);
+
+  // The load must track the SMOOTHED weight, not the raw spike. Six raw pounds at level 8 on a
+  // cable exercise is worth ~0.72 lb; the EMA should deliver appreciably less than that.
+  const moved = loadAfter - loadBefore;
+  check('load follows the smoothed weight, not the spike', moved > 0 && moved < 0.5,
+    `moved ${moved.toFixed(2)} lb (raw 6 lb would be ~0.72)`);
+
+  await page.screenshot({ path: join(SHOTS, '04-weighin.png'), fullPage: true });
+
   // ---- Derived tier: Blazor reads what the shell wrote ----
   console.log('\nDerived tier (Blazor reads the logbook):');
   let blazorOk = true;
@@ -224,7 +278,7 @@ async function main() {
     `${loggedLb} -> ${recommendedLb} lb (x${step.toFixed(2)})`,
   );
 
-  await page.screenshot({ path: join(SHOTS, '04-coach.png'), fullPage: true });
+  await page.screenshot({ path: join(SHOTS, '05-coach.png'), fullPage: true });
 
   console.log('\nConsole:');
   check('no console errors', errors.length === 0, errors.slice(0, 2).join(' | '));

@@ -62,7 +62,10 @@ export class SetLogger extends HTMLElement {
   #root: ShadowRoot;
   #catalog?: ExerciseCatalog;
   #profile?: RailProfile;
+  /** Smoothed. This is what computes -- see docs/adr/0004. */
   #bodyweightLb = 180;
+  /** Raw scale reading, stored alongside for auditability. */
+  #bodyweightRawLb = 180;
   #sessionId?: string;
   #state: UiState = { exerciseId: '', level: 8, reps: 10, vestLb: 0, barLb: 0 };
 
@@ -76,12 +79,16 @@ export class SetLogger extends HTMLElement {
   configure(opts: {
     catalog: ExerciseCatalog;
     profile: RailProfile;
+    /** Smoothed bodyweight -- the value the load is computed from. */
     bodyweightLb: number;
+    /** Raw scale reading, snapshotted for auditability. */
+    bodyweightRawLb?: number;
     sessionId: string;
   }): void {
     this.#catalog = opts.catalog;
     this.#profile = opts.profile;
     this.#bodyweightLb = opts.bodyweightLb;
+    this.#bodyweightRawLb = opts.bodyweightRawLb ?? opts.bodyweightLb;
     this.#sessionId = opts.sessionId;
 
     this.#state = { ...this.#state, ...this.#restore() };
@@ -91,6 +98,13 @@ export class SetLogger extends HTMLElement {
     this.#state.level = Math.min(this.#state.level, opts.profile.levelCount);
 
     this.#render();
+  }
+
+  /** Applied after a weigh-in, so the load readout reflects it without losing UI state. */
+  setBodyweight(smoothedLb: number, rawLb: number): void {
+    this.#bodyweightLb = smoothedLb;
+    this.#bodyweightRawLb = rawLb;
+    if (this.#catalog && this.#profile) this.#update();
   }
 
   #restore(): Partial<UiState> {
@@ -235,7 +249,7 @@ export class SetLogger extends HTMLElement {
         exerciseId: e.id,
         reps: this.#state.reps,
         level: this.#state.level,
-        bodyweightRawLb: this.#bodyweightLb,
+        bodyweightRawLb: this.#bodyweightRawLb,
         bodyweightSmoothedLb: this.#bodyweightLb,
         angleDeg: profile.angleDeg[this.#state.level - 1]!,
         boardWeightLb: profile.boardWeightLb,
