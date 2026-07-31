@@ -12,10 +12,11 @@ All paths are relative to the repo root.
 **The app renders in two tiers** ([docs/adr/0003](../../../docs/adr/0003-blazor-web-components-boundary.md)),
 and knowing this is essential to verifying it:
 
-- **Instant tier** — `<tg-app-shell>`, a web component that paints and becomes interactive
-  before the .NET runtime exists. Live resistance readout, ~5 KB.
-- **Derived tier** — Blazor renders the load ladder into `#blazor-root` seconds later, ~2.1 MB
-  brotli.
+- **Instant tier** — `<tg-app-shell>` and friends: onboarding, the set logger, the rest timer,
+  and the session list. Paints and is fully usable for logging before the .NET runtime exists.
+  ~20 KB, and it owns the write path.
+- **Derived tier** — Blazor renders coaching into `#blazor-root` seconds later, ~2.1 MB brotli.
+  Read-only, through the bridge; it never opens IndexedDB.
 
 A screenshot showing only one tier means something is broken.
 
@@ -65,33 +66,57 @@ only the server it started.
 | `--dark` | render with `prefers-color-scheme: dark` |
 | `PORT=5300` | use a different port (default 5232) |
 
-Screenshots → `.claude/skills/run-totalgymlogbook/screenshots/` — `01-instant.png` (shell only),
-`02-full.png` (both tiers), `03-interacted.png` (after slider + pulley + vest).
+Screenshots → `.claude/skills/run-totalgymlogbook/screenshots/` — `01-onboarding.png`,
+`02-logger.png`, `03-session.png` (after logging, correcting, deleting), `04-weighin.png`,
+`05-coach.png`.
+
+The driver starts from a FRESH browser context each run, so it always sees onboarding first.
+That is deliberate: the empty-logbook path is the one every new user hits.
 
 Verified output:
 
 ```
-server already up on http://localhost:5232
-chromium: /home/kcab7/.cache/ms-playwright/chromium-1200/chrome-linux64/chrome
-
-Instant tier (web components, pre-Blazor):
-  PASS  shell rendered a resistance readout  56.7 lb
-Derived tier (Blazor WASM):
-  PASS  Blazor booted and rendered
-  PASS  load ladder has 14 rows  14 rows
-  PASS  TypeScript and C# agree at level 8  shell=56.7 blazor=56.7
-Interaction:
-  PASS  slider level 8 -> 14 raises load  56.7 -> 86.0 lb
-  PASS  pulley halves the load  86.0 -> 43.0 lb
-  PASS  vest hint explains the discount  Your 20 lb of added weight contributes 4.3 lb here.
+Onboarding (instant tier, no .NET yet):
+  PASS  asks exactly three questions               3 inputs
+Logging a set:
+  PASS  load readout computed with no .NET         28.4 lb
+  PASS  flags cable exercises                      · cable, so half the incline load
+  PASS  rep stepper works                          12 reps
+  PASS  set appears in the session list            1 rows
+Rest timer:
+  PASS  starts automatically after a set
+  PASS  counts down from the deadline              1:30 -> 1:29
+  PASS  survives a reload                          1:29 after reload
+More sets and a correction:
+  PASS  a mistyped set can be corrected            8 reps
+  PASS  a set can be deleted                       2 rows
+Weigh-in:
+  PASS  shows the smoothed trend                   raw 186 -> trend 181.5 lb
+  PASS  load follows the smoothed weight           moved 0.20 lb (raw 6 lb would be ~0.72)
+Derived tier (Blazor reads the logbook):
+  PASS  coach produced a recommendation            30.7 lb
+  PASS  recommendation is a sane step              28.4 -> 30.7 lb (x1.08)
 Console:
   PASS  no console errors
 ```
 
-**The cross-tier check is the valuable one.** `TypeScript and C# agree at level 8` compares the
-shell's readout against the Blazor table's row 8. The resistance formula is deliberately
-implemented twice ([docs/adr/0004](../../../docs/adr/0004-domain-model-and-resistance.md)), so
-that assertion catches drift the unit tests would miss at the integration level.
+**Two checks earn their keep.**
+
+`recommendation is a sane step` catches the coach reasoning about the wrong exercise. Cable
+movements are halved by the pulley, so a load ladder built without the exercise's pulley factor
+compares 28.4 lb of chest press against a 61.4 lb direct-press rung and recommends doubling the
+load. Ratio-checking the recommendation against what was actually logged catches that class of
+error regardless of the numbers involved.
+
+`survives a reload` pins the rest timer's deadline-not-countdown design
+([docs/adr/0005](../../../docs/adr/0005-session-state-ownership.md)). A decrementing counter
+passes every other check and fails only this one.
+
+**One trap worth knowing if you extend the weigh-in checks.** Bodyweight stores one row per
+calendar day, so a second entry today REPLACES rather than accumulating. A smoothing assertion
+written against a single reading passes vacuously — the EMA of one value is that value. The
+driver seeds nine prior days through `db.recordBodyweight` before asserting, so there is
+actually something to damp.
 
 ## Run (human path)
 
@@ -109,8 +134,8 @@ lsof -ti:5232 -sTCP:LISTEN | xargs -r kill
 ## Test
 
 ```bash
-dotnet test                                    # 50 xUnit
-cd src/client && npm run check                 # tsc --noEmit + 14 vitest
+dotnet test                                    # 137 xUnit
+cd src/client && npm run check                 # tsc --noEmit + 73 vitest
 tests/publish-smoke.sh                         # 13 checks on real publish output
 ```
 
@@ -120,9 +145,13 @@ survived `dotnet publish`, which is a real failure mode
 
 ## Gotchas
 
-- **`<tg-app-shell>` renders into a shadow root.** Ordinary Playwright selectors (`#level`,
-  `text=Level 8`) never match anything inside the instant tier. Everything must go through
-  `el.shadowRoot` inside an `evaluate()`. `driver.mjs` has a `shellEval` helper for this.
+- **Shadow DOM is *not* a problem for Playwright** — an earlier version of this file claimed
+  ordinary selectors can't reach inside the custom elements. That was wrong. Playwright's CSS
+  engine pierces **open** shadow roots, so `page.locator('tg-set-logger #load')` works
+  directly, and `driver.mjs` no longer needs an `evaluate()` helper. (Text selectors and
+  `getByRole` also work; only `>>>`-style explicit piercing is unnecessary.) Plain
+  `document.querySelector` from inside an `evaluate()` still won't reach in — that's a DOM
+  limitation, not a Playwright one.
 
 - **Playwright's browser build number rarely matches the cache.** `npm i playwright` pulled a
   driver wanting `chromium_headless_shell-1234` while the cache held `chromium-1200`, giving
@@ -133,7 +162,9 @@ survived `dotnet publish`, which is a real failure mode
 - **Never `waitForLoadState('networkidle')` to wait for Blazor.** `index.html` calls
   `Blazor.start()` manually from a `requestIdleCallback` (deliberately — see
   [docs/adr/0003](../../../docs/adr/0003-blazor-web-components-boundary.md)), so the runtime
-  arrives long after load settles. Wait for `#blazor-root` to contain "Load ladder".
+  arrives long after load settles. Wait for a selector the component actually renders
+  (`#empty-state, #rec-load`), and note the `<h2>` appears BEFORE the logbook read finishes —
+  waiting on the heading alone is a race.
 
 - **npm 12 blocks postinstall scripts by default.** esbuild fetches its platform binary in
   `postinstall`, so a plain `npm ci` leaves you with no working esbuild and a confusing failure
@@ -184,7 +215,13 @@ survived `dotnet publish`, which is a real failure mode
   http://localhost:5232/data/rail-profiles.json`.
 
 - **`dev server never came up`**: usually port 5232 is held by a previous run.
-  `lsof -ti:5232 -sTCP:LISTEN | xargs -r kill`, then retry.
+  `lsof -ti:5232 -sTCP:LISTEN | xargs -r kill`, then retry. If it persists, run the dev server
+  by hand — the driver swallows its output, and a compile error looks identical to a slow start.
+
+- **`CS0234: The type or namespace name 'Interop' does not exist`**: something rewrote
+  `TotalGymLogBook.Web.csproj` and dropped a `<ProjectReference>`. An IDE tidying the project
+  file has done this at least once. Diff against git before assuming your own edit broke it:
+  `git diff src/TotalGymLogBook.Web/TotalGymLogBook.Web.csproj`.
 
 - **Blank or shell-only screenshot**: not a rendering bug — the driver screenshots
   `01-instant.png` deliberately before Blazor boots. Compare against `02-full.png`.

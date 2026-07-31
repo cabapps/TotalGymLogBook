@@ -2,8 +2,9 @@
 /**
  * Headless driver for Total Gym Logbook.
  *
- * Launches the Blazor dev server if it is not already up, drives the running app in headless
- * Chromium, screenshots both rendering tiers, and asserts the things that actually break.
+ * Launches the Blazor dev server if it is not already up, then drives the real user flow:
+ * onboarding, logging a set, the rest timer, correcting a set, and the coach picking it all
+ * up. Screenshots each stage.
  *
  * Usage (from repo root):
  *   node .claude/skills/run-totalgymlogbook/driver.mjs
@@ -11,7 +12,7 @@
  *   node .claude/skills/run-totalgymlogbook/driver.mjs --dark     # dark colour scheme
  *   PORT=5300 node .claude/skills/run-totalgymlogbook/driver.mjs
  *
- * Exit code 0 = the app rendered both tiers with no console errors.
+ * Exit code 0 = the whole loop worked with no console errors.
  */
 
 import { chromium } from 'playwright';
@@ -90,14 +91,6 @@ async function ensureServer() {
   return true;
 }
 
-/**
- * GOTCHA: <tg-app-shell> renders into a CLOSED-over shadow root, so ordinary Playwright
- * selectors ("#level", "text=Level 8") never match. Everything inside the instant tier has
- * to be reached through el.shadowRoot from inside an evaluate().
- */
-const shellEval = (page, fn, ...args) =>
-  page.locator('tg-app-shell').evaluate(fn, ...args);
-
 async function main() {
   const startedByUs = await ensureServer();
   const executablePath = findChromium();
@@ -123,140 +116,172 @@ async function main() {
   console.log(`\nnav ${URL}`);
   await page.goto(URL, { waitUntil: 'domcontentloaded' });
 
-  // ---- Instant tier: web components, no .NET required (docs/adr/0003) ----
-  console.log('\nInstant tier (web components, pre-Blazor):');
-  await page.waitForSelector('tg-app-shell', { timeout: 15_000 });
-  const lb0 = await shellEval(page, (el) => el.shadowRoot?.getElementById('lb')?.textContent);
-  check('shell rendered a resistance readout', !!lb0 && lb0 !== '—', `${lb0} lb`);
-  await page.screenshot({ path: join(SHOTS, '01-instant.png'), fullPage: true });
+  // ---- Onboarding: three questions (docs/adr/0010) ----
+  //
+  // NOTE: Playwright's CSS engine pierces OPEN shadow roots, so these plain locators reach
+  // inside <tg-app-shell> without any special handling.
+  console.log('\nOnboarding (instant tier, no .NET yet):');
+  await page.waitForSelector('#bw', { timeout: 20_000 });
 
-  // ---- Derived tier: Blazor boots and fills #blazor-root ----
-  // GOTCHA: index.html calls Blazor.start() manually from requestIdleCallback, so the runtime
-  // arrives well after load. Do not waitForLoadState('networkidle') -- wait for the content.
-  console.log('\nDerived tier (Blazor WASM):');
+  const questions = await page.locator('tg-app-shell select, tg-app-shell input').count();
+  check('asks exactly three questions', questions === 3, `${questions} inputs`);
+
+  await page.fill('#bw', '180');
+  await page.selectOption('#notches', { label: '14 levels' });
+  await page.selectOption('#goal', { label: 'Build muscle' });
+  await page.screenshot({ path: join(SHOTS, '01-onboarding.png'), fullPage: true });
+  await page.click('#start');
+
+  // ---- Workout screen ----
+  console.log('\nLogging a set:');
+  await page.waitForSelector('#logger', { timeout: 15_000 });
+  check('reached the workout screen', true);
+
+  const load0 = await page.locator('tg-set-logger #load').innerText();
+  check('load readout computed with no .NET', Number(load0) > 0, `${load0} lb`);
+
+  // Chest press is a cable movement, so the pulley note must be visible.
+  const note = await page.locator('tg-set-logger #loadNote').innerText();
+  check('flags cable exercises', /half the incline load/.test(note), note.trim());
+
+  await page.locator('tg-set-logger #plus').click();
+  await page.locator('tg-set-logger #plus').click();
+  const reps = await page.locator('tg-set-logger #reps').inputValue();
+  check('rep stepper works', reps === '12', `${reps} reps`);
+
+  await page.screenshot({ path: join(SHOTS, '02-logger.png'), fullPage: true });
+
+  await page.locator('tg-set-logger #log').click();
+  await page.waitForSelector('tg-session-list li', { timeout: 10_000 });
+
+  const rows = await page.locator('tg-session-list li').count();
+  check('set appears in the session list', rows === 1, `${rows} rows`);
+
+  // ---- Rest timer: deadline-based (docs/adr/0005) ----
+  console.log('\nRest timer:');
+  const timerVisible = await page.locator('tg-rest-timer').isVisible();
+  check('starts automatically after a set', timerVisible);
+
+  const t1 = await page.locator('tg-rest-timer #time').innerText();
+  await page.waitForTimeout(1500);
+  const t2 = await page.locator('tg-rest-timer #time').innerText();
+  check('counts down from the deadline', t1 !== t2, `${t1} -> ${t2}`);
+
+  // Survives a reload, because the deadline is absolute rather than a decrementing counter.
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('tg-rest-timer #time', { timeout: 15_000 });
+  const t3 = await page.locator('tg-rest-timer #time').innerText();
+  check('survives a reload', Boolean(t3) && t3 !== '0:00', `${t3} after reload`);
+
+  // ---- Two more sets, then correction ----
+  console.log('\nMore sets and a correction:');
+  await page.waitForSelector('tg-set-logger #log', { timeout: 15_000 });
+  for (let i = 0; i < 2; i++) {
+    await page.locator('tg-set-logger #log').click();
+    await page.waitForTimeout(250);
+  }
+
+  const rows3 = await page.locator('tg-session-list li').count();
+  check('three sets logged', rows3 === 3, `${rows3} rows`);
+
+  page.once('dialog', (d) => d.accept('8'));
+  await page.locator('tg-session-list button[aria-label="Edit reps"]').first().click();
+  await page.waitForTimeout(400);
+  const firstReps = await page.locator('tg-session-list .reps').first().innerText();
+  check('a mistyped set can be corrected', firstReps === '8', `${firstReps} reps`);
+
+  await page.locator('tg-session-list button[aria-label="Delete set"]').first().click();
+  await page.waitForTimeout(400);
+  const rowsAfterDelete = await page.locator('tg-session-list li').count();
+  check('a set can be deleted', rowsAfterDelete === 2, `${rowsAfterDelete} rows`);
+
+  await page.screenshot({ path: join(SHOTS, '03-session.png'), fullPage: true });
+
+  // ---- Weigh-in: smoothing feeds the load calculation (docs/adr/0004) ----
+  console.log('\nWeigh-in:');
+  const coverage0 = await page.locator('tg-weigh-in #coverage').innerText();
+  check('prompts for more weigh-ins before calling a trend', /more weigh-in/.test(coverage0), coverage0);
+
+  const loadBefore = Number(await page.locator('tg-set-logger #load').innerText());
+
+  // Onboarding already recorded today's weight, so the form is collapsed behind a link --
+  // deliberate, since re-prompting someone who already weighed in today is just noise.
+  const collapsed = await page.locator('tg-weigh-in #toggle').count();
+  check('collapses once weighed in today', collapsed === 1);
+  if (collapsed) await page.locator('tg-weigh-in #toggle').click();
+
+  // Smoothing needs a HISTORY to smooth. Onboarding recorded one reading today, and a second
+  // entry today replaces it rather than accumulating (one row per calendar day), so seed a
+  // week of prior days first -- otherwise there is nothing for the EMA to damp and the check
+  // would pass vacuously.
+  await page.evaluate(async () => {
+    const m = await import('/dist/shell.js');
+    const day = 86_400_000;
+    for (let i = 9; i >= 1; i--) {
+      const d = new Date(Date.now() - i * day);
+      const on = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      await m.db.recordBodyweight(on, 180);
+    }
+  });
+
+  // A 6 lb jump on the scale against nine steady days.
+  await page.fill('tg-weigh-in #lb', '186');
+  await page.locator('tg-weigh-in button[type=submit]').click();
+  await page.waitForTimeout(600);
+
+  const shown = await page.locator('tg-weigh-in .now').innerText();
+  check('shows the raw reading', shown.startsWith('186'), shown.replace(/\s+/g, ''));
+
+  const trendText = await page.locator('tg-weigh-in .smoothed').innerText().catch(() => '');
+  const trendLb = Number(trendText.replace(/[^\d.]/g, ''));
+  check(
+    'shows the smoothed trend alongside the raw reading',
+    trendLb > 180 && trendLb < 184,
+    `raw 186 -> trend ${trendLb} lb`,
+  );
+
+  const loadAfter = Number(await page.locator('tg-set-logger #load').innerText());
+  check('a weigh-in updates the load readout', loadAfter !== loadBefore, `${loadBefore} -> ${loadAfter} lb`);
+
+  // The load must track the SMOOTHED weight, not the raw spike. Six raw pounds at level 8 on a
+  // cable exercise is worth ~0.72 lb; the EMA should deliver appreciably less than that.
+  const moved = loadAfter - loadBefore;
+  check('load follows the smoothed weight, not the spike', moved > 0 && moved < 0.5,
+    `moved ${moved.toFixed(2)} lb (raw 6 lb would be ~0.72)`);
+
+  await page.screenshot({ path: join(SHOTS, '04-weighin.png'), fullPage: true });
+
+  // ---- Derived tier: Blazor reads what the shell wrote ----
+  console.log('\nDerived tier (Blazor reads the logbook):');
   let blazorOk = true;
   try {
-    await page.waitForFunction(
-      () => document.querySelector('#blazor-root')?.textContent?.includes('Your next set'),
-      { timeout: 60_000 },
-    );
+    await page.waitForSelector('#empty-state, #rec-load', { timeout: 60_000 });
   } catch {
     blazorOk = false;
   }
-  check('Blazor booted and rendered', blazorOk);
+  check('Blazor booted and read the logbook', blazorOk);
 
-  // The <h2> renders before the logbook read completes, so waiting on it is not enough --
-  // wait for the component to settle into one of its two terminal states.
-  await page
-    .waitForSelector('#empty-state, #rec-load', { timeout: 30_000 })
-    .catch(() => undefined);
-
-  const emptyState = await page.locator('#empty-state').count();
-  check('empty logbook shows the empty state', emptyState === 1, `${emptyState} found`);
-  await page.screenshot({ path: join(SHOTS, '02-empty.png'), fullPage: true });
-
-  // ---- The full round trip: TypeScript writes -> IndexedDB -> change bus -> Blazor reads ----
-  //
-  // This is the check the whole architecture exists to make possible. The shell's data layer
-  // owns the write path; Blazor never opens IndexedDB, it re-reads through the bridge when the
-  // change event fires (docs/adr/0003).
-  console.log('\nRound trip (TS writes, Blazor reads):');
-
-  const seeded = await page.evaluate(async () => {
-    // Same module instance index.html already loaded -- ES modules are cached by URL.
-    const m = await import('/dist/shell.js');
-    await m.db.clearAllData?.().catch?.(() => {});
-
-    const session = await m.db.startSession({ machineId: 'm1', bodyweightSmoothedLb: 180 });
-    const day = 86_400_000;
-
-    // Three sets at level 8, 12 reps -- the rep ceiling, so the coach should step the load.
-    for (let i = 0; i < 3; i++) {
-      await m.db.logSet({
-        sessionId: session.id,
-        exerciseId: 'chest-press',
-        ts: Date.now() - 3 * day,
-        reps: 12,
-        level: 8,
-        bodyweightRawLb: 180,
-        bodyweightSmoothedLb: 180,
-        angleDeg: 16.5,
-        boardWeightLb: 19.8,
-        pulleyFactor: 1,
-        bodyFraction: 1,
-        vestLb: 0,
-        barLb: 0,
-        directLoadLb: 0,
-        computedLb: 56.7,
-        formulaVersion: 1,
-      });
-    }
-    return (await m.db.getExerciseHistory('chest-press')).length;
-  });
-
-  check('shell wrote sets to IndexedDB', seeded === 3, `${seeded} sets`);
-
-  // Blazor must pick this up from the change bus without a reload.
-  let picked = true;
-  try {
-    await page.waitForFunction(
-      () => document.querySelector('#rec-load')?.textContent?.trim(),
-      { timeout: 30_000 },
-    );
-  } catch {
-    picked = false;
-  }
-  check('Blazor re-read on the change event (no reload)', picked);
-
-  const recLoad = (await page.locator('#rec-load').innerText().catch(() => '')).replace(/\s*lb$/, '');
+  const recLoad = await page.locator('#rec-load').innerText().catch(() => '');
   const recWhy = await page.locator('#rec-why').innerText().catch(() => '');
-  const logged = await page.locator('#fact-logged').innerText().catch(() => '');
+  check('coach produced a recommendation', recLoad.trim().length > 0, recLoad.replace(/\s+/g, ' '));
+  check('rationale is plain language', recWhy.length > 20, recWhy.slice(0, 70) + '…');
 
-  // Logged 12 reps at 56.7 lb on level 8, so the engine steps to level 9 -> 61.4 lb.
-  check('coach recommended the next rung', recLoad.startsWith('61.4'), `${recLoad} lb`);
-  check('rationale references the rep ceiling', /12 reps/.test(recWhy), recWhy.slice(0, 72) + '…');
-  check('set count round-tripped', /3 sets/.test(logged), logged);
-
-  await page.screenshot({ path: join(SHOTS, '03-recommendation.png'), fullPage: true });
-
-  // ---- Interact with the instant tier ----
-  console.log('\nInteraction (instant tier):');
-  await shellEval(page, (el) => {
-    const s = el.shadowRoot.getElementById('level');
-    s.value = '14';
-    s.dispatchEvent(new Event('input', { bubbles: true }));
-  });
-  const lbMax = await shellEval(page, (el) => el.shadowRoot.getElementById('lb').textContent);
-  check('slider level 8 -> 14 raises load', Number(lbMax) > Number(lb0), `${lb0} -> ${lbMax} lb`);
-
-  // ---- Interact: pulley must halve exactly (docs/adr/0004) ----
-  await shellEval(page, (el) => {
-    const c = el.shadowRoot.getElementById('pulley');
-    c.checked = true;
-    c.dispatchEvent(new Event('input', { bubbles: true }));
-  });
-  const lbCable = await shellEval(page, (el) => el.shadowRoot.getElementById('lb').textContent);
+  // The recommendation must be built against the SAME exercise that was logged. Chest press is
+  // a cable movement, so its ladder is halved; a coach that ignores the pulley factor compares
+  // 28.4 lb against a 61.4 lb direct-press rung and tells the trainee to double their load.
+  const loggedLb = Number(await page.locator('tg-set-logger #load').innerText());
+  const recommendedLb = Number(recLoad.replace(/[^\d.]/g, ''));
+  const step = recommendedLb / loggedLb;
   check(
-    'pulley halves the load',
-    Math.abs(Number(lbCable) * 2 - Number(lbMax)) < 0.15,
-    `${lbMax} -> ${lbCable} lb`,
+    'recommendation is a sane step, not a different exercise',
+    step > 1 && step < 1.3,
+    `${loggedLb} -> ${recommendedLb} lb (x${step.toFixed(2)})`,
   );
 
-  // ---- Interact: added weight is discounted by the incline ----
-  await shellEval(page, (el) => {
-    const v = el.shadowRoot.getElementById('vest');
-    v.value = '20';
-    v.dispatchEvent(new Event('input', { bubbles: true }));
-  });
-  const hint = await shellEval(page, (el) =>
-    el.shadowRoot.getElementById('hint').textContent.trim(),
-  );
-  check('vest hint explains the discount', /contributes/.test(hint), hint);
-
-  await page.screenshot({ path: join(SHOTS, '04-interacted.png'), fullPage: true });
+  await page.screenshot({ path: join(SHOTS, '05-coach.png'), fullPage: true });
 
   console.log('\nConsole:');
-  check('no console errors', errors.length === 0, errors.join(' | '));
+  check('no console errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 
   await browser.close();
   if (server && !KEEP) server.kill('SIGTERM');
@@ -264,7 +289,11 @@ async function main() {
 
   const failed = results.filter((r) => !r.ok);
   console.log(`\nscreenshots: ${SHOTS}`);
-  console.log(failed.length ? `\n\x1b[31m${failed.length} check(s) failed\x1b[0m` : '\n\x1b[32mAll checks passed\x1b[0m');
+  console.log(
+    failed.length
+      ? `\n\x1b[31m${failed.length} check(s) failed\x1b[0m`
+      : `\n\x1b[32mAll ${results.length} checks passed\x1b[0m`,
+  );
   process.exit(failed.length ? 1 : 0);
 }
 

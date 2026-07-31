@@ -117,6 +117,42 @@ public class LogbookMapperTests
         Assert.Equal(new DateOnly(2026, 3, 1), history.Sets[0].On);
     }
 
+    /// <summary>
+    /// Regression guard. A cable movement is halved by the pulley, so a coach that rebuilds the
+    /// load ladder without the exercise's pulley factor is comparing against a different
+    /// exercise entirely -- chest press at level 8 is 28.4 lb through the cable and 56.7 lb
+    /// pressed directly, so the recommendation came out as "double your load".
+    /// </summary>
+    [Fact]
+    public void CarriesThePulleyAndBodyFractionSnapshotIntoTheDomain()
+    {
+        const string cableSet = """
+        [{"id":"a","sessionId":"s","exerciseId":"chest-press","ts":1772409600000,"on":"2026-03-01",
+          "reps":12,"level":8,"computedLb":28.4,"formulaVersion":1,"updatedAt":1,
+          "pulleyFactor":0.5,"bodyFraction":0.85}]
+        """;
+
+        var set = LogbookMapper.ToExerciseHistory(
+            "chest-press", LogbookMapper.ParseSetLogs(cableSet)).Sets[0];
+
+        Assert.Equal(0.5, set.PulleyFactor);
+        Assert.Equal(0.85, set.BodyFraction);
+        Assert.True(set.UsesPulley);
+    }
+
+    [Fact]
+    public void RowsMissingTheSnapshotDefaultToTheDirectCase()
+    {
+        // Rows written before these fields existed must not be read as "pulley factor zero",
+        // which would compute every historical load as 0 lb.
+        var set = LogbookMapper.ToExerciseHistory(
+            "e", LogbookMapper.ParseSetLogs(OneSetJson)).Sets[0];
+
+        Assert.Equal(1.0, set.PulleyFactor);
+        Assert.Equal(1.0, set.BodyFraction);
+        Assert.False(set.UsesPulley);
+    }
+
     [Fact]
     public void TombstonedSetsNeverReachTheDomain()
     {

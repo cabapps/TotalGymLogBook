@@ -1,0 +1,210 @@
+{
+  "$comment": [
+    "Total Gym exercise catalogue. See docs/adr/0004 for the copyright position.",
+    "",
+    "Exercise NAMES are unprotectable short phrases (37 C.F.R. 202.1(a)) and the movements",
+    "themselves are unprotectable systems or methods (Bikram's Yoga College v. Evolation Yoga,",
+    "9th Cir. 2015). What IS protected is Total Gym's photography, illustration, and",
+    "instructional prose -- so every 'cue' line here is written from scratch and no artwork is",
+    "reproduced.",
+    "",
+    "usesPulley  : true when the movement routes through the cable, which halves the load.",
+    "bodyFraction: share of bodyweight actually riding the glideboard. Supine work is ~1.0;",
+    "              seated and kneeling positions put less of the trainee on the board.",
+    "              THESE ARE ESTIMATES, not measurements -- see the open item in docs/adr/README.",
+    "              Getting them wrong shifts absolute load but not progression, because every",
+    "              set for an exercise uses the same figure.",
+    "muscles     : fraction 1.0 = prime mover, 0.5 = meaningful secondary involvement.",
+    "              Fractional accounting matters because Total Gym work is almost all compound;",
+    "              see docs/adr/0010."
+  ],
+  "version": 1,
+  "exercises": [
+    {
+      "id": "chest-press",
+      "name": "Chest Press",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Lie face up, handles level with your chest, press until your arms are straight.",
+      "muscles": [
+        { "muscle": "Chest", "fraction": 1.0 },
+        { "muscle": "Triceps", "fraction": 0.5 },
+        { "muscle": "Shoulders", "fraction": 0.5 }
+      ]
+    },
+    {
+      "id": "chest-fly",
+      "name": "Chest Fly",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Lie face up, arms wide with a soft elbow, bring the handles together above you.",
+      "muscles": [
+        { "muscle": "Chest", "fraction": 1.0 },
+        { "muscle": "Shoulders", "fraction": 0.5 }
+      ]
+    },
+    {
+      "id": "pullover",
+      "name": "Pullover",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Lie face up, arms overhead, pull the handles down in an arc toward your hips.",
+      "muscles": [
+        { "muscle": "Back", "fraction": 1.0 },
+        { "muscle": "Chest", "fraction": 0.5 },
+        { "muscle": "Triceps", "fraction": 0.5 }
+      ]
+    },
+    {
+      "id": "lat-pulldown",
+      "name": "Lat Pulldown",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Lie face up, reach overhead, pull down and back with your elbows leading.",
+      "muscles": [
+        { "muscle": "Back", "fraction": 1.0 },
+        { "muscle": "Biceps", "fraction": 0.5 }
+      ]
+    },
+    {
+      "id": "seated-row",
+      "name": "Seated Row",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Sit upright facing the tower, pull the handles to your ribs, squeeze the shoulder blades.",
+      "muscles": [
+        { "muscle": "Back", "fraction": 1.0 },
+        { "muscle": "Biceps", "fraction": 0.5 },
+        { "muscle": "Shoulders", "fraction": 0.5 }
+      ]
+    },
+    {
+      "id": "shoulder-press",
+      "name": "Shoulder Press",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Sit facing away from the tower, press the handles overhead.",
+      "muscles": [
+        { "muscle": "Shoulders", "fraction": 1.0 },
+        { "muscle": "Triceps", "fraction": 0.5 }
+      ]
+    },
+    {
+      "id": "upright-row",
+      "name": "Upright Row",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Sit upright, draw the handles toward your collarbone with high elbows.",
+      "muscles": [
+        { "muscle": "Shoulders", "fraction": 1.0 },
+        { "muscle": "Back", "fraction": 0.5 },
+        { "muscle": "Biceps", "fraction": 0.5 }
+      ]
+    },
+    {
+      "id": "biceps-curl",
+      "name": "Biceps Curl",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Sit facing the tower, elbows tucked, curl the handles toward your shoulders.",
+      "muscles": [{ "muscle": "Biceps", "fraction": 1.0 }]
+    },
+    {
+      "id": "triceps-extension",
+      "name": "Triceps Extension",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Sit facing away, elbows high and still, straighten your arms.",
+      "muscles": [{ "muscle": "Triceps", "fraction": 1.0 }]
+    },
+    {
+      "id": "squat",
+      "name": "Squat",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Lie face up with both feet on the platform, push away until your legs are straight.",
+      "muscles": [
+        { "muscle": "Quadriceps", "fraction": 1.0 },
+        { "muscle": "Glutes", "fraction": 1.0 },
+        { "muscle": "Hamstrings", "fraction": 0.5 }
+      ]
+    },
+    {
+      "id": "single-leg-squat",
+      "name": "Single Leg Squat",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "As the squat, one foot at a time. Keep the knee tracking over the toes.",
+      "muscles": [
+        { "muscle": "Quadriceps", "fraction": 1.0 },
+        { "muscle": "Glutes", "fraction": 1.0 },
+        { "muscle": "Hamstrings", "fraction": 0.5 }
+      ]
+    },
+    {
+      "id": "calf-raise",
+      "name": "Calf Raise",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Toes on the edge of the platform, push through the balls of your feet.",
+      "muscles": [{ "muscle": "Calves", "fraction": 1.0 }]
+    },
+    {
+      "id": "leg-pull",
+      "name": "Leg Pull",
+      "usesPulley": true,
+      "bodyFraction": 0.9,
+      "attachment": "Leg pull accessory",
+      "cue": "Hook your feet in the strap and draw your knees toward your chest.",
+      "muscles": [
+        { "muscle": "Core", "fraction": 1.0 },
+        { "muscle": "Quadriceps", "fraction": 0.5 }
+      ]
+    },
+    {
+      "id": "crunch",
+      "name": "Crunch",
+      "usesPulley": false,
+      "bodyFraction": 0.75,
+      "attachment": null,
+      "cue": "Lie face up, curl your ribs toward your hips without pulling on your neck.",
+      "muscles": [{ "muscle": "Core", "fraction": 1.0 }]
+    },
+    {
+      "id": "hip-abduction",
+      "name": "Hip Abduction",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Lie on your side, drive the top leg away from the midline.",
+      "muscles": [
+        { "muscle": "Glutes", "fraction": 1.0 },
+        { "muscle": "Quadriceps", "fraction": 0.5 }
+      ]
+    },
+    {
+      "id": "pull-up",
+      "name": "Pull-Up",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Press-up bars",
+      "cue": "Lie face up under the bars, pull your chest toward your hands.",
+      "muscles": [
+        { "muscle": "Back", "fraction": 1.0 },
+        { "muscle": "Biceps", "fraction": 0.5 }
+      ]
+    }
+  ]
+}
