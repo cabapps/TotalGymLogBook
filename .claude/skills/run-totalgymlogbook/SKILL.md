@@ -181,7 +181,26 @@ survived `dotnet publish`, which is a real failure mode
   (`MSB4025: The project file could not be loaded`) points at the line but not the cause. That
   file has long prose comments; use a semicolon or comma instead of an em-dash.
 
-- **`JSHost.ImportAsync` resolves its URL relative to `_framework/`, not the app base.**
+- **`[JSImport]` global paths need an explicit `globalThis.` prefix.** `[JSImport("myGlobal.fn")]`
+  fails at first call with `myGlobal not found while looking up myGlobal.fn`, wrapped in an
+  opaque `AggregateException_ctor_DefaultMessage` — even when `globalThis.myGlobal` is
+  demonstrably an object in the page. Write `[JSImport("globalThis.myGlobal.fn")]`. Because the
+  binding resolves during startup, the only visible symptom is that Blazor renders nothing.
+
+- **`index.html` must keep `<script type="importmap"></script>`.** Publish populates it with
+  the fingerprint map for the runtime files. Without it the loader requests
+  `_framework/dotnet.js`, which does not exist (the file is `dotnet.<hash>.js`), and Blazor
+  dies with "Failed to fetch dynamically imported module". **This does not reproduce under
+  `dotnet run`** — the DevServer resolves unfingerprinted names itself — so the app looks
+  perfect locally and is broken on every static host. Caught only by `offline-check.mjs`.
+
+- **Editing `index.html` breaks the next incremental publish.** The fingerprint placeholder
+  survives into the output and the framework script tag 404s. `dotnet clean` does NOT fix it;
+  delete `obj/`. The csproj fails the build on this now.
+
+- **~~`JSHost.ImportAsync` resolves its URL relative to `_framework/`~~** (no longer relevant —
+  the bindings are global-rooted, which removes module URLs from the picture entirely; kept
+  because the trap is real if anyone reintroduces ImportAsync):
   `"./dist/shell.js"` silently becomes `/_framework/dist/shell.js` and 404s. The failure
   surfaces as an opaque `AggregateException_ctor_DefaultMessage (TypeError: Failed to fetch
   dynamically imported module)` during startup — it names neither the path nor the caller. Use

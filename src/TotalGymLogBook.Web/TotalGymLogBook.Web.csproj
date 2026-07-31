@@ -90,4 +90,33 @@
     <Copy SourceFiles="@(DomainData)" DestinationFolder="$(MSBuildProjectDirectory)/wwwroot/data/" SkipUnchangedFiles="true" />
   </Target>
 
+  <!-- ============================================================
+       Guard against a silently broken deployable.
+
+       index.html references the framework loader through a fingerprint placeholder that
+       OverrideHtmlAssetPlaceholders substitutes at publish time. That substitution is
+       INCREMENTAL and does not always rerun: touching index.html and publishing without
+       cleaning reproducibly leaves the literal placeholder in the output. The result still
+       publishes, still passes a file-existence smoke test, and is completely broken in a
+       browser, because the script tag 404s and Blazor never loads.
+
+       A clean publish is fine, which is exactly why this ships unnoticed. Fail the build
+       rather than trusting anyone to remember.
+       ============================================================ -->
+  <Target Name="VerifyPublishedIndexHtml" AfterTargets="Publish">
+    <PropertyGroup>
+      <_PublishedIndexHtml>$(PublishDir)wwwroot/index.html</_PublishedIndexHtml>
+    </PropertyGroup>
+
+    <!-- Read into a PROPERTY, not items. An item reference does not expand inside a property
+         function, so the obvious ReadLinesFromFile + String::Copy('@(...)') formulation
+         silently evaluates to false and the guard never fires. -->
+    <PropertyGroup Condition="Exists('$(_PublishedIndexHtml)')">
+      <_PublishedIndexText>$([System.IO.File]::ReadAllText('$(_PublishedIndexHtml)'))</_PublishedIndexText>
+    </PropertyGroup>
+
+    <Error Condition="'$(_PublishedIndexText)' != '' AND $(_PublishedIndexText.Contains('{fingerprint}'))"
+           Text="Published index.html still contains an unsubstituted asset fingerprint placeholder, so the framework script tag will 404 and Blazor will never load. Editing wwwroot/index.html triggers this. Fix: delete src/TotalGymLogBook.Web/obj and publish again. NOTE 'dotnet clean' is NOT sufficient - verified." />
+  </Target>
+
 </Project>

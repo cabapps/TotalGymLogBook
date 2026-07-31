@@ -121,6 +121,19 @@ Mitigations:
 - Once working, add `Inputs`/`Outputs` with a stamp file, or npm re-runs on every incremental
   build.
 
+## Two publish-only failure modes worth knowing
+
+Both were found by verification, not by review, and both are silent under `dotnet run`:
+
+- **`index.html` must keep `<script type="importmap"></script>`.** Publish populates it with
+  the runtime fingerprint map. Without it, Blazor requests `_framework/dotnet.js`, which does
+  not exist. See [0008](0008-service-worker-and-offline.md).
+- **Editing `index.html` poisons the next incremental publish** — the fingerprint placeholder
+  survives into the output. `dotnet clean` is not enough; delete `obj/`.
+
+`VerifyPublishedIndexHtml` in the csproj fails the build on both, and `publish-smoke.sh`
+asserts them independently.
+
 ## The cross-language parity test
 
 [0003](0003-blazor-web-components-boundary.md) duplicates the resistance calculation in C# and

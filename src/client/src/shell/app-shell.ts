@@ -26,6 +26,7 @@ import './set-logger.js';
 import './session-list.js';
 import './rest-timer.js';
 import './weigh-in.js';
+import './data-safety.js';
 
 const DEFAULT_REST_SECONDS = 90;
 
@@ -228,6 +229,7 @@ export class AppShell extends HTMLElement {
       <tg-session-list id="list"></tg-session-list>
 
       <button class="ghost" id="finish">Finish workout</button>
+      <tg-data-safety></tg-data-safety>
     `;
 
     const logger = this.#root.getElementById('logger') as SetLogger;

@@ -10,16 +10,25 @@
  *
  * C# side (TotalGymLogBook.Interop):
  *
- *   [JSImport("getExerciseHistoryJson", "tglb-db")]
+ *   [JSImport("tglbDb.getExerciseHistoryJson")]
  *   internal static partial Task<string> GetExerciseHistoryJson(string exerciseId, double sinceMs);
  */
 
 import * as repo from './repository.js';
+import * as backup from './backup.js';
 import { onChange } from './events.js';
 import { toIsoDate } from './schema.js';
 
-/** Marks the module for JSImport. Must match the moduleName in the C# attributes. */
-export const MODULE_NAME = 'tglb-db';
+/**
+ * Global handle the C# side binds to. Must match the dotted path in the [JSImport] attributes.
+ *
+ * A valid JS identifier on purpose: [JSImport] can root a binding at a globalThis path, which
+ * avoids JSHost.ImportAsync and the whole class of module-URL problems that came with it --
+ * ImportAsync resolves relative to _framework/ rather than the app base, and the dev server
+ * fingerprints static assets at serve time (dist/shell.<hash>.js) while publish does not, so
+ * any URL written here is wrong in one environment or the other.
+ */
+export const GLOBAL_NAME = 'tglbDb';
 
 const json = (value: unknown): string => JSON.stringify(value ?? null);
 
@@ -89,7 +98,15 @@ export function subscribeToChanges(callback: (store: string, ids: string) => voi
  * shell boot, well before Blazor.start().
  */
 export function installBridge(): void {
-  (globalThis as Record<string, unknown>)[MODULE_NAME] = {
+  (globalThis as Record<string, unknown>)[GLOBAL_NAME] = {
+    // The repository and backup APIs are exposed here as a deliberate debugging affordance.
+    // This is a local-first app with no server and no account, so nothing is being exposed that
+    // console access does not already grant. It also gives the run driver a stable handle that
+    // does not depend on resolving the bundle's URL -- the dev server fingerprints static
+    // assets at serve time while publish does not, so any re-derived URL risks evaluating a
+    // second copy of the module and colliding on customElements.define.
+    repo,
+    backup,
     getExerciseHistoryJson,
     getRecentSetsJson,
     getHistoriesJson,

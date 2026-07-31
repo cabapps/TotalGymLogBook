@@ -215,12 +215,17 @@ async function main() {
   // week of prior days first -- otherwise there is nothing for the EMA to damp and the check
   // would pass vacuously.
   await page.evaluate(async () => {
-    const m = await import('/dist/shell.js');
+    // Use the handle the shell publishes on globalThis rather than import()ing the bundle.
+    // The dev server fingerprints static assets at serve time (dist/shell.<hash>.js) while
+    // publish leaves the name alone, so any hardcoded or re-derived URL risks evaluating a
+    // SECOND copy of the module, which dies on
+    // "tg-set-logger has already been used with this registry".
+    const m = globalThis.tglbDb;
     const day = 86_400_000;
     for (let i = 9; i >= 1; i--) {
       const d = new Date(Date.now() - i * day);
       const on = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      await m.db.recordBodyweight(on, 180);
+      await m.repo.recordBodyweight(on, 180);
     }
   });
 
