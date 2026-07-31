@@ -10,6 +10,14 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# GITHUB_TOKEN defaults to read-only on repos created under the newer default, and the SWA
+# action needs pull-requests:write to post the preview-environment comment. Without this the
+# deploy itself succeeds and the action then fails on the comment, which reads as a deploy
+# failure.
+permissions:
+  contents: read
+  pull-requests: write
+
 concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: false
