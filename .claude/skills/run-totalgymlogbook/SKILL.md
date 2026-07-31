@@ -4,7 +4,7 @@ description: Build, run, and drive Total Gym Logbook. Use when asked to start th
 ---
 
 Total Gym Logbook is a Blazor WebAssembly PWA with a vanilla-web-component shell. Drive it with
-`.claude/skills/run-totalgymlogbook/driver.mjs` — it starts the dev server if needed, drives
+`e2e/driver.mjs` — it starts the dev server if needed, drives
 headless Chromium, screenshots both rendering tiers, and asserts the things that actually break.
 
 All paths are relative to the repo root.
@@ -37,8 +37,8 @@ Playwright needs a Chromium build in `~/.cache/ms-playwright/`. One was already 
 One-time, after clone:
 
 ```bash
-# Driver deps (kept out of src/client so Playwright isn't a dependency of the shipped app)
-cd .claude/skills/run-totalgymlogbook && npm install && cd -
+# e2e deps (kept out of src/client so Playwright is never a dependency of the shipped app)
+cd e2e && npm ci && cd -
 
 # Client deps. The approve step is REQUIRED on npm 12+ -- see Gotchas.
 cd src/client && npm ci && npm install-scripts approve esbuild && cd -
@@ -54,7 +54,8 @@ cd src/client && npm run build    # client bundle only, when iterating on TypeSc
 ## Run (agent path)
 
 ```bash
-node .claude/skills/run-totalgymlogbook/driver.mjs
+node e2e/driver.mjs          # the user flow, against the dev server
+node e2e/offline-check.mjs   # publishes, serves statically, pulls the network out
 ```
 
 Cold start to fully verified in ~10s. Starts the dev server if it isn't already up, and stops
@@ -66,7 +67,7 @@ only the server it started.
 | `--dark` | render with `prefers-color-scheme: dark` |
 | `PORT=5300` | use a different port (default 5232) |
 
-Screenshots → `.claude/skills/run-totalgymlogbook/screenshots/` — `01-onboarding.png`,
+Screenshots → `e2e/screenshots/` — `01-onboarding.png`,
 `02-logger.png`, `03-session.png` (after logging, correcting, deleting), `04-weighin.png`,
 `05-coach.png`.
 
@@ -136,10 +137,17 @@ lsof -ti:5232 -sTCP:LISTEN | xargs -r kill
 ```bash
 dotnet test                                    # 137 xUnit
 cd src/client && npm run check                 # tsc --noEmit + 73 vitest
-tests/publish-smoke.sh                         # 13 checks on real publish output
+tests/publish-smoke.sh                         # 15 checks on real publish output
+node e2e/offline-check.mjs                     # 11 checks against a PUBLISHED build
 ```
 
-`publish-smoke.sh` is the one that matters before deploying — it asserts the esbuild bundle
+**`offline-check.mjs` is the one that catches what nothing else can.** It publishes and serves
+statically, so it exercises the real service worker and the real fingerprinted asset names.
+Both of the worst bugs found in this project -- a missing import map that stopped Blazor
+loading on any static host, and a stale incremental publish -- were invisible to every other
+check because `dotnet run` papers over both.
+
+`publish-smoke.sh` is the cheap one to run before deploying — it asserts the esbuild bundle
 survived `dotnet publish`, which is a real failure mode
 ([docs/adr/0009](../../../docs/adr/0009-repo-structure-and-build.md)).
 

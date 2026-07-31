@@ -7,10 +7,10 @@
  * up. Screenshots each stage.
  *
  * Usage (from repo root):
- *   node .claude/skills/run-totalgymlogbook/driver.mjs
- *   node .claude/skills/run-totalgymlogbook/driver.mjs --keep     # leave the server running
- *   node .claude/skills/run-totalgymlogbook/driver.mjs --dark     # dark colour scheme
- *   PORT=5300 node .claude/skills/run-totalgymlogbook/driver.mjs
+ *   node e2e/driver.mjs
+ *   node e2e/driver.mjs --keep     # leave the server running
+ *   node e2e/driver.mjs --dark     # dark colour scheme
+ *   PORT=5300 node e2e/driver.mjs
  *
  * Exit code 0 = the whole loop worked with no console errors.
  */
@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { homedir } from 'node:os';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const REPO = join(HERE, '..', '..', '..');
+const REPO = join(HERE, '..');
 const PORT = process.env.PORT ?? '5232';
 const URL = `http://localhost:${PORT}`;
 const SHOTS = join(HERE, 'screenshots');

@@ -8,8 +8,8 @@
  * from a static server with correct MIME types, and then pulls the network out.
  *
  * Usage (from repo root):
- *   node .claude/skills/run-totalgymlogbook/offline-check.mjs
- *   KEEP_PUBLISH=1 node .claude/skills/run-totalgymlogbook/offline-check.mjs   # keep the output dir
+ *   node e2e/offline-check.mjs
+ *   KEEP_PUBLISH=1 node e2e/offline-check.mjs   # keep the output dir
  *
  * Exit code 0 = the app boots, logs a set, and persists it with the network disconnected.
  */
@@ -23,7 +23,7 @@ import { fileURLToPath } from 'node:url';
 import { homedir, tmpdir } from 'node:os';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const REPO = join(HERE, '..', '..', '..');
+const REPO = join(HERE, '..');
 const PORT = Number(process.env.PORT ?? 5233);
 const SHOTS = join(HERE, 'screenshots');
 

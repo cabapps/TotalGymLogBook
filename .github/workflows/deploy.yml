@@ -1,0 +1,77 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  # Preview environments for pull requests. Remove this block, and the close job below, if you
+  # would rather not have SWA spin up an environment per PR.
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  deploy:
+    name: Publish and deploy
+    if: github.event_name != 'pull_request' || github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install client dependencies
+        working-directory: src/client
+        run: |
+          npm ci --no-audit --no-fund
+          npm install-scripts approve esbuild || true
+
+      # publish-smoke.sh publishes into the given directory AND verifies the result, so this is
+      # one step rather than two. The verification is what gates the deploy: it asserts the
+      # import map is populated and the asset fingerprints were substituted, which is the
+      # difference between "every expected file is present" and "the app actually works".
+      #
+      # A fresh checkout has no obj/, so this is always a clean publish. That matters -- editing
+      # wwwroot/index.html leaves the fingerprint placeholder unsubstituted on an INCREMENTAL
+      # publish, giving output where the framework script tag 404s and Blazor never loads.
+      - name: Publish and verify
+        run: tests/publish-smoke.sh publish
+
+      - name: Deploy to Azure Static Web Apps
+        id: swa
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: upload
+          # skip_app_build is REQUIRED. Left on, the action's Oryx builder tries to build the
+          # app itself and gets it wrong -- we have already published above. See docs/adr/0009.
+          skip_app_build: true
+          skip_api_build: true
+          app_location: publish/wwwroot
+          output_location: ''
+
+  close_preview:
+    name: Tear down PR preview
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close preview environment
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          action: close
