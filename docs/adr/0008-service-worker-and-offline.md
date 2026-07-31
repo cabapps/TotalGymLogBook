@@ -127,8 +127,31 @@ not rerun, leaving the literal `#[.{fingerprint}]` in the output, and the framew
 404s. `dotnet clean` does NOT fix it; deleting `obj/` does. The csproj now fails the publish on
 both conditions rather than trusting anyone to notice.
 
+### And a third, found only on the live site
+
+**Azure refuses to serve `staticwebapp.config.json`** — it consumes the file as configuration.
+But it lives in `wwwroot`, so Blazor listed it in the service worker's asset manifest, and
+`cache.addAll()` is all-or-nothing: that single failing request rejected the whole install, the
+browser discarded the registration, and **the deployed app had no offline support at all**.
+
+Every local check passed, because a plain static server serves the file happily. It was found by
+`e2e/diagnose-sw.mjs`, which replays each precache request individually against a real
+deployment: 47 of 48 assets fetched cleanly.
+
+Two fixes, because one is not enough:
+
+- `service-worker.published.js` excludes the file via `offlineAssetsExclude`.
+- `offline-check.mjs`'s static server now **404s the files the real host consumes**, so the
+  local check reproduces production rather than flattering it. Verified both ways: it fails
+  with the exclusion removed and passes with it in place.
+
+The `service worker activated` check is also time-bounded now.
+`navigator.serviceWorker.ready` never resolves when install rejects, so awaiting it bare turned
+a clear failure into a hang.
+
 The lesson generalises: a file-existence smoke test passes happily on a completely broken
-deployable. Assert on *content* and on *behaviour in a browser*.
+deployable, and a local server that serves everything is not simulating a host that withholds
+things. Assert on *content*, on *behaviour in a browser*, and against *the real deployment*.
 
 ### Keep the dev/prod split
 

@@ -9,7 +9,19 @@ self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
 const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/, /\.webmanifest$/ ];
-const offlineAssetsExclude = [ /^service-worker\.js$/ ];
+const offlineAssetsExclude = [
+    /^service-worker\.js$/,
+    // Azure Static Web Apps CONSUMES staticwebapp.config.json as configuration and refuses to
+    // serve it, but it lives in wwwroot so Blazor lists it in the asset manifest anyway. The
+    // precache below uses cache.addAll(), which is all-or-nothing: that single failing request
+    // rejects the whole install, the browser discards the registration, and the app ends up
+    // with an empty cache and NO offline support.
+    //
+    // This is invisible locally -- a plain static server serves the file happily, so
+    // e2e/offline-check.mjs passes. It was found by e2e/diagnose-sw.mjs against the real
+    // deployment, which replays each precache request individually. See docs/adr/0008.
+    /^staticwebapp\.config\.json$/,
+];
 
 // Replace with your base path if you are hosting on a subfolder. Ensure there is a trailing '/'.
 const base = "/";
