@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push supersedes an in-flight run on the same branch, except on main where
+# every commit should be verified because deploys hang off it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  # Fast feedback: everything that does not need a browser. ~2 minutes.
+  test:
+    name: Build and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: src/client/package-lock.json
+
+      - name: Install client dependencies
+        working-directory: src/client
+        run: |
+          npm ci --no-audit --no-fund
+          # npm 12 blocks postinstall scripts, so esbuild never fetches its platform binary
+          # and the build fails later with a confusing error. Tolerate failure so older npm,
+          # which has no such command, still works.
+          npm install-scripts approve esbuild || true
+
+      - name: Build
+        run: dotnet build -c Release --nologo -warnaserror
+
+      - name: Domain tests
+        run: dotnet test -c Release --no-build --nologo -v q
+
+      - name: Typecheck and client tests
+        working-directory: src/client
+        run: npm run check
+
+      # Asserts on the real publish OUTPUT rather than trusting MSBuild target names, which
+      # have shifted between SDK versions. See docs/adr/0009.
+      - name: Publish smoke test
+        run: tests/publish-smoke.sh
+
+  # Browser checks. Slower, and the only thing that catches publish-only breakage.
+  e2e:
+    name: Browser end-to-end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install client dependencies
+        working-directory: src/client
+        run: |
+          npm ci --no-audit --no-fund
+          npm install-scripts approve esbuild || true
+
+      - name: Install e2e dependencies
+        working-directory: e2e
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Chromium
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Build
+        run: dotnet build -c Release --nologo
+
+      # Drives the real user flow against the dev server: onboarding, logging, the rest timer,
+      # correction, weigh-in smoothing, and the coach reading it all back.
+      - name: User flow
+        run: node e2e/driver.mjs
+
+      # THE important one. Publishes, serves the output statically, and pulls the network out.
+      # This cannot be done against `dotnet run`, which ships a no-op service worker and
+      # resolves unfingerprinted asset names itself -- so it is the only check that would have
+      # caught the missing import map that stopped Blazor loading on any static host.
+      # See docs/adr/0008.
+      - name: Offline and published-build check
+        run: node e2e/offline-check.mjs
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-screenshots
+          path: e2e/screenshots/
+          if-no-files-found: ignore
+          retention-days: 7

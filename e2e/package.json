@@ -1,0 +1,14 @@
+{
+  "name": "totalgymlogbook-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Browser end-to-end harness. Kept separate from src/client so Playwright never becomes a dependency of the shipped app. Driven by CI and by the run-totalgymlogbook skill.",
+  "scripts": {
+    "drive": "node driver.mjs",
+    "offline": "node offline-check.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.50.0"
+  }
+}

@@ -19,10 +19,17 @@ TotalGymLogBook/
 │  │  └─ wwwroot/{index.html, dist/, data/}
 │  └─ client/                         # TypeScript
 │     └─ src/{shell/, db/, resistance.ts, bridge.ts, repsources/}
+├─ e2e/                               # browser harness: driver.mjs, offline-check.mjs
 └─ tests/
    ├─ Domain.Tests/                   # xUnit, desktop runtime
-   └─ client/                         # vitest
+   ├─ client/                         # vitest
+   └─ publish-smoke.sh                # asserts on real publish output
 ```
+
+**`e2e/` graduated out of the run skill** once CI wanted it, which is exactly the move this ADR
+anticipated. Playwright lives in `e2e/package.json` rather than `src/client`, so it never
+becomes a dependency of the shipped app. The `run-totalgymlogbook` skill still documents the
+harness; it just points at `e2e/` now.
 
 **`Domain` must never reference `Interop`.** JSImport requires the `browser-wasm` target, which
 would drag domain tests onto a browser runner. A dependency-free class library means the
