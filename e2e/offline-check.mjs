@@ -54,9 +54,26 @@ function findChromium() {
     .filter(existsSync)[0];
 }
 
+/**
+ * Files the real host CONSUMES rather than serves. A local server that happily returns these
+ * is not simulating production, and the difference is not cosmetic: the service worker
+ * precaches with cache.addAll(), which is all-or-nothing, so one asset that 404s in production
+ * but 200s locally means offline works here and is completely broken live.
+ *
+ * That exact bug shipped -- staticwebapp.config.json was in the precache manifest, Azure
+ * refused to serve it, and the deployed app had no offline support while this check passed.
+ */
+const HOST_CONSUMES = [/^\/staticwebapp\.config\.json$/];
+
 function serve(root) {
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
+
+    if (HOST_CONSUMES.some((p) => p.test(url.pathname))) {
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      return res.end('not found (consumed by the host, as on Azure)');
+    }
+
     let path = normalize(join(root, decodeURIComponent(url.pathname)));
 
     // Directory or unknown path -> index.html, matching the SWA navigation fallback.
@@ -104,11 +121,32 @@ async function main() {
   await page.waitForSelector('#bw', { timeout: 30_000 });
   check('published build boots', true);
 
-  const controlled = await page.evaluate(async () => {
-    const reg = await navigator.serviceWorker.ready;
-    return Boolean(reg.active);
+  // Time-bounded on purpose. navigator.serviceWorker.ready NEVER resolves when install
+  // rejects -- and install rejects wholesale if any single precached asset fails, because
+  // cache.addAll is all-or-nothing. Awaiting it bare turns a clear failure into a hang, which
+  // is a strictly worse outcome for anyone running this.
+  const swState = await page.evaluate(async () => {
+    const activated = await Promise.race([
+      navigator.serviceWorker.ready.then(() => 'active'),
+      new Promise((r) => setTimeout(() => r('timeout'), 45_000)),
+    ]);
+    if (activated === 'active') return { ok: true, detail: 'active' };
+
+    const regs = await navigator.serviceWorker.getRegistrations();
+    const cacheNames = await caches.keys();
+    let entries = 0;
+    for (const n of cacheNames) entries += (await (await caches.open(n)).keys()).length;
+
+    return {
+      ok: false,
+      detail:
+        `${regs.length} registration(s), ${entries} cached entries` +
+        (regs.length === 0 || entries === 0
+          ? ' - install rejected; run `node e2e/diagnose-sw.mjs <url>` to name the asset'
+          : ''),
+    };
   });
-  check('service worker activated', controlled);
+  check('service worker activated', swState.ok, swState.detail);
 
   // Complete onboarding so there is real data to survive the disconnect.
   await page.fill('#bw', '180');
