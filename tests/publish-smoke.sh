@@ -89,6 +89,30 @@ echo
 echo "Wiring:"
 check_contains "index.html loads the shell bundle" "$WWWROOT/index.html" 'dist/shell.js'
 check_contains "Blazor autostart disabled"         "$WWWROOT/index.html" 'autostart="false"'
+
+# Editing wwwroot/index.html leaves the asset-fingerprint placeholder unsubstituted on the next
+# incremental publish. The output still contains every expected file, so a pure existence check
+# passes while the app is completely broken -- the framework script tag 404s and Blazor never
+# loads. `dotnet clean` does not fix it; deleting obj/ does. The csproj now fails the build on
+# this, and this is the belt to that braces.
+# The importmap maps _framework/dotnet.js to the fingerprinted file. Missing or empty, Blazor
+# dies with "Failed to fetch dynamically imported module" on any static host -- while working
+# perfectly under `dotnet run`, whose DevServer resolves the names itself.
+if grep -q '<script type="importmap">{' "$WWWROOT/index.html"; then
+  printf '  \033[32mPASS\033[0m  importmap populated\n'
+  pass=$((pass + 1))
+else
+  printf '  \033[31mFAIL\033[0m  importmap populated                       missing or empty in index.html\n'
+  fail=$((fail + 1))
+fi
+
+if grep -q '{fingerprint}' "$WWWROOT/index.html"; then
+  printf '  \033[31mFAIL\033[0m  asset fingerprints substituted            index.html still has {fingerprint}\n'
+  fail=$((fail + 1))
+else
+  printf '  \033[32mPASS\033[0m  asset fingerprints substituted\n'
+  pass=$((pass + 1))
+fi
 check_contains "published SW was swapped in"       "$WWWROOT/service-worker.js" 'self.assetsManifest'
 
 if grep -qi 'bootstrap' "$WWWROOT/index.html"; then

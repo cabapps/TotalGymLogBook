@@ -101,6 +101,35 @@ The template won't do this for you: an installed PWA can run for days without a 
 navigation and will never notice an update. Call `registration.update()` on `visibilitychange`
 when the app regains focus, throttled to roughly hourly.
 
+## Verified, not assumed
+
+`.claude/skills/run-totalgymlogbook/offline-check.mjs` publishes, serves the output from a
+static server with correct MIME types, and pulls the network out. Measured: 51 precached
+entries, the app boots with no network, sets logged offline persist across reconnection, and
+the 2 MB Blazor runtime loads from cache.
+
+**This cannot be tested against `dotnet run`**, which is why it went unverified for so long.
+The dev server uses the no-op `service-worker.js`; only publish swaps in
+`service-worker.published.js`.
+
+Two bugs surfaced the moment it ran, both invisible under `dotnet run`:
+
+**A missing import map broke the published build entirely.** The rewritten `index.html` dropped
+the template's `<script type="importmap"></script>`. That element is populated at publish time
+with the fingerprint map for the runtime files, so without it the loader requests
+`_framework/dotnet.js` — which does not exist, the published file being `dotnet.<hash>.js` —
+and Blazor dies with *"Failed to start platform: Failed to fetch dynamically imported module"*.
+The DevServer resolves unfingerprinted names itself, so the app was perfect locally and would
+have deployed to Azure SWA with the instant tier working and the coach never appearing.
+
+**Editing `index.html` breaks the next incremental publish.** The fingerprint substitution does
+not rerun, leaving the literal `#[.{fingerprint}]` in the output, and the framework script tag
+404s. `dotnet clean` does NOT fix it; deleting `obj/` does. The csproj now fails the publish on
+both conditions rather than trusting anyone to notice.
+
+The lesson generalises: a file-existence smoke test passes happily on a completely broken
+deployable. Assert on *content* and on *behaviour in a browser*.
+
 ### Keep the dev/prod split
 
 Blazor's no-op `service-worker.js` for development, `service-worker.published.js` for production.

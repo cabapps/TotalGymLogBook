@@ -14,6 +14,18 @@
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
 
+    <!--
+      DO NOT REMOVE. Populated at publish time with the fingerprint map for the .NET runtime
+      files. Without it the loader requests _framework/dotnet.js, which does not exist -- the
+      published file is dotnet.<hash>.js -- and Blazor dies with
+      "Failed to start platform: Failed to fetch dynamically imported module".
+
+      This does not reproduce under `dotnet run`: the DevServer resolves unfingerprinted names
+      itself, so the app looks fine locally and is broken on any static host, which is exactly
+      how Azure Static Web Apps serves it. Verified by offline-check.mjs.
+    -->
+    <script type="importmap"></script>
+
     <!-- docs/adr/0003: critical CSS is inlined so first paint needs zero round trips.
          Everything else is deferred. -->
     <style>
