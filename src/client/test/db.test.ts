@@ -72,6 +72,9 @@ describe('sessions', () => {
 
   it('surfaces orphaned sessions rather than closing or resuming them', async () => {
     const session = await repo.startSession({ machineId: 'm1' });
+    // Must contain work: an empty session is someone who opened the app, not an unfinished
+    // workout. See "never treats an empty session as an unfinished workout" below.
+    await repo.logSet(setInput({ sessionId: session.id }));
 
     // Backdate to yesterday.
     const stale = { ...session, startedAt: Date.now() - 20 * 3_600_000 };
@@ -347,5 +350,70 @@ describe('argument shapes the C# bridge actually sends', () => {
     await repo.logSet(setInput());
     // Would throw DataError if the bound were built from +/-Infinity.
     await expect(repo.getExerciseHistory('chest-press')).resolves.toHaveLength(1);
+  });
+});
+
+describe('session lifecycle', () => {
+  it('deletes a session and its sets together', async () => {
+    const session = await repo.startSession({ machineId: 'm1' });
+    await repo.logSet(setInput({ sessionId: session.id }));
+    await repo.logSet(setInput({ sessionId: session.id }));
+
+    expect(await repo.deleteSession(session.id)).toBe(2);
+    expect(await repo.getSessionSets(session.id)).toHaveLength(0);
+    expect(await repo.listSessions()).toHaveLength(0);
+  });
+
+  it('keeps tombstones so a deletion propagates to a future sync peer', async () => {
+    const session = await repo.startSession({ machineId: 'm1' });
+    await repo.logSet(setInput({ sessionId: session.id }));
+    await repo.deleteSession(session.id);
+
+    const backup = await exportBackup();
+    expect(backup.records[Store.Sessions]).toHaveLength(1);
+    expect((backup.records[Store.Sessions] as Array<{ deletedAt?: number }>)[0]!.deletedAt)
+      .toBeGreaterThan(0);
+  });
+
+  it('deleting is idempotent', async () => {
+    const session = await repo.startSession({ machineId: 'm1' });
+    await repo.logSet(setInput({ sessionId: session.id }));
+
+    expect(await repo.deleteSession(session.id)).toBe(1);
+    expect(await repo.deleteSession(session.id)).toBe(0);
+  });
+
+  it('purges sessions that were opened but never used', async () => {
+    // Earlier builds created a session on every app open, so real logbooks are full of these.
+    const used = await repo.startSession({ machineId: 'm1' });
+    await repo.logSet(setInput({ sessionId: used.id }));
+    await repo.endSession(used.id);
+
+    const empty1 = await repo.startSession({ machineId: 'm1' });
+    await repo.endSession(empty1.id);
+    const empty2 = await repo.startSession({ machineId: 'm1' });
+    await repo.endSession(empty2.id);
+
+    expect(await repo.purgeEmptySessions()).toBe(2);
+    const left = await repo.listSessions();
+    expect(left).toHaveLength(1);
+    expect(left[0]!.id).toBe(used.id);
+  });
+
+  it('never treats an empty session as an unfinished workout', async () => {
+    // The bug this fixes: opening the app is not starting a workout, so an empty session
+    // must not surface as "you have an unfinished workout" six hours later.
+    const session = await repo.startSession({ machineId: 'm1' });
+    const old = { ...session, startedAt: Date.now() - 20 * 3_600_000, updatedAt: Date.now() + 1 };
+    await importBackup({
+      format: 1, app: 'totalgymlogbook', exportedAt: '', dbVersion: 1,
+      records: { [Store.Sessions]: [old] },
+    });
+
+    expect(await repo.findOrphanedSessions(6)).toEqual([]);
+
+    // With a set in it, it IS an unfinished workout and should be offered.
+    await repo.logSet(setInput({ sessionId: session.id }));
+    expect((await repo.findOrphanedSessions(6)).map((s) => s.id)).toContain(session.id);
   });
 });

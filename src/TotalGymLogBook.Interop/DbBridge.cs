@@ -67,6 +67,18 @@ internal static partial class DbBridge
     [JSImport(Global + ".listSessionsJson")]
     internal static partial Task<string> ListSessionsJson(double sinceMs);
 
+    [JSImport(Global + ".getSessionHistoryJson")]
+    internal static partial Task<string> GetSessionHistoryJson(double days);
+
+    /// <summary>Soft-deletes a session and its sets. The one WRITE on this bridge, and it is
+    /// here rather than in the instant tier because deleting is a considered act done from the
+    /// history view, not something that has to work before the runtime boots.</summary>
+    [JSImport(Global + ".deleteSessionJson")]
+    internal static partial Task<string> DeleteSessionJson(string sessionId);
+
+    [JSImport(Global + ".purgeEmptySessionsJson")]
+    internal static partial Task<string> PurgeEmptySessionsJson();
+
     [JSImport(Global + ".getSettingsJson")]
     internal static partial Task<string> GetSettingsJson();
 

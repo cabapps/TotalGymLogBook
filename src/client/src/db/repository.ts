@@ -96,16 +96,75 @@ export async function endSession(
   return updated;
 }
 
+/** Soft-deletes a session and every set in it, so history stays consistent. */
+export async function deleteSession(id: string): Promise<number> {
+  const stamp = now();
+
+  const count = await transact([Store.Sessions, Store.SetLogs], 'readwrite', async (tx) => {
+    const session = await getById<SessionRecord>(tx, Store.Sessions, id);
+    if (session && !session.deletedAt) {
+      await put(tx, Store.Sessions, { ...session, deletedAt: stamp, updatedAt: stamp });
+    }
+
+    const sets = await getAllFromIndex<SetLogRecord>(
+      tx, Store.SetLogs, 'by-session', IDBKeyRange.only(id));
+
+    let deleted = 0;
+    for (const set of sets) {
+      if (set.deletedAt) continue;
+      await put(tx, Store.SetLogs, { ...set, deletedAt: stamp, updatedAt: stamp });
+      deleted++;
+    }
+    return deleted;
+  });
+
+  publishChange(Store.Sessions, [id]);
+  publishChange(Store.SetLogs, []);
+  return count;
+}
+
 /**
- * Sessions left 'active' for longer than `olderThanHours`. docs/adr/0005: never auto-close
- * (discards data) and never auto-resume (pollutes today) -- the caller prompts.
+ * Discards sessions that were opened but never used.
+ *
+ * Sessions are created lazily now, but earlier builds created one on every app open, so plenty
+ * of empty ones are already in people's logbooks. This clears them without touching anything
+ * that has a set attached.
+ */
+export async function purgeEmptySessions(): Promise<number> {
+  const sessions = await listSessions();
+  let purged = 0;
+
+  for (const session of sessions) {
+    const sets = await getSessionSets(session.id);
+    if (sets.length === 0) {
+      await deleteSession(session.id);
+      purged++;
+    }
+  }
+
+  return purged;
+}
+
+/**
+ * Sessions left 'active' for longer than `olderThanHours` AND holding at least one set.
+ *
+ * The set requirement matters: an empty session is not an unfinished workout, it is someone
+ * who opened the app. Prompting about those is pure noise, which is what happened before
+ * sessions became lazy.
  */
 export async function findOrphanedSessions(olderThanHours = 6): Promise<SessionRecord[]> {
   const cutoff = now() - olderThanHours * 3_600_000;
   const rows = await transact(Store.Sessions, 'readonly', (tx) =>
     getAllFromIndex<SessionRecord>(tx, Store.Sessions, 'by-status', IDBKeyRange.only('active')),
   );
-  return alive(rows).filter((s) => s.startedAt < cutoff);
+
+  const stale = alive(rows).filter((s) => s.startedAt < cutoff);
+
+  const withSets: SessionRecord[] = [];
+  for (const session of stale) {
+    if ((await getSessionSets(session.id)).length > 0) withSets.push(session);
+  }
+  return withSets;
 }
 
 export async function listSessions(sinceMs?: Instant | null): Promise<SessionRecord[]> {

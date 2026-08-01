@@ -3,5 +3,18 @@
 @* docs/adr/0003: Blazor owns only the region inside #blazor-root. Navigation, the tab bar,
    and the set logger are web components living outside it. *@
 <article class="tg-derived">
+    <nav class="tg-nav">
+        <NavLink href="" Match="NavLinkMatch.All">Coach</NavLink>
+        <NavLink href="history">History</NavLink>
+    </nav>
     @Body
 </article>
+
+<style>
+    .tg-nav { display: flex; gap: .25rem; margin: 1.5rem 0 .25rem; }
+    .tg-nav a {
+        font-size: .8125rem; padding: .35rem .75rem; border-radius: .5rem;
+        color: var(--muted); text-decoration: none; border: 1px solid transparent;
+    }
+    .tg-nav a.active { color: var(--fg); border-color: var(--border); background: var(--surface); }
+</style>

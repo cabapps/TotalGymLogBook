@@ -177,8 +177,18 @@ async function main() {
   console.log('\nMore sets and a correction:');
   await page.waitForSelector('tg-set-logger #log', { timeout: 15_000 });
   for (let i = 0; i < 2; i++) {
+    const before = await page.locator('tg-session-list li').count();
     await page.locator('tg-set-logger #log').click();
-    await page.waitForTimeout(250);
+    // Wait for the row to actually appear rather than sleeping a guessed interval. Sessions
+    // are created lazily now, so the first log after a reload carries an extra round trip.
+    await page
+      .waitForFunction(
+        (n) => document.querySelector('tg-session-list')?.shadowRoot
+          ?.querySelectorAll('li').length > n,
+        before,
+        { timeout: 10_000 },
+      )
+      .catch(() => undefined);
   }
 
   const rows3 = await page.locator('tg-session-list li').count();
@@ -284,6 +294,27 @@ async function main() {
   );
 
   await page.screenshot({ path: join(SHOTS, '05-coach.png'), fullPage: true });
+
+  // ---- History ----
+  console.log('\nHistory:');
+  await page.locator('.tg-nav a', { hasText: 'History' }).click();
+  await page.waitForSelector('#history-summary, #history-empty', { timeout: 30_000 });
+
+  const summary = await page.locator('#history-summary').innerText().catch(() => '');
+  check('lists the session', /1 session/.test(summary), summary.replace(/\s+/g, ' '));
+
+  const sessionRows = await page.locator('ul.sessions li').count();
+  check('session row rendered', sessionRows === 1, `${sessionRows} rows`);
+
+  await page.screenshot({ path: join(SHOTS, '06-history.png'), fullPage: true });
+
+  await page.locator('button.del').first().click();
+  await page.waitForTimeout(800);
+  const afterDelete = await page.locator('ul.sessions li').count();
+  check('a session can be deleted', afterDelete === 0, `${afterDelete} rows`);
+
+  const emptyNow = await page.locator('#history-empty').count();
+  check('empty state returns after deleting everything', emptyNow === 1);
 
   console.log('\nConsole:');
   check('no console errors', errors.length === 0, errors.slice(0, 2).join(' | '));

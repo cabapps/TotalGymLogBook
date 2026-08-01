@@ -48,6 +48,9 @@ export {
   getSettingsJson,
   listMachinesJson,
   listSessionsJson,
+  getSessionHistoryJson,
+  deleteSessionJson,
+  purgeEmptySessionsJson,
   subscribeToChanges,
 } from './db/bridge.js';
 export type {
