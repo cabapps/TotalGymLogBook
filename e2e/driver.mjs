@@ -107,6 +107,22 @@ async function main() {
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   page.on('pageerror', (e) => errors.push(`PAGEERROR: ${e.message}`));
 
+  /**
+   * Polls a locator's text until it matches. Several panels refresh asynchronously off a
+   * 'set-logged' event, so the click resolving is not the same as the DOM having caught up --
+   * reading straight after the click is a race that fails maybe one run in three.
+   */
+  const waitForText = async (locator, pattern, timeout = 10_000) => {
+    const deadline = Date.now() + timeout;
+    let text = '';
+    while (Date.now() < deadline) {
+      text = await locator.innerText().catch(() => '');
+      if (pattern.test(text)) return text;
+      await page.waitForTimeout(150);
+    }
+    return text;
+  };
+
   const results = [];
   const check = (label, ok, detail = '') => {
     results.push({ label, ok, detail });
@@ -354,6 +370,68 @@ async function main() {
   check('reports weekly volume per muscle', weekly.length > 20, weekly.replace(/\s+/g, ' ').slice(0, 70) + '…');
 
   await page.screenshot({ path: join(SHOTS, '10-coach-per-exercise.png'), fullPage: true });
+
+  // ---- Programs ----
+  //
+  // A program is an ORDERED ROTATION, not a calendar (docs/adr/0007), and which session is next
+  // is DERIVED from history rather than tracked by a cursor. Both of those are invisible until
+  // something is logged against a plan, so this drives the whole loop: pick a program, log the
+  // planned movement, watch it tick off, and confirm the rotation advanced.
+  console.log('\nPrograms:');
+  await page.locator('tg-program-panel #change').click().catch(() => {});
+  await page.waitForSelector('tg-program-panel #use-0', { timeout: 15_000 });
+  check('offers the splits people actually run',
+    (await page.locator('tg-program-panel .choice h4').count()) === 3);
+
+  // Push/Pull/Legs -- its first session leads with chest press, which is already logged today,
+  // so the tick list has something to show immediately.
+  const pplIndex = await page.locator('tg-program-panel .choice h4').allInnerTexts()
+    .then((names) => names.findIndex((n) => /push/i.test(n)));
+  await page.locator(`tg-program-panel #use-${pplIndex}`).click();
+  await page.waitForSelector('tg-program-panel #plan', { timeout: 15_000 });
+
+  const sessionName = await page.locator('tg-program-panel #session-name').innerText();
+  check('starts at the beginning of the rotation', /push/i.test(sessionName), sessionName.trim());
+
+  const position = await page.locator('tg-program-panel #session-position').innerText();
+  check('shows where you are in the rotation', /1 of 3/.test(position), position.replace(/\s+/g, ' '));
+
+  // Sets logged earlier today count toward the plan, because closing the app mid-workout
+  // starts a new session record but is obviously the same workout to the trainee.
+  const firstItem = await page.locator('tg-program-panel #plan li').first().innerText();
+  check('counts sets already logged today', /[1-9]\/\d/.test(firstItem), firstItem.replace(/\s+/g, ' '));
+
+  // Tapping a planned movement selects it in the logger. The plan drives the picker; it never
+  // replaces it.
+  await page.locator('tg-program-panel #pick-1').click();
+  const picked = await page.locator('tg-set-logger #exercise').inputValue();
+  check('tapping the plan selects that exercise', picked === 'shoulder-press', picked);
+
+  await page.locator('tg-set-logger #log').click();
+
+  const afterLog = await waitForText(
+    page.locator('tg-program-panel #plan li').nth(1),
+    /1\/3/,
+  );
+  check('logging ticks the plan along', /1\/3/.test(afterLog), afterLog.replace(/\s+/g, ' '));
+
+  await page.screenshot({ path: join(SHOTS, '13-program.png'), fullPage: true });
+
+  // The derived tier's half: is this program any good?
+  await page.locator('.tg-nav a', { hasText: 'Program' }).click();
+  await page.waitForSelector('#program-verdict', { timeout: 30_000 });
+
+  const verdict = await page.locator('#program-verdict').innerText();
+  check('critiques the program by weekly volume', verdict.length > 30,
+    verdict.replace(/\s+/g, ' ').slice(0, 70) + '…');
+
+  const bars = await page.locator('#program-volume li').count();
+  check('charts planned volume for every muscle group', bars >= 10, `${bars} muscles`);
+
+  const sessionsListed = await page.locator('#program-sessions li').count();
+  check('lists the sessions', sessionsListed === 3, `${sessionsListed} sessions`);
+
+  await page.screenshot({ path: join(SHOTS, '14-program-critique.png'), fullPage: true });
 
   // ---- History ----
   console.log('\nHistory:');

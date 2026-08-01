@@ -1,0 +1,149 @@
+@page "/program"
+@using TotalGymLogBook.Domain.Training
+@using TotalGymLogBook.Interop
+@implements IDisposable
+@inject ExerciseCatalog Catalog
+@inject Logbook Logbook
+@inject ProgramAnalyzer Analyzer
+
+@*
+    Whether the program the trainee is following is any good.
+
+    The shell owns "what do I do next", because that drives the exercise picker and has to work
+    before the .NET runtime exists (docs/adr/0003). This is the other half: the same per-muscle,
+    fractional volume accounting the ledger uses, applied to a PLAN rather than to history --
+    so a gap is visible before six weeks of running it, not after.
+*@
+
+<h2>Your program</h2>
+
+@if (!_loaded)
+{
+    <p class="note">Reading your program&hellip;</p>
+}
+else if (_program is null)
+{
+    <p class="note" id="no-program">
+        You're not following a program. That's a perfectly good way to train &mdash; the coach
+        works from whatever you log. Pick one from the workout screen if you'd rather have the
+        sessions laid out for you.
+    </p>
+}
+else
+{
+    <p class="focus" id="program-name">@_program.Name</p>
+    <p class="verdict @(_critique.Warnings.Count == 0 ? "ok" : "gap")" id="program-verdict">
+        @_critique.Verdict
+    </p>
+
+    @if (_critique.Warnings.Count > 0)
+    {
+        <ul class="warnings" id="program-warnings">
+            @foreach (var warning in _critique.Warnings)
+            {
+                <li>@warning</li>
+            }
+        </ul>
+    }
+
+    @if (_critique.Untrained.Length > 0)
+    {
+        <p class="note small" id="program-untrained">@_critique.Untrained</p>
+    }
+
+    <h2>Sets a rotation</h2>
+    <ul class="volume" id="program-volume">
+        @foreach (var v in _critique.Volumes.OrderByDescending(v => v.WeeklySets))
+        {
+            <li class="@(v.BelowMinimum ? "short" : "")">
+                <span class="muscle">@v.Muscle.Label()</span>
+                <span class="bar"><span style="width:@Width(v)%"></span></span>
+                <span class="sets">@v.WeeklySets.ToString("0.#")</span>
+            </li>
+        }
+    </ul>
+    <p class="note small">
+        One rotation through @_program.Sessions.Count session@(_program.Sessions.Count == 1 ? "" : "s"),
+        counted the same way as your logged volume &mdash; a movement's secondary muscles get
+        half a set each. The bar marks @VolumeTarget.MinimumEffectiveDose.ToString("0") sets,
+        where growth starts.
+    </p>
+
+    <h2>Sessions</h2>
+    <ol class="sessions" id="program-sessions">
+        @foreach (var session in _program.Sessions)
+        {
+            <li>
+                <strong>@session.Name</strong>
+                <span class="sub">
+                    @string.Join(", ", session.Exercises.Select(e => $"{Catalog.NameOf(e.ExerciseId)} ×{e.Sets}"))
+                </span>
+            </li>
+        }
+    </ol>
+}
+
+<style>
+    .verdict { font-size: .85rem; line-height: 1.5; margin: 0 0 .6rem;
+               padding: .7rem .85rem; border-radius: .75rem;
+               background: var(--surface); border: 1px solid var(--border); }
+    .verdict.gap { border-color: #d97706; }
+    .note.small { font-size: .75rem; color: var(--muted); margin: 0 0 .5rem; line-height: 1.45; }
+    ul.warnings { list-style: none; margin: 0 0 .5rem; padding: 0;
+                  font-size: .8125rem; color: var(--muted); }
+    ul.warnings li { padding: .25rem 0; }
+    ul.volume { list-style: none; margin: 0; padding: 0; font-size: .8125rem; }
+    ul.volume li { display: flex; align-items: center; gap: .5rem; padding: .22rem 0; }
+    ul.volume .muscle { flex: 0 0 5.5rem; text-transform: capitalize; }
+    ul.volume .bar { flex: 1; height: .5rem; border-radius: 999px; background: var(--border);
+                     overflow: hidden; }
+    ul.volume .bar span { display: block; height: 100%; background: var(--accent); }
+    ul.volume li.short .bar span { background: #d97706; }
+    ul.volume .sets { flex: 0 0 2rem; text-align: right; color: var(--muted);
+                      font-variant-numeric: tabular-nums; }
+    ol.sessions { list-style: none; margin: 0; padding: 0; }
+    ol.sessions li { padding: .45rem 0; border-top: 1px solid var(--border); font-size: .8125rem; }
+    ol.sessions .sub { display: block; color: var(--muted); font-size: .75rem; margin-top: .15rem; }
+</style>
+
+@code {
+    private bool _loaded;
+    private TrainingProgram? _program;
+    private ProgramCritique _critique = new([], [], "", "");
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logbook.Changed += OnChanged;
+        await LoadAsync();
+    }
+
+    private void OnChanged() => _ = InvokeAsync(async () =>
+    {
+        await LoadAsync();
+        StateHasChanged();
+    });
+
+    private async Task LoadAsync()
+    {
+        _program = await Logbook.GetActiveProgramAsync();
+
+        if (_program is not null)
+        {
+            var phase = await Logbook.GetPhaseAsync(DateOnly.FromDateTime(DateTime.Now));
+            var experience = await Logbook.GetExperienceAsync();
+            _critique = Analyzer.Critique(_program, Catalog, VolumeTarget.For(experience, phase.Balance));
+        }
+
+        _loaded = true;
+    }
+
+    /// <summary>
+    /// Bar width relative to the effective dose, capped. Scaling to the largest value instead
+    /// would make a program with one very heavily trained muscle look like everything else was
+    /// neglected, which is a different claim from the one being made.
+    /// </summary>
+    private static double Width(PlannedMuscleVolume v) =>
+        Math.Min(100, 100 * v.WeeklySets / (VolumeTarget.MinimumEffectiveDose * 2));
+
+    public void Dispose() => Logbook.Changed -= OnChanged;
+}

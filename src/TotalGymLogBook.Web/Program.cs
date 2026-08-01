@@ -36,6 +36,7 @@ using (var http = new HttpClient { BaseAddress = new Uri(builder.HostEnvironment
 builder.Services.AddSingleton<Logbook>();
 builder.Services.AddSingleton<ProgressionEngine>();
 builder.Services.AddSingleton<SessionAdvisor>();
+builder.Services.AddSingleton<ProgramAnalyzer>();
 
 var host = builder.Build();
 

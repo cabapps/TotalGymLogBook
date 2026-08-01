@@ -112,6 +112,11 @@ export async function listMachinesJson(): Promise<string> {
   return json(await repo.listMachines());
 }
 
+/** The program the trainee is following, or null. */
+export async function getActiveProgramJson(): Promise<string> {
+  return json((await repo.getActiveProgram()) ?? null);
+}
+
 /** What the trainee has selected in the logger, so the coach can advise on THAT exercise. */
 export function getFocusJson(): string {
   return json(getFocus());
@@ -162,6 +167,7 @@ export function installBridge(): void {
     purgeEmptySessionsJson,
     getSettingsJson,
     listMachinesJson,
+    getActiveProgramJson,
     getFocusJson,
     subscribeToChanges,
   };

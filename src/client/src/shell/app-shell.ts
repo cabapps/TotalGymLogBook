@@ -14,6 +14,7 @@
 import * as db from '../db/repository.js';
 import { ExerciseCatalog } from '../exercises.js';
 import { RailProfileTable } from '../profiles.js';
+import { ProgramLibrary } from '../programs.js';
 import { toIsoDate, type SessionRecord } from '../db/schema.js';
 import type { RailProfile } from '../resistance.js';
 import type { SetLogger } from './set-logger.js';
@@ -21,12 +22,33 @@ import type { SessionList } from './session-list.js';
 import type { RestTimer } from './rest-timer.js';
 import type { WeighIn } from './weigh-in.js';
 import type { Equipment } from './equipment.js';
+import type { ProgramPanel } from './program-panel.js';
+import type { ExerciseEditor } from './exercise-editor.js';
 import { smoothedLb, toReadings } from '../bodyweight.js';
+import type { CustomExerciseRecord } from '../db/schema.js';
+import type { Exercise } from '../exercises.js';
+
+/** A stored custom exercise as the catalog wants it. Same shape, different provenance. */
+function toExercise(record: CustomExerciseRecord): Exercise {
+  return {
+    id: record.id,
+    name: record.name,
+    category: record.category,
+    kind: record.kind,
+    usesPulley: record.usesPulley,
+    bodyFraction: record.bodyFraction,
+    attachment: record.attachment,
+    cue: record.cue,
+    muscles: record.muscles,
+  };
+}
 
 import './set-logger.js';
 import './session-list.js';
 import './rest-timer.js';
 import './weigh-in.js';
+import './program-panel.js';
+import './exercise-editor.js';
 import './equipment.js';
 import './data-safety.js';
 
@@ -63,6 +85,9 @@ styles.replaceSync(`
 export class AppShell extends HTMLElement {
   #root: ShadowRoot;
   #catalog?: ExerciseCatalog;
+  /** The shipped catalog, kept separately so re-merging cannot stack custom entries. */
+  #builtIn?: ExerciseCatalog;
+  #library?: ProgramLibrary;
   #profiles?: RailProfileTable;
   #profile?: RailProfile;
   #machineId?: string;
@@ -83,11 +108,18 @@ export class AppShell extends HTMLElement {
   async connectedCallback(): Promise<void> {
     this.#root.innerHTML = `<p class="sub">Loading&hellip;</p>`;
 
-    const [catalog, profilesJson] = await Promise.all([
+    const [catalog, profilesJson, library, custom] = await Promise.all([
       ExerciseCatalog.load(),
       fetch('data/rail-profiles.json').then((r) => r.text()),
+      ProgramLibrary.load(),
+      db.listCustomExercises(),
     ]);
-    this.#catalog = catalog;
+
+    // The trainee's own movements merge into the shipped catalog, so everything downstream --
+    // picker, load calculation, program plans -- sees one list.
+    this.#builtIn = catalog;
+    this.#catalog = catalog.withCustom(custom.map(toExercise));
+    this.#library = library;
     this.#profiles = RailProfileTable.parse(profilesJson);
 
     await this.#route();
@@ -129,10 +161,15 @@ export class AppShell extends HTMLElement {
    * Creates the session on demand. Called when a set is about to be logged, never on load.
    */
   async #ensureSession(): Promise<string> {
+    // The plan is stamped on at creation, which is what lets the rotation be derived from
+    // history later rather than tracked by a cursor that drifts.
+    const plan = (this.#root.getElementById('program') as ProgramPanel | null)?.plan;
+
     this.#session ??= await db.startSession({
       machineId: this.#machineId!,
       bodyweightRawLb: this.#bodyweightRawLb,
       bodyweightSmoothedLb: this.#bodyweightLb,
+      ...(plan ?? {}),
     });
     return this.#session.id;
   }
@@ -241,12 +278,14 @@ export class AppShell extends HTMLElement {
 
       <tg-rest-timer id="timer" hidden></tg-rest-timer>
       <tg-weigh-in id="weight"></tg-weigh-in>
+      <tg-program-panel id="program"></tg-program-panel>
       <tg-set-logger id="logger"></tg-set-logger>
       <tg-session-list id="list"></tg-session-list>
 
       <button class="ghost" id="finish">Finish workout</button>
 
       <tg-equipment id="equipment"></tg-equipment>
+      <tg-exercise-editor id="editor"></tg-exercise-editor>
 
       <!-- Blazor's #blazor-root is projected here (see index.html). The coach and history are
            the payoff for logging, so they sit directly under the workout rather than below the
@@ -272,6 +311,40 @@ export class AppShell extends HTMLElement {
       sessionId: () => this.#ensureSession(),
     });
 
+    const program = this.#root.getElementById('program') as ProgramPanel;
+    program.configure({ catalog: this.#catalog!, library: this.#library! });
+
+    // Tapping a planned movement selects it. The plan drives the picker; it never replaces it.
+    program.addEventListener('plan-exercise-picked', (event) => {
+      const { exerciseId } = (event as CustomEvent<{ exerciseId: string }>).detail;
+      logger.selectExercise(exerciseId);
+    });
+
+    const editor = this.#root.getElementById('editor') as ExerciseEditor;
+    editor.configure({
+      catalog: this.#catalog!,
+      profile: this.#profile!,
+      bodyweightLb: this.#bodyweightLb,
+    });
+
+    // A new movement has to reach the picker, the plan, and the load calculation at once, so
+    // the merged catalog is rebuilt rather than patched.
+    editor.addEventListener('exercises-changed', async () => {
+      const custom = await db.listCustomExercises();
+      this.#catalog = this.#builtIn!.withCustom(custom.map(toExercise));
+
+      logger.configure({
+        catalog: this.#catalog,
+        profile: this.#profile!,
+        bodyweightLb: this.#bodyweightLb,
+        bodyweightRawLb: this.#bodyweightRawLb,
+        ...(this.#owned !== undefined && { ownedAttachments: this.#owned }),
+        sessionId: () => this.#ensureSession(),
+      });
+      program.configure({ catalog: this.#catalog, library: this.#library! });
+      list.configure({ catalog: this.#catalog, ...(this.#session && { sessionId: this.#session.id }) });
+    });
+
     const equipment = this.#root.getElementById('equipment') as Equipment;
     equipment.configure({ catalog: this.#catalog! });
 
@@ -287,6 +360,7 @@ export class AppShell extends HTMLElement {
     logger.addEventListener('set-logged', () => {
       timer.start(DEFAULT_REST_SECONDS);
       if (this.#session) list.configure({ catalog: this.#catalog!, sessionId: this.#session.id });
+      void program.refresh();
     });
 
     // A weigh-in changes every load figure, so push the new value straight into the logger

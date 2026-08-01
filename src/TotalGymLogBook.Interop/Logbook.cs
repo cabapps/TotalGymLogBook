@@ -112,6 +112,15 @@ public sealed class Logbook
         return LogbookMapper.ParseFocusExerciseId(json);
     }
 
+    /// <summary>The program the trainee is following, or null. Uncached: it is one small row.</summary>
+    public async Task<TrainingProgram?> GetActiveProgramAsync()
+    {
+        await DbBridge.EnsureImportedAsync();
+
+        var dto = LogbookMapper.ParseProgram(await DbBridge.GetActiveProgramJson());
+        return dto is null ? null : LogbookMapper.ToProgram(dto);
+    }
+
     public async Task<SettingsDto> GetSettingsAsync()
     {
         await DbBridge.EnsureImportedAsync();

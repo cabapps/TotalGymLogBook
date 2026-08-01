@@ -45,6 +45,20 @@ public static class LogbookMapper
             ? null
             : JsonSerializer.Deserialize(json, LogbookJson.Default.FocusDto)?.ExerciseId) ?? "";
 
+    public static ProgramDto? ParseProgram(string? json) =>
+        string.IsNullOrWhiteSpace(json) || json == "null"
+            ? null
+            : JsonSerializer.Deserialize(json, LogbookJson.Default.ProgramDto);
+
+    /// <summary>The stored shape into the domain shape. No behavior, just a boundary crossing.</summary>
+    public static TrainingProgram ToProgram(ProgramDto dto) =>
+        new(dto.Id, dto.Name,
+            dto.Sessions
+                .Select(s => new Training.ProgramSession(
+                    s.Id, s.Name,
+                    s.Exercises.Select(e => new PlannedExercise(e.ExerciseId, e.Sets)).ToList()))
+                .ToList());
+
     public static SessionDto? ParseSession(string? json) =>
         string.IsNullOrWhiteSpace(json) || json == "null"
             ? null

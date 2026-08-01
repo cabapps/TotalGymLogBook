@@ -101,6 +101,28 @@ public sealed record SettingsDto
     [JsonPropertyName("ownedAttachments")] public string[]? OwnedAttachments { get; init; }
 }
 
+public sealed record PlannedExerciseDto
+{
+    [JsonPropertyName("exerciseId")] public string ExerciseId { get; init; } = "";
+    [JsonPropertyName("sets")] public int Sets { get; init; }
+}
+
+public sealed record ProgramSessionDto
+{
+    [JsonPropertyName("id")] public string Id { get; init; } = "";
+    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("exercises")] public IReadOnlyList<PlannedExerciseDto> Exercises { get; init; } = [];
+}
+
+public sealed record ProgramDto
+{
+    [JsonPropertyName("id")] public string Id { get; init; } = "";
+    [JsonPropertyName("name")] public string Name { get; init; } = "";
+    [JsonPropertyName("description")] public string Description { get; init; } = "";
+    [JsonPropertyName("sessions")] public IReadOnlyList<ProgramSessionDto> Sessions { get; init; } = [];
+    [JsonPropertyName("isActive")] public bool IsActive { get; init; }
+}
+
 /// <summary>In-flight shell state, not a stored record. See src/client/src/focus.ts.</summary>
 public sealed record FocusDto
 {
@@ -127,4 +149,5 @@ public sealed record FocusDto
 [JsonSerializable(typeof(IReadOnlyList<MachineDto>))]
 [JsonSerializable(typeof(SettingsDto))]
 [JsonSerializable(typeof(FocusDto))]
+[JsonSerializable(typeof(ProgramDto))]
 public sealed partial class LogbookJson : JsonSerializerContext;

@@ -123,6 +123,28 @@ export class SetLogger extends HTMLElement {
     this.#render();
   }
 
+  /**
+   * Selects a movement from outside the picker -- tapping an item in today's plan.
+   *
+   * Falls back to adding it if the equipment filter has hidden it: a planned movement the
+   * trainee explicitly asked for must be loggable, or the plan has an item they cannot action.
+   */
+  selectExercise(exerciseId: string): void {
+    if (!this.#catalog?.tryGet(exerciseId)) return;
+
+    this.#state.exerciseId = exerciseId;
+
+    const select = this.#root.getElementById('exercise') as HTMLSelectElement | null;
+    if (select && select.querySelector(`option[value="${exerciseId}"]`)) {
+      select.value = exerciseId;
+      this.#update();
+    } else {
+      this.#render();
+    }
+
+    void this.#assist.setExercise(exerciseId);
+  }
+
   /** Keeps the selected exercise pointing at something that is actually in the list. */
   #repairSelection(): void {
     const available = this.#catalog!.available(this.#owned);
@@ -131,6 +153,22 @@ export class SetLogger extends HTMLElement {
     if (!stillThere) {
       this.#state.exerciseId = available[0]?.id ?? this.#catalog!.all[0]!.id;
     }
+  }
+
+  /**
+   * Options for the picker: what the trainee owns, plus the current selection even when the
+   * filter would exclude it. Without the exception, picking a planned movement they lack the
+   * accessory for would silently snap back to something else.
+   */
+  #pickable(): ReadonlyMap<string, readonly import('../exercises.js').Exercise[]> {
+    const groups = new Map(this.#catalog!.grouped(this.#owned));
+    const selected = this.#catalog!.tryGet(this.#state.exerciseId);
+
+    if (selected && ![...groups.values()].some((g) => g.some((e) => e.id === selected.id))) {
+      groups.set(selected.category, [...(groups.get(selected.category) ?? []), selected]);
+    }
+
+    return groups;
   }
 
   /** Applied after a weigh-in, so the load readout reflects it without losing UI state. */
@@ -169,7 +207,6 @@ export class SetLogger extends HTMLElement {
   }
 
   #render(): void {
-    const catalog = this.#catalog!;
     const profile = this.#profile!;
     const s = this.#state;
 
@@ -177,7 +214,7 @@ export class SetLogger extends HTMLElement {
       <div class="card">
         <label for="exercise">Exercise</label>
         <select id="exercise">
-          ${[...catalog.grouped(this.#owned)]
+          ${[...this.#pickable()]
             .map(
               ([category, exercises]) => `
                 <optgroup label="${category}">
