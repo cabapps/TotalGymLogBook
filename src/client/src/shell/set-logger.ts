@@ -13,6 +13,9 @@ import { computeResistance, type RailProfile } from '../resistance.js';
 import type { Exercise, ExerciseCatalog } from '../exercises.js';
 import * as db from '../db/repository.js';
 import { FORMULA_VERSION, PULLEY_FACTOR_CABLE, PULLEY_FACTOR_DIRECT } from '../resistance.js';
+import type { RepAssist } from './rep-assist.js';
+
+import './rep-assist.js';
 
 /** In-flight UI state. sessionStorage per docs/adr/0005: fast, and gone when the tab closes. */
 const UI_KEY = 'tg.logger';
@@ -169,6 +172,7 @@ export class SetLogger extends HTMLElement {
           <input type="number" id="reps" min="1" max="100" value="${s.reps}" />
           <button id="plus" aria-label="One more rep">+</button>
         </div>
+        <tg-rep-assist id="assist"></tg-rep-assist>
 
         <div class="row">
           <div>
@@ -190,6 +194,7 @@ export class SetLogger extends HTMLElement {
 
     on('exercise', 'change', () => {
       s.exerciseId = (this.#root.getElementById('exercise') as HTMLSelectElement).value;
+      void this.#assist.setExercise(s.exerciseId);
       this.#update();
     });
     on('level', 'input', () => {
@@ -198,6 +203,7 @@ export class SetLogger extends HTMLElement {
     });
     on('reps', 'input', () => {
       s.reps = Number((this.#root.getElementById('reps') as HTMLInputElement).value) || 1;
+      this.#assist.syncCount(s.reps);
       this.#update();
     });
     on('vest', 'input', () => {
@@ -212,12 +218,31 @@ export class SetLogger extends HTMLElement {
     on('plus', 'click', () => this.#nudgeReps(1));
     on('log', 'click', () => void this.#logSet());
 
+    // An automatic source proposes; the field is still the truth, and the stepper still works
+    // while it runs (docs/adr/0006 rule 3).
+    this.#assist.addEventListener('reps-detected', (event) => {
+      const { count } = (event as CustomEvent<{ count: number }>).detail;
+      if (count > 0) this.#setReps(count);
+    });
+    void this.#assist.setExercise(s.exerciseId);
+
     this.#update();
   }
 
+  get #assist(): RepAssist {
+    return this.#root.getElementById('assist') as RepAssist;
+  }
+
   #nudgeReps(delta: number): void {
-    this.#state.reps = Math.max(1, this.#state.reps + delta);
-    (this.#root.getElementById('reps') as HTMLInputElement).value = String(this.#state.reps);
+    this.#setReps(Math.max(1, this.#state.reps + delta));
+    // A manual correction re-anchors the counter, so the next spoken number is measured against
+    // what the trainee can actually see rather than against a stale internal total.
+    this.#assist.syncCount(this.#state.reps);
+  }
+
+  #setReps(reps: number): void {
+    this.#state.reps = reps;
+    (this.#root.getElementById('reps') as HTMLInputElement).value = String(reps);
     this.#update();
   }
 
@@ -262,6 +287,10 @@ export class SetLogger extends HTMLElement {
         computedLb: Math.round(this.#computedLb() * 10) / 10,
         formulaVersion: FORMULA_VERSION,
       });
+
+      // The next set counts from zero. The source keeps running -- the trainee is mid-workout,
+      // and making them re-grant the microphone between sets would defeat the point.
+      this.#assist.reset();
 
       this.dispatchEvent(
         new CustomEvent('set-logged', { bubbles: true, composed: true, detail: { exerciseId: e.id } }),

@@ -388,6 +388,105 @@ async function main() {
   await safariPage.screenshot({ path: join(SHOTS, '08-no-idle-callback.png'), fullPage: true });
   await safariCtx.close();
 
+  // ---- Rep assist: motion counting, end to end ----
+  //
+  // The detector's arithmetic is covered by unit tests against synthetic waveforms. What only a
+  // browser can check is the chain around it: permission gate, devicemotion listener, counter
+  // guards, the custom event, and the reps field actually moving.
+  //
+  // Needs a touch-capable context. Motion assist deliberately hides itself on desktop, where
+  // DeviceMotionEvent is defined but never fires -- offering a mode that silently does nothing
+  // is worse than not offering it.
+  console.log('\nRep assist (motion):');
+  const phoneCtx = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  const phone = await phoneCtx.newPage();
+  const phoneErrors = [];
+  phone.on('pageerror', (e) => phoneErrors.push(e.message));
+
+  await phone.goto(URL, { waitUntil: 'domcontentloaded' });
+  await phone.waitForSelector('#bw', { timeout: 30_000 });
+  await phone.selectOption('#notches', { label: '14 levels' });
+  await phone.click('#start');
+  await phone.waitForSelector('tg-set-logger #log', { timeout: 30_000 });
+
+  const motionButton = phone.locator('tg-rep-assist #mode-motion');
+  const voiceButton = phone.locator('tg-rep-assist #mode-voice');
+  check('offers motion counting on a touch device', (await motionButton.count()) === 1);
+  check('offers voice counting where recognition exists', (await voiceButton.count()) === 1);
+
+  await motionButton.click();
+  const armed = await phone.locator('tg-rep-assist #mode-motion').getAttribute('aria-pressed');
+  check('motion assist arms on tap', armed === 'true');
+
+  // Four reps of a clean glideboard waveform, dispatched in real time. Real time matters: the
+  // plausibility filter is a wall-clock refractory period, so replaying the trace instantly
+  // would be correctly rejected as impossibly fast.
+  const REPS = 4;
+  await phone.evaluate(
+    async ({ cycles, periodMs }) => {
+      const step = 1000 / 60;
+      const total = cycles * periodMs;
+      const startedAt = performance.now();
+
+      await new Promise((resolve) => {
+        const id = setInterval(() => {
+          const t = performance.now() - startedAt;
+          if (t >= total) {
+            clearInterval(id);
+            resolve();
+            return;
+          }
+          const motion = 2.5 * Math.sin((2 * Math.PI * t) / periodMs);
+          window.dispatchEvent(
+            new DeviceMotionEvent('devicemotion', {
+              accelerationIncludingGravity: { x: 0, y: 0, z: 9.81 + motion },
+              interval: step,
+            }),
+          );
+        }, step);
+      });
+    },
+    { cycles: REPS, periodMs: 1600 },
+  );
+
+  const counted = Number(await phone.locator('tg-set-logger #reps').inputValue());
+  check('counts reps from the accelerometer', counted >= REPS - 1 && counted <= REPS, `${counted} reps`);
+
+  const assistStatus = await phone.locator('tg-rep-assist #status').innerText();
+  check('shows the running count', /Counted/.test(assistStatus), assistStatus.trim());
+
+  await phone.screenshot({ path: join(SHOTS, '09-rep-assist.png'), fullPage: true });
+
+  // Rule 3: the stepper stays live while a source runs, so a miscount is always one tap from
+  // being right.
+  await phone.locator('tg-set-logger #plus').click();
+  const corrected = Number(await phone.locator('tg-set-logger #reps').inputValue());
+  check('manual correction still works while counting', corrected === counted + 1, `${corrected} reps`);
+
+  // ...and the counter re-anchors to it, rather than fighting the trainee back down.
+  await phone.evaluate(() => {
+    window.dispatchEvent(
+      new DeviceMotionEvent('devicemotion', {
+        accelerationIncludingGravity: { x: 0, y: 0, z: 9.81 },
+        interval: 16,
+      }),
+    );
+  });
+  const afterCorrection = Number(await phone.locator('tg-set-logger #reps').inputValue());
+  check('correction is not overwritten', afterCorrection === corrected, `${afterCorrection} reps`);
+
+  await phone.locator('tg-set-logger #log').click();
+  await phone.waitForSelector('tg-session-list li', { timeout: 10_000 });
+  const loggedReps = await phone.locator('tg-session-list .reps').first().innerText();
+  check('the counted set logs with the counted reps', loggedReps === String(corrected), loggedReps);
+
+  check('no page errors during rep assist', phoneErrors.length === 0, phoneErrors.slice(0, 2).join(' | '));
+  await phoneCtx.close();
+
   console.log('\nConsole:');
   check('no console errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 

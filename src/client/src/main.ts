@@ -35,6 +35,18 @@ registerServiceWorker();
 
 export { AppShell } from './shell/app-shell.js';
 export { UpdateBanner } from './shell/update-banner.js';
+export { RepAssist, type AssistMode } from './shell/rep-assist.js';
+export {
+  MAX_REPS,
+  MAX_SPOKEN_JUMP,
+  MIN_REP_MS,
+  RepCounter,
+  type RepEvent,
+  type RepSource,
+} from './reps/counter.js';
+export { MotionRepSource, RepDetector } from './reps/motion.js';
+export { VoiceRepSource } from './reps/voice.js';
+export { highestSpokenNumber, parseSpokenNumbers } from './reps/numerals.js';
 export { applyUpdate, isUpdateReady, registerServiceWorker } from './updates.js';
 
 export * as db from './db/repository.js';
