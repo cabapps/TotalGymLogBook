@@ -77,6 +77,32 @@ export async function listSessionsJson(sinceMs = 0): Promise<string> {
   return json(await repo.listSessions(sinceMs || undefined));
 }
 
+/**
+ * Sessions with their sets, newest first. One call rather than N+1 across the interop
+ * boundary, which matters because the history view needs every session at once.
+ */
+export async function getSessionHistoryJson(days = 365): Promise<string> {
+  const since = Date.now() - days * 86_400_000;
+  const sessions = await repo.listSessions(since);
+
+  const out = [];
+  for (const session of sessions) {
+    const sets = await repo.getSessionSets(session.id);
+    out.push({ session, sets });
+  }
+  return json(out);
+}
+
+/** Soft-deletes a session and its sets. Returns how many sets went with it. */
+export async function deleteSessionJson(sessionId: string): Promise<string> {
+  return json({ deletedSets: await repo.deleteSession(sessionId) });
+}
+
+/** Clears sessions that were opened but never used. Returns how many were removed. */
+export async function purgeEmptySessionsJson(): Promise<string> {
+  return json({ purged: await repo.purgeEmptySessions() });
+}
+
 export async function getSettingsJson(): Promise<string> {
   return json(await repo.getSettings());
 }
@@ -114,6 +140,9 @@ export function installBridge(): void {
     getActiveSessionJson,
     getSessionSetsJson,
     listSessionsJson,
+    getSessionHistoryJson,
+    deleteSessionJson,
+    purgeEmptySessionsJson,
     getSettingsJson,
     listMachinesJson,
     subscribeToChanges,

@@ -28,6 +28,9 @@ public static class LogbookMapper
     public static IReadOnlyList<SessionDto> ParseSessions(string? json) =>
         Deserialize(json, LogbookJson.Default.IReadOnlyListSessionDto);
 
+    public static IReadOnlyList<SessionWithSetsDto> ParseSessionHistory(string? json) =>
+        Deserialize(json, LogbookJson.Default.IReadOnlyListSessionWithSetsDto);
+
     public static IReadOnlyList<MachineDto> ParseMachines(string? json) =>
         Deserialize(json, LogbookJson.Default.IReadOnlyListMachineDto);
 

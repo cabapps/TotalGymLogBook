@@ -43,7 +43,7 @@ styles.replaceSync(`
 export class SessionList extends HTMLElement {
   #root: ShadowRoot;
   #catalog?: ExerciseCatalog;
-  #sessionId?: string;
+  #sessionId: string | undefined;
   #unsubscribe?: () => void;
 
   constructor() {
@@ -52,7 +52,7 @@ export class SessionList extends HTMLElement {
     this.#root.adoptedStyleSheets = [styles];
   }
 
-  configure(opts: { catalog: ExerciseCatalog; sessionId: string }): void {
+  configure(opts: { catalog: ExerciseCatalog; sessionId?: string }): void {
     this.#catalog = opts.catalog;
     this.#sessionId = opts.sessionId;
     void this.refresh();

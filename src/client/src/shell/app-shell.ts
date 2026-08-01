@@ -63,11 +63,12 @@ export class AppShell extends HTMLElement {
   #catalog?: ExerciseCatalog;
   #profiles?: RailProfileTable;
   #profile?: RailProfile;
+  #machineId?: string;
   /** Smoothed -- what the resistance calculation uses (docs/adr/0004). */
   #bodyweightLb = 0;
   /** Raw latest scale reading, snapshotted alongside for auditability. */
   #bodyweightRawLb = 0;
-  #session?: SessionRecord;
+  #session: SessionRecord | undefined;
 
   constructor() {
     super();
@@ -108,13 +109,27 @@ export class AppShell extends HTMLElement {
       return;
     }
 
-    this.#session = await db.startSession({
-      machineId: machine.id,
+    // Sessions are created LAZILY, on the first logged set -- see #ensureSession.
+    //
+    // Creating one here meant every app open produced a session, so glancing at the app and
+    // closing it left an empty 'active' session that later surfaced as "you have an unfinished
+    // workout". Opening the app is not starting a workout.
+    this.#machineId = machine.id;
+    this.#session = await db.getActiveSession();
+
+    this.#renderWorkout();
+  }
+
+  /**
+   * Creates the session on demand. Called when a set is about to be logged, never on load.
+   */
+  async #ensureSession(): Promise<string> {
+    this.#session ??= await db.startSession({
+      machineId: this.#machineId!,
       bodyweightRawLb: this.#bodyweightRawLb,
       bodyweightSmoothedLb: this.#bodyweightLb,
     });
-
-    this.#renderWorkout();
+    return this.#session.id;
   }
 
   /**
@@ -152,10 +167,6 @@ export class AppShell extends HTMLElement {
           )
           .join('')}
       </select>
-      <p class="sub" style="margin:.4rem 0 0">
-        Count them on the tower &mdash; model names are unreliable. The FIT and FIT Anniversary
-        share a name but have 12 and 14.
-      </p>
 
       <label for="goal">What are you working toward?</label>
       <select id="goal">
@@ -241,12 +252,17 @@ export class AppShell extends HTMLElement {
       profile: this.#profile!,
       bodyweightLb: this.#bodyweightLb,
       bodyweightRawLb: this.#bodyweightRawLb,
-      sessionId: this.#session!.id,
+      // Resolved at log time, so no session exists until the trainee actually works.
+      sessionId: () => this.#ensureSession(),
     });
-    list.configure({ catalog: this.#catalog!, sessionId: this.#session!.id });
+    list.configure({ catalog: this.#catalog!, ...(this.#session && { sessionId: this.#session.id }) });
 
-    // Logging a set starts the rest clock. The list updates itself off the change bus.
-    logger.addEventListener('set-logged', () => timer.start(DEFAULT_REST_SECONDS));
+    // Logging a set starts the rest clock, and is also the moment the session first exists,
+    // so point the list at it now.
+    logger.addEventListener('set-logged', () => {
+      timer.start(DEFAULT_REST_SECONDS);
+      if (this.#session) list.configure({ catalog: this.#catalog!, sessionId: this.#session.id });
+    });
 
     // A weigh-in changes every load figure, so push the new value straight into the logger
     // rather than rebuilding it -- rebuilding would lose the in-flight rep count.
@@ -259,7 +275,9 @@ export class AppShell extends HTMLElement {
     });
 
     this.#root.getElementById('finish')!.addEventListener('click', async () => {
-      await db.endSession(this.#session!.id);
+      // Nothing logged means there is no session to end, which is the point of lazy creation.
+      if (this.#session) await db.endSession(this.#session.id);
+      this.#session = undefined;
       timer.stop();
       await this.#route();
     });

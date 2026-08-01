@@ -72,6 +72,13 @@ public sealed record SessionDto
     [JsonPropertyName("deletedAt")] public long? DeletedAt { get; init; }
 }
 
+/// <summary>A session together with the sets logged in it, as the history view needs it.</summary>
+public sealed record SessionWithSetsDto
+{
+    [JsonPropertyName("session")] public SessionDto Session { get; init; } = new();
+    [JsonPropertyName("sets")] public IReadOnlyList<SetLogDto> Sets { get; init; } = [];
+}
+
 public sealed record MachineDto
 {
     [JsonPropertyName("id")] public string Id { get; init; } = "";
@@ -105,6 +112,8 @@ public sealed record SettingsDto
 [JsonSerializable(typeof(IReadOnlyList<BodyweightDto>))]
 [JsonSerializable(typeof(SessionDto))]
 [JsonSerializable(typeof(IReadOnlyList<SessionDto>))]
+[JsonSerializable(typeof(SessionWithSetsDto))]
+[JsonSerializable(typeof(IReadOnlyList<SessionWithSetsDto>))]
 [JsonSerializable(typeof(MachineDto))]
 [JsonSerializable(typeof(IReadOnlyList<MachineDto>))]
 [JsonSerializable(typeof(SettingsDto))]

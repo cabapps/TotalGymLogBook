@@ -1,0 +1,265 @@
+@page "/history"
+@using TotalGymLogBook.Domain
+@using TotalGymLogBook.Domain.Persistence
+@using TotalGymLogBook.Domain.Training
+@using TotalGymLogBook.Interop
+@implements IDisposable
+@inject Logbook Logbook
+
+@*
+    History lives in Blazor because it is entirely derived: grouping, per-muscle rollups, trend
+    lines. That is the "complicated work that wants the .NET runtime" side of docs/adr/0003, and
+    it can arrive late without anyone minding.
+*@
+
+<h2>History</h2>
+
+@if (!_loaded)
+{
+    <p class="note">Reading your logbook&hellip;</p>
+}
+else if (_sessions.Count == 0)
+{
+    <p class="note" id="history-empty">
+        No workouts recorded yet. Log a set and it will show up here.
+    </p>
+}
+else
+{
+    <p class="note" id="history-summary">
+        @_sessions.Count session@(_sessions.Count == 1 ? "" : "s") &middot;
+        @_totalSets sets &middot; @($"{_totalVolume:N0}") lb of total volume
+    </p>
+
+    @* The dual-axis chart from docs/adr/0004: absolute load and bodyweight together are the
+       only honest read for anyone whose weight is deliberately changing. Hand-rolled SVG --
+       a chart library would be a CDN dependency the CSP blocks anyway. *@
+    @if (_chart.Points.Count > 1)
+    {
+        <div class="chart-wrap">
+            <svg viewBox="0 0 320 120" preserveAspectRatio="none" role="img"
+                 aria-label="Top set load and bodyweight over time" id="history-chart">
+                <polyline class="load" points="@_chart.LoadPath" />
+                @if (_chart.HasBodyweight)
+                {
+                    <polyline class="bw" points="@_chart.BodyweightPath" />
+                }
+            </svg>
+            <div class="legend">
+                <span class="k load"></span> top set (@_chart.LoadMin.ToString("0")&ndash;@_chart.LoadMax.ToString("0") lb)
+                @if (_chart.HasBodyweight)
+                {
+                    <span class="k bw"></span>
+                    <text>bodyweight (@_chart.BwMin.ToString("0")&ndash;@_chart.BwMax.ToString("0") lb)</text>
+                }
+            </div>
+            <p class="note small">@_trendNote</p>
+        </div>
+    }
+
+    <ul class="sessions">
+        @foreach (var s in _sessions)
+        {
+            <li>
+                <div class="row">
+                    <div class="when">
+                        <strong>@s.When.ToString("ddd d MMM")</strong>
+                        <span class="sub">@s.When.ToString("HH:mm") &middot; @s.Sets sets &middot; @($"{s.Volume:N0}") lb</span>
+                    </div>
+                    <button class="del" id="del-@s.Id" @onclick="() => Delete(s)">Delete</button>
+                </div>
+                <div class="exercises">@s.Summary</div>
+            </li>
+        }
+    </ul>
+}
+
+<style>
+    .tg-derived .note.small { font-size: .7rem; margin-top: .35rem; }
+    .chart-wrap {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: .75rem; padding: .75rem; margin: .75rem 0 1rem;
+    }
+    .chart-wrap svg { width: 100%; height: 120px; display: block; }
+    .chart-wrap polyline { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+    .chart-wrap polyline.load { stroke: var(--accent); }
+    .chart-wrap polyline.bw { stroke: #9aa5b1; stroke-dasharray: 3 3; }
+    .legend { font-size: .7rem; color: var(--muted); margin-top: .5rem; display: flex;
+              align-items: center; gap: .35rem; flex-wrap: wrap; }
+    .legend .k { display: inline-block; width: .8rem; height: 0; border-top: 2px solid; }
+    .legend .k.load { border-color: var(--accent); }
+    .legend .k.bw { border-color: #9aa5b1; border-top-style: dashed; margin-left: .6rem; }
+    ul.sessions { list-style: none; margin: 0; padding: 0; }
+    ul.sessions li { padding: .6rem 0; border-bottom: 1px solid var(--border); }
+    .row { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
+    .when strong { font-size: .9rem; }
+    .when .sub { display: block; color: var(--muted); font-size: .75rem; }
+    .exercises { color: var(--muted); font-size: .75rem; margin-top: .2rem; }
+    button.del {
+        font: inherit; font-size: .7rem; padding: .2rem .5rem; border-radius: .35rem;
+        border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer;
+    }
+    button.del:hover { color: #b45309; border-color: #b45309; }
+</style>
+
+@code {
+    private sealed record Row(string Id, DateTime When, int Sets, double Volume, string Summary);
+
+    private sealed record Chart(
+        IReadOnlyList<(DateOnly On, double Load, double? Bw)> Points,
+        string LoadPath, string BodyweightPath,
+        double LoadMin, double LoadMax, double BwMin, double BwMax, bool HasBodyweight)
+    {
+        public static readonly Chart Empty = new([], "", "", 0, 0, 0, 0, false);
+    }
+
+    private bool _loaded;
+    private List<Row> _sessions = [];
+    private int _totalSets;
+    private double _totalVolume;
+    private Chart _chart = Chart.Empty;
+    private string _trendNote = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        Logbook.Changed += OnChanged;
+        await LoadAsync();
+    }
+
+    private void OnChanged() => _ = InvokeAsync(async () => { await LoadAsync(); StateHasChanged(); });
+
+    private async Task LoadAsync()
+    {
+        var history = await Logbook.GetSessionHistoryAsync();
+        var trend = await Logbook.GetBodyweightTrendAsync();
+
+        _sessions = history
+            .Where(h => h.Sets.Count > 0)
+            .Select(h =>
+            {
+                var when = DateTimeOffset.FromUnixTimeMilliseconds(h.Session.StartedAt).LocalDateTime;
+                var volume = h.Sets.Sum(s => s.ComputedLb * s.Reps);
+                var names = h.Sets.Select(s => s.ExerciseId).Distinct().ToList();
+
+                return new Row(h.Session.Id, when, h.Sets.Count, volume,
+                    string.Join(", ", names.Select(Pretty)));
+            })
+            .OrderByDescending(r => r.When)
+            .ToList();
+
+        _totalSets = _sessions.Sum(r => r.Sets);
+        _totalVolume = _sessions.Sum(r => r.Volume);
+        _chart = BuildChart(history, trend);
+        _trendNote = Describe(_chart);
+        _loaded = true;
+    }
+
+    /// <summary>
+    /// Top working set per day against bodyweight. Both series are normalised to their own
+    /// range, so the SHAPES are comparable even though the units are not -- which is the point:
+    /// load falling while bodyweight falls is a very different story from load falling alone.
+    /// </summary>
+    private static Chart BuildChart(IReadOnlyList<SessionWithSetsDto> history, BodyweightTrend trend)
+    {
+        var byDay = history
+            .SelectMany(h => h.Sets)
+            .Where(s => s.DeletedAt is null)
+            .GroupBy(s => s.On)
+            .Where(g => DateOnly.TryParse(g.Key, out _))
+            .Select(g => (On: DateOnly.Parse(g.Key), Load: g.Max(s => s.ComputedLb)))
+            .OrderBy(p => p.On)
+            .ToList();
+
+        if (byDay.Count < 2) return Chart.Empty;
+
+        var readings = trend.HasAny ? trend : null;
+        var points = byDay
+            .Select(p => (p.On, p.Load, Bw: BodyweightNear(readings, p.On)))
+            .ToList();
+
+        var loadMin = points.Min(p => p.Load);
+        var loadMax = points.Max(p => p.Load);
+        var bwValues = points.Where(p => p.Bw is not null).Select(p => p.Bw!.Value).ToList();
+        var hasBw = bwValues.Count > 1;
+
+        var bwMin = hasBw ? bwValues.Min() : 0;
+        var bwMax = hasBw ? bwValues.Max() : 0;
+
+        string Path(Func<(DateOnly On, double Load, double? Bw), double?> pick, double lo, double hi)
+        {
+            var span = hi - lo;
+            var parts = new List<string>();
+            for (var i = 0; i < points.Count; i++)
+            {
+                var v = pick(points[i]);
+                if (v is null) continue;
+                var x = points.Count == 1 ? 0 : 320.0 * i / (points.Count - 1);
+                // 10..110 leaves breathing room; flat series sit in the middle rather than
+                // pinned to an edge, which would read as "at the bottom of the range".
+                var y = span <= 0 ? 60 : 110 - 100 * (v.Value - lo) / span;
+                parts.Add($"{x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)},{y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}");
+            }
+            return string.Join(" ", parts);
+        }
+
+        return new Chart(points,
+            Path(p => p.Load, loadMin, loadMax),
+            hasBw ? Path(p => p.Bw, bwMin, bwMax) : "",
+            loadMin, loadMax, bwMin, bwMax, hasBw);
+    }
+
+    /// <summary>Nearest weigh-in within a week; bodyweight is not recorded every training day.</summary>
+    private static double? BodyweightNear(BodyweightTrend? trend, DateOnly on)
+    {
+        if (trend is null || !trend.HasAny) return null;
+
+        var readings = trend.Readings
+            .Where(r => Math.Abs(r.On.DayNumber - on.DayNumber) <= 7)
+            .OrderBy(r => Math.Abs(r.On.DayNumber - on.DayNumber))
+            .ToList();
+
+        return readings.Count > 0 ? readings[0].Lb : null;
+    }
+
+    /// <summary>
+    /// The reading that matters, in plain language. docs/adr/0004: load falling while
+    /// bodyweight falls is maintained strength, not regression.
+    /// </summary>
+    private static string Describe(Chart chart)
+    {
+        if (chart.Points.Count < 2) return "";
+
+        var first = chart.Points[0];
+        var last = chart.Points[^1];
+        var loadDelta = last.Load - first.Load;
+
+        if (!chart.HasBodyweight || first.Bw is null || last.Bw is null)
+        {
+            return loadDelta >= 0
+                ? $"Top set is up {loadDelta:0.#} lb since you started logging."
+                : $"Top set is down {Math.Abs(loadDelta):0.#} lb. Weigh in regularly and the coach can tell you whether that is bodyweight or strength.";
+        }
+
+        var bwDelta = last.Bw.Value - first.Bw.Value;
+
+        return (loadDelta, bwDelta) switch
+        {
+            ( >= 0, <= -1) => $"Your top set held or rose while you lost {Math.Abs(bwDelta):0.#} lb. That is the win.",
+            ( < 0, <= -1) => $"Top set is down {Math.Abs(loadDelta):0.#} lb, but so is your bodyweight, by {Math.Abs(bwDelta):0.#} lb. On this machine that is expected, not lost strength.",
+            ( > 0, >= 1) => $"Top set is up {loadDelta:0.#} lb and you are {bwDelta:0.#} lb heavier, so some of that is the extra bodyweight.",
+            _ => $"Top set has moved {loadDelta:+0.#;-0.#;0} lb with your weight steady, so that is a real change.",
+        };
+    }
+
+    private static string Pretty(string exerciseId) =>
+        string.Join(' ', exerciseId.Split('-').Select(w => char.ToUpperInvariant(w[0]) + w[1..]));
+
+    private async Task Delete(Row row)
+    {
+        await Logbook.DeleteSessionAsync(row.Id);
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    public void Dispose() => Logbook.Changed -= OnChanged;
+}

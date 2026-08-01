@@ -66,7 +66,7 @@ export class SetLogger extends HTMLElement {
   #bodyweightLb = 180;
   /** Raw scale reading, stored alongside for auditability. */
   #bodyweightRawLb = 180;
-  #sessionId?: string;
+  #resolveSessionId?: () => Promise<string>;
   #state: UiState = { exerciseId: '', level: 8, reps: 10, vestLb: 0, barLb: 0 };
 
   constructor() {
@@ -83,13 +83,14 @@ export class SetLogger extends HTMLElement {
     bodyweightLb: number;
     /** Raw scale reading, snapshotted for auditability. */
     bodyweightRawLb?: number;
-    sessionId: string;
+    /** Resolved at log time so a session is only created once the trainee actually works. */
+    sessionId: () => Promise<string>;
   }): void {
     this.#catalog = opts.catalog;
     this.#profile = opts.profile;
     this.#bodyweightLb = opts.bodyweightLb;
     this.#bodyweightRawLb = opts.bodyweightRawLb ?? opts.bodyweightLb;
-    this.#sessionId = opts.sessionId;
+    this.#resolveSessionId = opts.sessionId;
 
     this.#state = { ...this.#state, ...this.#restore() };
     if (!this.#catalog.tryGet(this.#state.exerciseId)) {
@@ -245,7 +246,7 @@ export class SetLogger extends HTMLElement {
       // The full snapshot from docs/adr/0004. Historical resistance is never recomputed, so
       // every input that went into this number is frozen alongside it.
       await db.logSet({
-        sessionId: this.#sessionId!,
+        sessionId: await this.#resolveSessionId!(),
         exerciseId: e.id,
         reps: this.#state.reps,
         level: this.#state.level,

@@ -108,6 +108,34 @@ public sealed class Logbook
         return LogbookMapper.ParseMachines(await DbBridge.ListMachinesJson());
     }
 
+    public async Task<IReadOnlyList<SessionWithSetsDto>> GetSessionHistoryAsync(int days = 365)
+    {
+        await DbBridge.EnsureImportedAsync();
+        return LogbookMapper.ParseSessionHistory(await DbBridge.GetSessionHistoryJson(days));
+    }
+
+    /// <summary>Soft-deletes a session and its sets, then invalidates the caches.</summary>
+    public async Task DeleteSessionAsync(string sessionId)
+    {
+        await DbBridge.EnsureImportedAsync();
+        await DbBridge.DeleteSessionJson(sessionId);
+        _histories = null;
+    }
+
+    /// <summary>
+    /// Clears sessions opened but never used. Earlier builds created a session on every app
+    /// open, so existing logbooks are full of empties even though sessions are lazy now.
+    /// </summary>
+    public async Task<int> PurgeEmptySessionsAsync()
+    {
+        await DbBridge.EnsureImportedAsync();
+        var json = await DbBridge.PurgeEmptySessionsJson();
+        _histories = null;
+
+        using var doc = System.Text.Json.JsonDocument.Parse(json);
+        return doc.RootElement.TryGetProperty("purged", out var p) ? p.GetInt32() : 0;
+    }
+
     // ------------------------------------------------------------------ derived
 
     /// <summary>

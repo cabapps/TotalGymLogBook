@@ -72,6 +72,10 @@ public sealed class BodyweightTrend
 
     public bool HasAny => _readings.Count > 0;
 
+    /// <summary>The underlying weigh-ins, oldest first. Charting needs the raw series, not
+    /// just the derived figures.</summary>
+    public IReadOnlyList<BodyweightReading> Readings => _readings;
+
     public BodyweightReading? Latest => _readings.Count > 0 ? _readings[^1] : null;
 
     /// <summary>
