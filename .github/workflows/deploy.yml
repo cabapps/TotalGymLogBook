@@ -32,13 +32,13 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '24'
 
@@ -69,7 +69,14 @@ jobs:
           # skip_app_build is REQUIRED. Left on, the action's Oryx builder tries to build the
           # app itself and gets it wrong -- we have already published above. See docs/adr/0009.
           skip_app_build: true
-          skip_api_build: true
+          # There is no API, and an empty api_location is how you say so.
+          #
+          # This used to also pass skip_api_build, which the deployment console rejected with
+          # "Unexpected input(s) 'skip_api_build'" and then carried on -- the worst kind of
+          # wrong, because it looks like it worked. The input DOES exist on the current @v1
+          # commit, so the tag we resolved was older; either way it was never doing anything
+          # here, because skipping the Functions build is meaningless with no Functions.
+          api_location: ''
           app_location: publish/wwwroot
           output_location: ''
 
