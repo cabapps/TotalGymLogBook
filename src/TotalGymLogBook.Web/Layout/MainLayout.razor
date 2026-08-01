@@ -1,7 +1,8 @@
 @inherits LayoutComponentBase
 
 @* docs/adr/0003: Blazor owns only the region inside #blazor-root. Navigation, the tab bar,
-   and the set logger are web components living outside it. *@
+   and the set logger are web components living outside it. That root is slotted into
+   <tg-app-shell> (see index.html), so everything below inherits the shell's column width. *@
 <article class="tg-derived">
     <nav class="tg-nav">
         <NavLink href="" Match="NavLinkMatch.All">Coach</NavLink>
@@ -11,7 +12,10 @@
 </article>
 
 <style>
-    .tg-nav { display: flex; gap: .25rem; margin: 1.5rem 0 .25rem; }
+    /* The rule is the seam between the instant tier and the derived tier -- it appears when
+       Blazor arrives, so it also doubles as the "the coach is here now" cue. */
+    .tg-nav { display: flex; gap: .25rem; margin: 1.5rem 0 .25rem;
+              border-top: 1px solid var(--border); padding-top: 1rem; }
     .tg-nav a {
         font-size: .8125rem; padding: .35rem .75rem; border-radius: .5rem;
         color: var(--muted); text-decoration: none; border: 1px solid transparent;

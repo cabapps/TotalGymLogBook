@@ -66,6 +66,32 @@ two-drivers-disagreeing class of bug.
    them. Shadow DOM for encapsulation, with CSS custom properties and `::part()` exposed so
    both tiers consume identical design tokens.
 
+### Ownership is not adjacency: slot the derived tier in
+
+Read literally, rule 5 produces sibling regions — shell, then Blazor — and that is what shipped
+first. It put the coach and the history below the data-safety card, at the bottom of a page the
+trainee had already stopped scrolling. Everything worked and nobody saw it.
+
+`#blazor-root` is now a **light-DOM child of `<tg-app-shell>`**, projected through
+`<slot name="derived">` between the Finish button and the data card. Ownership is unchanged —
+Blazor still renders into that element and nothing else, the shell still never touches its
+contents — but the shell now decides *where on the page* it appears.
+
+Light DOM is what makes this safe, and it is the whole trick:
+
+- The shell rewrites its **shadow** root on every screen change. A light child is untouched by
+  that, so the .NET runtime can boot into it whenever it arrives, whatever the shell is showing.
+- `document.querySelector('#blazor-root')` still resolves, so `RootComponents.Add<App>` needs no
+  change.
+- On screens with no matching slot — onboarding, the resume prompt — the child is simply not
+  rendered. Hiding the coach mid-onboarding falls out of the platform rather than needing a
+  flag.
+
+The failure mode is silent in the other direction: drop the slot, or rename it on one side, and
+the content still exists in the DOM while rendering nowhere. `e2e/driver.mjs` therefore asserts
+*position* (`#blazor-root` sits between `#finish` and `tg-data-safety`), not presence, and
+`publish-smoke.sh` greps both halves of the name out of the published output.
+
 ## Consequences
 
 Two pieces of logic that "should" be in .NET are in TypeScript instead, because the load-time

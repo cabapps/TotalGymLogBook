@@ -276,6 +276,32 @@ async function main() {
   }
   check('Blazor booted and read the logbook', blazorOk);
 
+  // Placement, not just presence. The coach used to render after the data-safety card, below
+  // the fold, where nobody found it. #blazor-root is now a light-DOM child projected into the
+  // shell's <slot name="derived">, so this asserts the two things that can silently break:
+  // the slot is actually assigned, and the rendered result lands between Finish and the data
+  // card. Comparing element positions is the only check that fails when the slot goes missing
+  // -- unslotted content still exists in the DOM, it just stops being rendered.
+  const placement = await page.evaluate(() => {
+    const shell = document.querySelector('tg-app-shell');
+    const root = document.getElementById('blazor-root');
+    const finish = shell?.shadowRoot?.getElementById('finish');
+    const safety = shell?.shadowRoot?.querySelector('tg-data-safety');
+    const top = (el) => el?.getBoundingClientRect().top ?? NaN;
+
+    return {
+      slotted: root?.assignedSlot?.getAttribute('name') ?? null,
+      insideShell: shell?.contains(root) ?? false,
+      afterFinish: top(root) > top(finish),
+      beforeSafety: top(root) < top(safety),
+    };
+  });
+
+  check('derived tier is projected into the shell', placement.insideShell && placement.slotted === 'derived',
+    `slot=${placement.slotted}`);
+  check('coach renders under the workout, above the data card',
+    placement.afterFinish && placement.beforeSafety);
+
   const recLoad = await page.locator('#rec-load').innerText().catch(() => '');
   const recWhy = await page.locator('#rec-why').innerText().catch(() => '');
   check('coach produced a recommendation', recLoad.trim().length > 0, recLoad.replace(/\s+/g, ' '));

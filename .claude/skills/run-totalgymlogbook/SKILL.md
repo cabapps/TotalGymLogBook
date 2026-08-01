@@ -136,9 +136,10 @@ lsof -ti:5232 -sTCP:LISTEN | xargs -r kill
 
 ```bash
 dotnet test                                    # 137 xUnit
-cd src/client && npm run check                 # tsc --noEmit + 73 vitest
-tests/publish-smoke.sh                         # 15 checks on real publish output
+cd src/client && npm run check                 # tsc --noEmit + 90 vitest
+tests/publish-smoke.sh                         # 20 checks on real publish output
 node e2e/offline-check.mjs                     # 11 checks against a PUBLISHED build
+node e2e/update-check.mjs                      # 11 checks across TWO builds
 ```
 
 **`offline-check.mjs` is the one that catches what nothing else can.** It publishes and serves
@@ -146,6 +147,12 @@ statically, so it exercises the real service worker and the real fingerprinted a
 Both of the worst bugs found in this project -- a missing import map that stopped Blazor
 loading on any static host, and a stale incremental publish -- were invisible to every other
 check because `dotnet run` papers over both.
+
+**`update-check.mjs` is the only one that involves a second build,** which is where the update
+path lives: it installs a build, mutates the served worker to look like a redeploy, and drives
+detection → banner → `SKIP_WAITING` → reload. Nothing single-build can see that, and the
+failure it guards is silent — an installed iOS PWA that never leaves the version it was
+installed with.
 
 `publish-smoke.sh` is the cheap one to run before deploying — it asserts the esbuild bundle
 survived `dotnet publish`, which is a real failure mode
@@ -160,6 +167,17 @@ survived `dotnet publish`, which is a real failure mode
   `getByRole` also work; only `>>>`-style explicit piercing is unnecessary.) Plain
   `document.querySelector` from inside an `evaluate()` still won't reach in — that's a DOM
   limitation, not a Playwright one.
+
+- **Headless Chromium never fires `visibilitychange`.** `page.bringToFront()` on another tab
+  does not background the first one — the listener simply never runs, and a check waiting on it
+  fails for a reason that looks like a product bug. `update-check.mjs` dispatches the event
+  directly instead. Firing it on resume is the platform's job; what a test can verify is the
+  handler.
+
+- **A shadow-DOM host whose only content is `position: fixed` has a zero-height box,** so
+  Playwright reports it as not visible while `count()` and `evaluate()` still find it — a check
+  that fails and a click that works, in the same run. Put the `position: fixed` on `:host`
+  itself (see `update-banner.ts`), which is better for assistive tech anyway.
 
 - **Playwright's browser build number rarely matches the cache.** `npm i playwright` pulled a
   driver wanting `chromium_headless_shell-1234` while the cache held `chromium-1200`, giving

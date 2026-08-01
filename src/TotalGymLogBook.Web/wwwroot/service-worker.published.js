@@ -5,6 +5,7 @@ self.importScripts('./service-worker-assets.js');
 self.addEventListener('install', event => event.waitUntil(onInstall(event)));
 self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
 self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
+self.addEventListener('message', event => onMessage(event));
 
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
@@ -47,6 +48,27 @@ async function onActivate(event) {
     await Promise.all(cacheKeys
         .filter(key => key.startsWith(cacheNamePrefix) && key !== cacheName)
         .map(key => caches.delete(key)));
+
+    // Take over the page that just accepted the update, instead of waiting for it to navigate.
+    // src/client/src/updates.ts reloads on the resulting 'controllerchange'; without this claim
+    // that event never fires and the trainee taps Update to no effect.
+    await self.clients.claim();
+}
+
+/**
+ * The update handshake. A newly installed worker sits in 'waiting' until every client running
+ * the old one closes -- which on an iOS home-screen PWA can be never, because resuming from the
+ * app switcher does not retire the old client. The page prompts the trainee and posts this
+ * message when they accept.
+ *
+ * skipWaiting() is deliberately NOT called unconditionally at install: the _framework assets
+ * are content-fingerprinted, so swapping the cache out from under a running Blazor app can
+ * fail its next lazy fetch mid-session. See docs/adr/0008.
+ */
+function onMessage(event) {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 }
 
 async function onFetch(event) {

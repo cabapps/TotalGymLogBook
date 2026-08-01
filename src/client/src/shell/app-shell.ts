@@ -240,6 +240,14 @@ export class AppShell extends HTMLElement {
       <tg-session-list id="list"></tg-session-list>
 
       <button class="ghost" id="finish">Finish workout</button>
+
+      <!-- Blazor's #blazor-root is projected here (see index.html). The coach and history are
+           the payoff for logging, so they sit directly under the workout rather than below the
+           data card, where nobody scrolled to find them. The slot exists only on this screen:
+           an unslotted light child is not rendered, which is exactly the behaviour we want
+           during onboarding and the resume prompt. -->
+      <slot name="derived"></slot>
+
       <tg-data-safety></tg-data-safety>
     `;
 
