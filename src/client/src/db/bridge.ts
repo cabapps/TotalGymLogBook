@@ -17,6 +17,7 @@
 import * as repo from './repository.js';
 import * as backup from './backup.js';
 import { onChange } from './events.js';
+import { getFocus, onFocusChange } from '../focus.js';
 import { toIsoDate } from './schema.js';
 
 /**
@@ -111,12 +112,28 @@ export async function listMachinesJson(): Promise<string> {
   return json(await repo.listMachines());
 }
 
+/** What the trainee has selected in the logger, so the coach can advise on THAT exercise. */
+export function getFocusJson(): string {
+  return json(getFocus());
+}
+
 /**
- * Lets Blazor subscribe to the change bus once. The callback receives only a store name and
- * ids; Blazor re-reads through the functions above rather than trusting a payload.
+ * Lets Blazor subscribe once and hear about everything. The callback receives only a topic and
+ * ids; Blazor re-reads through the functions above rather than trusting a payload (docs/adr/0003
+ * rule 2).
+ *
+ * Two producers, one subscription. The database bus carries persisted writes; 'focus' carries
+ * the in-flight exercise selection, which is not persisted and must not be -- see focus.ts.
+ * Merging them here rather than adding a second [JSImport] keeps rule 3's single-bus contract.
  */
 export function subscribeToChanges(callback: (store: string, ids: string) => void): () => void {
-  return onChange((event) => callback(event.store, event.ids.join(',')));
+  const unsubscribeDb = onChange((event) => callback(event.store, event.ids.join(',')));
+  const unsubscribeFocus = onFocusChange(() => callback('focus', getFocus().exerciseId));
+
+  return () => {
+    unsubscribeDb();
+    unsubscribeFocus();
+  };
 }
 
 /**
@@ -145,6 +162,7 @@ export function installBridge(): void {
     purgeEmptySessionsJson,
     getSettingsJson,
     listMachinesJson,
+    getFocusJson,
     subscribeToChanges,
   };
 }

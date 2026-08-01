@@ -68,6 +68,69 @@ actually matters. Feed the model Tier-0's computed facts as context rather than 
 Degradation between tiers is invisible: same interface, same fact base, capability-negotiated
 implementation.
 
+## Two questions, not one
+
+The coach answers two different questions and they need different machinery, different data,
+and different placement on screen:
+
+| | Question | Engine | Unit | Scope |
+|---|---|---|---|---|
+| **Set** | "What should this set be?" | `ProgressionEngine` | reps, level, added weight | one exercise |
+| **Session** | "What's missing?" | `SessionAdvisor` | sets per muscle per week | whole body |
+
+The first shipped pinned to a hardcoded `chest-press`, which made it actively wrong the moment
+anyone trained anything else — it would advise a notch increase on the press while the trainee
+stood at the squat stand. The engine was always per-exercise; nothing ever told it *which*.
+
+### The coach does not need to predict the next exercise
+
+The obvious answer is "it needs a programme". It does not, and waiting for one was the mistake.
+
+**The trainee has already said.** They pick the exercise in the set logger before the first
+rep, so the selection *is* the answer, available with no prediction, no schedule, and no
+model. `src/client/src/focus.ts` publishes it and the derived tier follows it live.
+
+That state is deliberately **not persisted**: it is in-flight UI state per
+[0005](0005-session-state-ownership.md), and writing it to IndexedDB on every flick of a
+dropdown would push UI churn into a log designed to sync. It is also not broadcast to other
+tabs — a second tab's dropdown is not this trainee's next set.
+
+It rides the existing change bus as a `focus` topic rather than a second `[JSImport]`
+subscription, which keeps [0003](0003-blazor-web-components-boundary.md) rule 3's
+one-bus contract. `Logbook` special-cases it to *not* drop the history cache, or scrolling the
+selector would refetch the entire logbook per option.
+
+A programme, when it arrives, makes this better — it can say what is next *before* the trainee
+picks — but it was never a prerequisite.
+
+### Terminology, corrected against the literature
+
+Worth writing down, because the everyday usage and the textbook usage differ in one place that
+matters for the data model:
+
+- **Split** — how the body's musculature is divided across sessions. *Full body, upper/lower,
+  push-pull-legs are splits, not programmes.* This is the correction: they describe only the
+  division of work.
+- **Programme** — the split *plus* exercise selection, set and rep prescription, and a
+  progression scheme. PPL alone does not tell you what to do on Monday.
+- **Microcycle** — the repeating block, conventionally a week. "Week" is the right word for the
+  UI; the term is only useful for knowing that the one-week assumption is a convention and not
+  a law.
+- **Session** — correct as-is.
+- **Weekly sets per muscle** — the accepted unit of training volume in the hypertrophy
+  dose-response work, counting hard sets taken near failure. Not tonnage, not time, not
+  sessions. The framing of "hit every major muscle group for a target number of sets by the end
+  of the week" is exactly right and is the modern mainstream view.
+
+One implication for [Slice B](README.md): **order the programme by rotation, not by calendar.**
+Day-of-week scheduling breaks the first time someone trains on Tuesday instead of Monday, and a
+home-gym population misses days constantly. "Next session in the rotation" degrades gracefully;
+"it's Wednesday, do legs" nags.
+
+Frequency falls out of the split rather than needing its own setting. Total weekly volume is
+what drives growth; frequency mostly distributes it, with roughly twice a week per muscle a
+reasonable default because it is easier to do 12 quality sets across two days than one.
+
 ## Consequences
 
 `TrainingGoal` and `Phase` are short, high-signal context that keep a small model on-topic far

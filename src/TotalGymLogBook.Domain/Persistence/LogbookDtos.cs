@@ -98,6 +98,12 @@ public sealed record SettingsDto
     [JsonPropertyName("defaultMachineId")] public string? DefaultMachineId { get; init; }
 }
 
+/// <summary>In-flight shell state, not a stored record. See src/client/src/focus.ts.</summary>
+public sealed record FocusDto
+{
+    [JsonPropertyName("exerciseId")] public string? ExerciseId { get; init; }
+}
+
 /// <summary>
 /// Source-generated serialisation. Reflection-based System.Text.Json breaks under the IL
 /// trimming enabled in docs/adr/0002, and the failure only appears after publish -- never in
@@ -117,4 +123,5 @@ public sealed record SettingsDto
 [JsonSerializable(typeof(MachineDto))]
 [JsonSerializable(typeof(IReadOnlyList<MachineDto>))]
 [JsonSerializable(typeof(SettingsDto))]
+[JsonSerializable(typeof(FocusDto))]
 public sealed partial class LogbookJson : JsonSerializerContext;

@@ -71,6 +71,8 @@ check "esbuild output present"           "$WWWROOT/dist/shell.js"
 echo
 echo "Domain data:"
 check "rail-profiles.json copied"        "$WWWROOT/data/rail-profiles.json"
+# Blazor now parses this at startup too, for exercise names and per-muscle volume.
+check "exercises.json copied"            "$WWWROOT/data/exercises.json"
 
 echo
 echo "Blazor framework (.NET 10 content-fingerprints these; there is no blazor.boot.json):"

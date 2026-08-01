@@ -49,6 +49,11 @@ public sealed class Logbook
             case "bodyweight":
                 _trend = null;
                 break;
+            case "focus":
+                // The trainee changed the exercise dropdown. Nothing in the logbook moved, so
+                // dropping the caches here would refetch the entire history on every flick
+                // through the selector.
+                break;
             default:
                 _histories = null;
                 _trend = null;
@@ -94,6 +99,17 @@ public sealed class Logbook
     {
         await DbBridge.EnsureImportedAsync();
         return LogbookMapper.ParseSession(await DbBridge.GetActiveSessionJson());
+    }
+
+    /// <summary>
+    /// The exercise the trainee has selected in the logger -- what they are ABOUT to do, which
+    /// is what the coach needs to advise on. Synchronous and uncached: it is one field of
+    /// in-memory shell state, not a database read (see src/client/src/focus.ts).
+    /// </summary>
+    public string GetFocusedExerciseId()
+    {
+        var json = DbBridge.GetFocusJson();
+        return LogbookMapper.ParseFocusExerciseId(json);
     }
 
     public async Task<SettingsDto> GetSettingsAsync()
@@ -154,6 +170,39 @@ public sealed class Logbook
         }
 
         return (await GetBodyweightTrendAsync()).InferPhase(asOf);
+    }
+
+    /// <summary>
+    /// Training age, inferred from history the same way phase is (docs/adr/0010): someone with
+    /// three weeks of logs is a novice whatever they would claim. Honours the advanced
+    /// override.
+    ///
+    /// The thresholds are session counts rather than calendar time, because someone who trained
+    /// twice a month for a year is not an intermediate.
+    /// </summary>
+    public async Task<ExperienceLevel> GetExperienceAsync()
+    {
+        var settings = await GetSettingsAsync();
+
+        if (!string.IsNullOrWhiteSpace(settings.ExperienceOverride)
+            && settings.ExperienceOverride != "auto"
+            && Enum.TryParse<ExperienceLevel>(settings.ExperienceOverride, true, out var pinned))
+        {
+            return pinned;
+        }
+
+        var histories = await GetHistoriesAsync();
+        var sessions = histories
+            .SelectMany(h => h.Sets.Select(s => s.On))
+            .Distinct()
+            .Count();
+
+        return sessions switch
+        {
+            < 24 => ExperienceLevel.Novice,
+            < 100 => ExperienceLevel.Intermediate,
+            _ => ExperienceLevel.Advanced
+        };
     }
 
     public async Task<TrainingGoal> GetGoalAsync()

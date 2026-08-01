@@ -122,6 +122,32 @@ Same principle as phase. Someone with three weeks of logs is a novice regardless
 claim, and training age is derivable from weeks logged, consistency, and how quickly progression
 has stalled. Available as an advanced override alongside the phase override.
 
+**Implemented as distinct training days, not calendar time** (`Logbook.GetExperienceAsync`):
+under 24 is novice, under 100 intermediate, beyond that advanced. Someone who trained twice a
+month for a year is not an intermediate, and weeks-since-signup would say they were.
+
+### Surfaced, at last, by SessionAdvisor
+
+The ledger was built and tested and then displayed nowhere, which meant every gap it could find
+went unreported. `SessionAdvisor` turns the rollup into one line the trainee can act on —
+*"You've put 9 sets into quads this week and 1 into biceps. 3 sets of Biceps Curl would get
+biceps there."* — plus the two or three worst gaps with concrete movements against each.
+
+Three rules it inherits and one it adds:
+
+- **Never nag about a muscle never trained.** Skipping calves entirely is a programme choice,
+  not a gap. `BelowEffectiveDose` already drew that line; the advisor respects it, which also
+  means a brand-new trainee sees nothing until they have trained something at least once.
+- **Never warn about excess.** No ceiling exists to warn against.
+- **Never suggest indirect work to fill a direct gap.** Filling a biceps gap with more rows is
+  how the gap got there, so suggestions are drawn only from movements where the short muscle is
+  the prime mover.
+- **Prefer movements the trainee already knows.** Someone mid-workout wants the exercise whose
+  setup they can already do, not an introduction to a new one.
+
+The contrast line ("quads are fine, biceps are not") is only drawn when the two are at least
+four sets apart. Comparing 4.5 against 3.5 invites fixing something that is not broken.
+
 ## Phase is inferred, never asked
 
 Bodyweight over time is already required for the resistance formula. That same series determines
