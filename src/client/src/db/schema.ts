@@ -122,6 +122,12 @@ export interface SettingsRecord extends SyncFields {
   experienceOverride?: string;
   units?: 'lb' | 'kg';
   defaultMachineId?: string;
+  /**
+   * Preferred rep-counting source, keyed by exercise id. Per-exercise and not global, because
+   * motion counting works for chest press and not at all for standing cable work -- one global
+   * setting would feel broken half the time (docs/adr/0006).
+   */
+  repAssist?: Record<string, string>;
 }
 
 export type AnyRecord =
