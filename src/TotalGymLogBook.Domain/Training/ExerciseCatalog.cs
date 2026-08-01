@@ -16,17 +16,36 @@ namespace TotalGymLogBook.Domain.Training;
 /// </summary>
 public sealed class ExerciseCatalog
 {
-    private readonly Dictionary<string, Exercise> _byId;
+    /// <summary>
+    /// What an answer with no recorded version answered.
+    ///
+    /// Version 1, not 0. Those answers came from the panel that stored capability labels, and it
+    /// offered exactly the version-1 accessories — so a trainee who left the press-up bars
+    /// unticked meant it. Reading them as "answered nothing" would silently re-tick every box
+    /// they had deliberately cleared.
+    /// </summary>
+    private const int LegacyAnswerVersion = 1;
 
-    public ExerciseCatalog(IEnumerable<Exercise> exercises)
+    private readonly Dictionary<string, Exercise> _byId;
+    private readonly Dictionary<string, Accessory> _accessoryById;
+
+    public ExerciseCatalog(IEnumerable<Exercise> exercises, IEnumerable<Accessory>? accessories = null)
     {
         ArgumentNullException.ThrowIfNull(exercises);
 
         All = exercises.ToList();
+        Accessories = accessories?.ToList() ?? [];
         _byId = All.ToDictionary(e => e.Id, StringComparer.Ordinal);
+        _accessoryById = Accessories.ToDictionary(a => a.Id, StringComparer.Ordinal);
     }
 
     public IReadOnlyList<Exercise> All { get; }
+
+    /// <summary>Things a trainee can own, and what each one unlocks.</summary>
+    public IReadOnlyList<Accessory> Accessories { get; }
+
+    /// <summary>The newest accessory-registry version this catalog knows about.</summary>
+    public int AccessoryVersion => Accessories.Count == 0 ? 0 : Accessories.Max(a => a.Added);
 
     /// <summary>What <see cref="VolumeLedger"/> takes.</summary>
     public IReadOnlyDictionary<string, Exercise> ById => _byId;
@@ -44,9 +63,53 @@ public sealed class ExerciseCatalog
     public IReadOnlyList<Exercise> PrimaryFor(MuscleGroup muscle) =>
         All.Where(e => e.InvolvementOf(muscle) >= MuscleInvolvement.Direct).ToList();
 
-    /// <summary>Distinct accessories the catalog references, for the equipment picker.</summary>
+    /// <summary>Distinct capabilities the catalog's exercises ask for.</summary>
     public IReadOnlyList<string> Attachments =>
         All.Select(e => e.Attachment).OfType<string>().Distinct().Order().ToList();
+
+    /// <summary>
+    /// What a stored answer lets the trainee do.
+    ///
+    /// Entries are accessory ids. An entry matching no accessory is taken as a capability name
+    /// verbatim, which is how answers stored before the accessory registry existed keep working:
+    /// the panel used to write the requirement label itself, and those labels are still
+    /// capability names today.
+    /// </summary>
+    public IReadOnlySet<string> Capabilities(IEnumerable<string> ownedAttachments)
+    {
+        ArgumentNullException.ThrowIfNull(ownedAttachments);
+
+        var can = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var entry in ownedAttachments)
+        {
+            if (_accessoryById.TryGetValue(entry, out var accessory)) can.UnionWith(accessory.Provides);
+            else can.Add(entry);
+        }
+
+        return can;
+    }
+
+    /// <summary>
+    /// A stored answer, brought up to date with accessories added since it was given.
+    ///
+    /// SILENCE IS NOT A NO. A trainee who ticked their equipment last year answered a shorter
+    /// question than the one being asked now, so accessories added since count as owned until
+    /// they say otherwise. The alternative is that an app update quietly stops the coach
+    /// suggesting movements the trainee has been doing for months.
+    ///
+    /// Null in, null out: never configured is a different state and stays one (see
+    /// <see cref="Available"/>).
+    /// </summary>
+    public IReadOnlyCollection<string>? ResolveOwned(
+        IReadOnlyCollection<string>? ownedAttachments, int? answeredVersion = null)
+    {
+        if (ownedAttachments is null) return null;
+
+        var answered = answeredVersion ?? LegacyAnswerVersion;
+        var unanswered = Accessories.Where(a => a.Added > answered).Select(a => a.Id);
+        return new HashSet<string>(ownedAttachments.Concat(unanswered), StringComparer.Ordinal);
+    }
 
     /// <summary>
     /// Only what the trainee can actually do with the accessories they own.
@@ -59,8 +122,8 @@ public sealed class ExerciseCatalog
     {
         if (ownedAttachments is null) return All;
 
-        var owned = new HashSet<string>(ownedAttachments, StringComparer.OrdinalIgnoreCase);
-        return All.Where(e => e.Attachment is null || owned.Contains(e.Attachment)).ToList();
+        var can = Capabilities(ownedAttachments);
+        return All.Where(e => e.Attachment is null || can.Contains(e.Attachment)).ToList();
     }
 
     public static ExerciseCatalog Parse(string json)
@@ -73,7 +136,12 @@ public sealed class ExerciseCatalog
         var document = JsonSerializer.Deserialize(json, ExerciseCatalogJson.Default.CatalogDocument)
             ?? throw new FormatException("Exercise catalog is empty.");
 
-        return new ExerciseCatalog(document.Exercises.Select(ToExercise));
+        return new ExerciseCatalog(
+            document.Exercises.Select(ToExercise),
+            // Null-tolerant: a catalog file that predates the accessory registry parses to a
+            // catalog with no accessories, which filters exactly as it did before.
+            (document.Accessories ?? []).Select(
+                a => new Accessory(a.Id, a.Name, a.Provides ?? [], a.Common, a.Added, a.Note)));
     }
 
     /// <summary>
@@ -107,10 +175,39 @@ public sealed class ExerciseCatalog
     };
 }
 
+/// <summary>
+/// Something the trainee can own, and what it lets them do.
+///
+/// Not the same vocabulary as <see cref="Exercise.Attachment"/>, on purpose. An exercise names a
+/// CAPABILITY ("Wing attachment"); an accessory is a PRODUCT that provides one. The wing shipped
+/// as one piece and as two, and both do every wing exercise, so an exercise naming the product
+/// would hide pull-ups from every owner of the other version.
+/// </summary>
+public sealed record Accessory(
+    string Id,
+    string Name,
+    IReadOnlyList<string> Provides,
+    bool Common,
+    int Added,
+    string? Note = null);
+
 internal sealed record CatalogDocument
 {
     [JsonPropertyName("exercises")]
     public IReadOnlyList<ExerciseDto> Exercises { get; init; } = [];
+
+    [JsonPropertyName("accessories")]
+    public IReadOnlyList<AccessoryDto>? Accessories { get; init; }
+
+    internal sealed record AccessoryDto
+    {
+        public string Id { get; init; } = "";
+        public string Name { get; init; } = "";
+        public IReadOnlyList<string>? Provides { get; init; }
+        public bool Common { get; init; }
+        public int Added { get; init; }
+        public string? Note { get; init; }
+    }
 
     internal sealed record ExerciseDto
     {

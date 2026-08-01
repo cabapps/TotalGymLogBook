@@ -82,7 +82,11 @@ else
     }
 
     <dl class="facts">
-        <dt>Logged</dt><dd id="fact-logged">@_setCount sets across @_exerciseCount exercise(s)</dd>
+        <dt>Logged</dt>
+        <dd id="fact-logged">
+            @_setCount set@(_setCount == 1 ? "" : "s") across
+            @_exerciseCount exercise@(_exerciseCount == 1 ? "" : "s")
+        </dd>
         <dt>Weight</dt><dd>@_phaseNote</dd>
         <dt>Machine</dt><dd>@_profileLabel</dd>
     </dl>
@@ -185,8 +189,9 @@ else
             VolumeTarget.For(experience, phase.Balance),
             // Null means "never configured", which filters nothing -- the coach must not suggest
             // a squat-stand movement to someone who has said they do not own one, and must not
-            // go silent on someone who has never opened the equipment panel.
-            ownedAttachments: settings.OwnedAttachments,
+            // go silent on someone who has never opened the equipment panel. Resolved first, so
+            // an accessory added since they last answered is unanswered rather than a "no".
+            ownedAttachments: Catalog.ResolveOwned(settings.OwnedAttachments, settings.EquipmentVersion),
             familiarExerciseIds: histories.Select(h => h.ExerciseId).ToList());
 
         _loaded = true;

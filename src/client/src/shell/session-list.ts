@@ -87,7 +87,8 @@ export class SessionList extends HTMLElement {
       <ol>
         ${sets.map((s) => this.#row(s, catalog)).join('')}
       </ol>
-      <p class="total">${sets.length} sets &middot; ${Math.round(volume).toLocaleString()} lb total volume</p>
+      <p class="total">${sets.length} set${sets.length === 1 ? '' : 's'} &middot;
+        ${Math.round(volume).toLocaleString()} lb total volume</p>
     `;
 
     for (const set of sets) {

@@ -145,8 +145,29 @@ set — otherwise a mid-workout weigh-in makes sets within one session incompara
 RailProfile { id, levelCount, angleDeg[], boardWeightLb, angleSource, verified }
 Machine     { id, modelName, railProfileId, calibratedAngles? }
 Exercise    { id, name, usesPulley, bodyFraction, attachment?, muscles[] }
+Accessory   { id, name, provides[], common, added, note? }
 Equipment   { id, kind: 'vest'|'bar'|'plate', lb, ridesIncline, ownedQty }
 ```
+
+### Accessories are a separate vocabulary from `attachment`
+
+An exercise names a **capability** (`"Wing attachment"`); the trainee owns a **product**
+(`"Wing attachment (two-piece)"`). The wing shipped in one-piece and two-piece versions that do
+exactly the same job, so an exercise naming the product would hide pull-ups from every owner of
+the other one. `Accessory.provides` is the join, and it is many-to-one on purpose.
+
+`Accessory.added` records the registry version an accessory first appeared in, and the stored
+answer records the version it answered (`SettingsRecord.equipmentVersion`). **Silence is not a
+no**: an accessory newer than the version the trainee answered counts as owned until they say
+otherwise. Without that rule, adding an accessory retroactively reinterprets every stored answer
+as a "no" to a question nobody was asked, and shipping a release quietly deletes exercises from
+people's pickers — including ones they have logged for months and ones their own program plans.
+This is the same reasoning that makes *unconfigured* mean "show everything" rather than
+"owns nothing", applied to each subsequent addition.
+
+`Accessory.common` marks what ships with most machines. It never filters — it groups the picker,
+and it is what the shipped program templates are held to, so a template is runnable on a stock
+machine rather than being a plan the trainee discovers they cannot follow one exercise at a time.
 
 `bodyFraction` values are currently unmeasured and all default to 1.0.
 
