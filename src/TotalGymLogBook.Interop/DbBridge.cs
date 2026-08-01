@@ -85,6 +85,9 @@ internal static partial class DbBridge
     [JSImport(Global + ".listMachinesJson")]
     internal static partial Task<string> ListMachinesJson();
 
+    [JSImport(Global + ".getFocusJson")]
+    internal static partial string GetFocusJson();
+
     [JSImport(Global + ".subscribeToChanges")]
     internal static partial void SubscribeToChanges(
         [JSMarshalAs<JSType.Function<JSType.String, JSType.String>>] Action<string, string> callback);

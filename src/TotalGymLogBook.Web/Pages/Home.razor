@@ -4,12 +4,20 @@
 @using TotalGymLogBook.Interop
 @implements IDisposable
 @inject RailProfileTable Profiles
+@inject ExerciseCatalog Catalog
 @inject Logbook Logbook
 @inject ProgressionEngine Engine
+@inject SessionAdvisor Advisor
 
 @*
     The derived tier (docs/adr/0003). Everything here reads sets that TypeScript wrote to
     IndexedDB, through the read-only bridge -- Blazor never opens the database itself.
+
+    Two questions, deliberately separate:
+
+      "What should this set be?"    ProgressionEngine, against the exercise the trainee has
+                                    SELECTED. It follows the dropdown.
+      "What is missing this week?"  SessionAdvisor, against weekly sets per muscle.
 
     The shell above is fully usable before any of this exists. That is the architectural bet.
 *@
@@ -20,27 +28,58 @@
 {
     <p class="note">Reading your logbook&hellip;</p>
 }
-else if (_recommendation is null)
-{
-    <p class="note" id="empty-state">
-        No sets logged yet. Once you log a few, the coach works out what to do next from your
-        own history &mdash; level, added weight, reps, and how your bodyweight is moving.
-    </p>
-}
 else
 {
-    <div class="rec">
-        <div class="rec-load" id="rec-load">@_recommendation.TargetLb.ToString("0.#")<small>lb</small></div>
-        <div class="rec-setup">
-            Level @_recommendation.Level
-            @if (_recommendation.AddedLb > 0)
-            {
-                <text> &middot; +@_recommendation.AddedLb.ToString("0.#") lb added</text>
-            }
-            &middot; @_recommendation.Sets &times; @_recommendation.TargetReps reps
+    <p class="focus" id="focus-exercise">@_exerciseName</p>
+
+    @if (_recommendation is null)
+    {
+        <p class="note" id="empty-state">
+            No @_exerciseName sets logged yet. Log a few and the coach works out what to do next
+            from your own history &mdash; level, added weight, reps, and how your bodyweight is
+            moving.
+        </p>
+    }
+    else
+    {
+        <div class="rec">
+            <div class="rec-load" id="rec-load">@_recommendation.TargetLb.ToString("0.#")<small>lb</small></div>
+            <div class="rec-setup">
+                Level @_recommendation.Level
+                @if (_recommendation.AddedLb > 0)
+                {
+                    <text> &middot; +@_recommendation.AddedLb.ToString("0.#") lb added</text>
+                }
+                &middot; @_recommendation.Sets &times; @_recommendation.TargetReps reps
+            </div>
+            <p class="rec-why" id="rec-why">@_lastTime @_recommendation.Rationale</p>
         </div>
-        <p class="rec-why" id="rec-why">@_recommendation.Rationale</p>
-    </div>
+    }
+
+    @if (_advice.Headline.Length > 0)
+    {
+        <h2>This week</h2>
+        <div class="week @(_advice.HasGaps ? "gap" : "ok")">
+            <p class="headline" id="week-headline">@_advice.Headline</p>
+
+            @if (_advice.HasGaps)
+            {
+                <ul class="gaps" id="week-gaps">
+                    @foreach (var gap in _advice.Gaps)
+                    {
+                        <li>
+                            <span class="muscle">@gap.Muscle.Label()</span>
+                            <span class="sets">@gap.WeeklySets.ToString("0.#") / @gap.MinimumSets.ToString("0") sets</span>
+                            @if (gap.Fixes.Count > 0)
+                            {
+                                <span class="fixes">@string.Join(" or ", gap.Fixes.Select(f => f.Name))</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    }
 
     <dl class="facts">
         <dt>Logged</dt><dd id="fact-logged">@_setCount sets across @_exerciseCount exercise(s)</dd>
@@ -54,12 +93,9 @@ else
        padding. Adding our own would double it. */
     .tg-derived { margin: 0; padding: 0; }
     .tg-derived h2 { font-size: 1.05rem; margin: 1.25rem 0 .5rem; }
-    .tag {
-        display: inline-block; font-size: .6875rem; letter-spacing: .04em; text-transform: uppercase;
-        background: #6b7280; color: #fff; border-radius: 999px; padding: .15rem .5rem;
-        vertical-align: middle;
-    }
     .tg-derived .note { color: var(--muted); font-size: .8125rem; }
+    .focus { margin: 0 0 .4rem; font-size: .75rem; letter-spacing: .04em;
+             text-transform: uppercase; color: var(--muted); }
     .rec {
         background: var(--surface); border: 1px solid var(--border);
         border-radius: .75rem; padding: 1rem;
@@ -68,6 +104,18 @@ else
     .rec-load small { font-size: .9rem; font-weight: 400; color: var(--muted); margin-left: .25rem; }
     .rec-setup { margin-top: .35rem; font-size: .9rem; }
     .rec-why { margin: .75rem 0 0; font-size: .85rem; color: var(--muted); line-height: 1.45; }
+    .week {
+        background: var(--surface); border: 1px solid var(--border);
+        border-radius: .75rem; padding: .9rem 1rem;
+    }
+    .week.gap { border-color: #d97706; }
+    .week .headline { margin: 0; font-size: .85rem; line-height: 1.5; }
+    ul.gaps { list-style: none; margin: .75rem 0 0; padding: 0; font-size: .8125rem; }
+    ul.gaps li { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap;
+                 padding: .35rem 0; border-top: 1px solid var(--border); }
+    ul.gaps .muscle { text-transform: capitalize; font-weight: 600; }
+    ul.gaps .sets { color: var(--muted); font-variant-numeric: tabular-nums; }
+    ul.gaps .fixes { color: var(--muted); flex-basis: 100%; font-size: .75rem; }
     .facts { display: grid; grid-template-columns: auto 1fr; gap: .3rem .75rem; margin-top: 1rem;
              font-size: .8125rem; }
     .facts dt { color: var(--muted); }
@@ -75,10 +123,15 @@ else
 </style>
 
 @code {
-    private const string PreferredExercise = "chest-press";
+    /// <summary>Where the coach looks when nothing has been logged and nothing is selected.</summary>
+    private const string FallbackExercise = "chest-press";
 
     private bool _loaded;
+    private string _exerciseId = "";
+    private string _exerciseName = "";
+    private string _lastTime = "";
     private Recommendation? _recommendation;
+    private SessionAdvice _advice = SessionAdvice.Silent;
     private int _setCount;
     private int _exerciseCount;
     private string _phaseNote = "";
@@ -91,7 +144,9 @@ else
     }
 
     private void OnLogbookChanged() =>
-        // Fired from the JS change bus, so hop back onto the renderer's context.
+        // Fired from the JS change bus, so hop back onto the renderer's context. The bus now
+        // also carries the exercise selection, which is what makes this view follow the
+        // dropdown rather than sitting on one hardcoded movement.
         _ = InvokeAsync(async () =>
         {
             await LoadAsync();
@@ -100,44 +155,109 @@ else
 
     private async Task LoadAsync()
     {
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var today = DateOnly.FromDateTime(DateTime.Now);
 
         var histories = await Logbook.GetHistoriesAsync();
         var profile = await Logbook.GetRailProfileAsync();
         var goal = await Logbook.GetGoalAsync();
         var phase = await Logbook.GetPhaseAsync(today);
         var trend = await Logbook.GetBodyweightTrendAsync();
+        var experience = await Logbook.GetExperienceAsync();
 
         _setCount = histories.Sum(h => h.Sets.Count);
         _exerciseCount = histories.Count;
         _profileLabel = $"{profile.LevelCount}-notch rail, {profile.BoardWeightLb:0.#} lb glideboard";
         _phaseNote = trend.HasAny ? trend.Describe(today) : "No weigh-ins yet.";
 
-        var history = histories.FirstOrDefault(h => h.ExerciseId == PreferredExercise)
-                      ?? histories.FirstOrDefault();
+        _exerciseId = ChooseExercise(histories);
+        _exerciseName = Catalog.NameOf(_exerciseId);
 
-        if (history is not null && history.Sets.Count > 0)
-        {
-            var bodyweight = trend.SmoothedLb ?? 180;
+        var history = histories.FirstOrDefault(h => h.ExerciseId == _exerciseId)
+                      ?? ExerciseHistory.Empty(_exerciseId);
 
-            // The ladder must describe the SAME exercise the sets were logged against. A cable
-            // movement is halved by the pulley, so building a default ladder here would compare
-            // 28.4 lb of chest press against a 61.4 lb direct-press rung and recommend doubling
-            // the load. Both figures come from the frozen snapshot (docs/adr/0004).
-            var last = history.LastSession[0];
-            var ladder = new LoadLadder(
-                profile, bodyweight, EquipmentInventory.None,
-                usesPulley: last.UsesPulley,
-                bodyFraction: last.BodyFraction);
+        _recommendation = Recommend(history, profile, goal, phase, trend);
+        _lastTime = DescribeLastTime(history, today);
 
-            _recommendation = Engine.NextSession(history, goal, phase, ladder);
-        }
-        else
-        {
-            _recommendation = null;
-        }
+        _advice = Advisor.Advise(
+            new VolumeLedger(histories, Catalog.ById).Summary(today),
+            Catalog,
+            VolumeTarget.For(experience, phase.Balance),
+            ownedAttachments: null,
+            familiarExerciseIds: histories.Select(h => h.ExerciseId).ToList());
 
         _loaded = true;
+    }
+
+    /// <summary>
+    /// What the trainee is about to do. The selector in the set logger already says, which is
+    /// why this needs no programme and no guessing -- see src/client/src/focus.ts.
+    ///
+    /// The fallbacks matter for the moments the selection is not available yet: Blazor can
+    /// finish booting before the shell has rendered the logger, and on the history route there
+    /// is no logger at all.
+    /// </summary>
+    private string ChooseExercise(IReadOnlyList<ExerciseHistory> histories)
+    {
+        var focused = Logbook.GetFocusedExerciseId();
+        if (focused.Length > 0) return focused;
+
+        var mostRecent = histories
+            .Where(h => h.Sets.Count > 0)
+            .OrderByDescending(h => h.Sets.Max(s => s.On))
+            .FirstOrDefault();
+
+        return mostRecent?.ExerciseId ?? FallbackExercise;
+    }
+
+    private Recommendation? Recommend(
+        ExerciseHistory history, RailProfile profile, TrainingGoal goal, Phase phase,
+        BodyweightTrend trend)
+    {
+        if (history.Sets.Count == 0) return null;
+
+        var bodyweight = trend.SmoothedLb ?? 180;
+
+        // The ladder must describe the SAME exercise the sets were logged against. A cable
+        // movement is halved by the pulley, so building a default ladder here would compare
+        // 28.4 lb of chest press against a 61.4 lb direct-press rung and recommend doubling
+        // the load. Both figures come from the frozen snapshot (docs/adr/0004).
+        var last = history.LastSession[0];
+        var ladder = new LoadLadder(
+            profile, bodyweight, EquipmentInventory.None,
+            usesPulley: last.UsesPulley,
+            bodyFraction: last.BodyFraction);
+
+        return Engine.NextSession(history, goal, phase, ladder);
+    }
+
+    /// <summary>
+    /// "Last time you hit 20 reps on squats." The engine's rationale explains the DECISION;
+    /// this supplies the memory it was made from, which is what makes it feel like coaching
+    /// rather than arithmetic.
+    /// </summary>
+    private string DescribeLastTime(ExerciseHistory history, DateOnly today)
+    {
+        var lastSession = history.LastSession;
+        if (lastSession.Count == 0) return "";
+
+        var on = lastSession[0].On;
+        var days = today.DayNumber - on.DayNumber;
+        var top = lastSession.MaxBy(s => s.ComputedLb)!;
+
+        var when = days switch
+        {
+            <= 0 => "Earlier today",
+            1 => "Yesterday",
+            < 7 => $"{days} days ago",
+            < 14 => "Last week",
+            _ => $"{days} days ago",
+        };
+
+        var sets = lastSession.Count == 1
+            ? $"one set of {top.Reps}"
+            : $"{lastSession.Count} sets, best {top.Reps} reps,";
+
+        return $"{when} you did {sets} at {top.ComputedLb:0.#} lb.";
     }
 
     public void Dispose() => Logbook.Changed -= OnLogbookChanged;

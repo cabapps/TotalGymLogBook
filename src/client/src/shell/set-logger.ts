@@ -14,6 +14,7 @@ import type { Exercise, ExerciseCatalog } from '../exercises.js';
 import * as db from '../db/repository.js';
 import { FORMULA_VERSION, PULLEY_FACTOR_CABLE, PULLEY_FACTOR_DIRECT } from '../resistance.js';
 import type { RepAssist } from './rep-assist.js';
+import { setFocus } from '../focus.js';
 
 import './rep-assist.js';
 
@@ -197,6 +198,7 @@ export class SetLogger extends HTMLElement {
       void this.#assist.setExercise(s.exerciseId);
       this.#update();
     });
+
     on('level', 'input', () => {
       s.level = Number((this.#root.getElementById('level') as HTMLInputElement).value);
       this.#update();
@@ -256,6 +258,10 @@ export class SetLogger extends HTMLElement {
     this.#root.getElementById('loadNote')!.textContent = e.usesPulley
       ? '· cable, so half the incline load'
       : '';
+
+    // Tell the derived tier what is coming next. Every path that changes the selection funnels
+    // through here, and setFocus is a no-op when nothing actually changed.
+    setFocus({ exerciseId: e.id });
 
     this.#persist();
   }

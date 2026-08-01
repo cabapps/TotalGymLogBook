@@ -321,6 +321,40 @@ async function main() {
 
   await page.screenshot({ path: join(SHOTS, '05-coach.png'), fullPage: true });
 
+  // The coach must advise on the exercise the trainee is ABOUT to do. It used to be pinned to
+  // chest press, which made it wrong the moment anyone trained anything else -- telling you to
+  // move up a notch on the press while you stood at the squat stand.
+  //
+  // No programme and no prediction needed: the selector already says. This asserts the whole
+  // path -- dropdown -> focus.ts -> change bus -> Blazor re-read.
+  const named = await page.locator('#focus-exercise').innerText();
+  check('coach names the selected exercise', /Chest Press/i.test(named), named.trim());
+
+  // Option labels carry the required attachment ("Squat (Squat stand)"), so select by value.
+  await page.selectOption('tg-set-logger #exercise', { value: 'squat' });
+  await page.waitForFunction(
+    () => /squat/i.test(document.getElementById('focus-exercise')?.textContent ?? ''),
+    null,
+    { timeout: 20_000 },
+  );
+  const switched = await page.locator('#focus-exercise').innerText();
+  check('coach follows the exercise selector', /Squat/i.test(switched), switched.trim());
+
+  // Nothing logged for squats, so it must say so rather than quoting chest-press numbers.
+  const squatState = await page.locator('#empty-state').innerText().catch(() => '');
+  check('advises from that exercise history, not another', /squat/i.test(squatState),
+    squatState.replace(/\s+/g, ' ').slice(0, 60) + '…');
+
+  await page.selectOption('tg-set-logger #exercise', { value: 'chest-press' });
+  await page.waitForSelector('#rec-load', { timeout: 20_000 });
+  check('switching back restores the recommendation', true);
+
+  // Session-level coaching: weekly sets per muscle, the unit the hypertrophy literature uses.
+  const weekly = await page.locator('#week-headline').innerText().catch(() => '');
+  check('reports weekly volume per muscle', weekly.length > 20, weekly.replace(/\s+/g, ' ').slice(0, 70) + '…');
+
+  await page.screenshot({ path: join(SHOTS, '10-coach-per-exercise.png'), fullPage: true });
+
   // ---- History ----
   console.log('\nHistory:');
   await page.locator('.tg-nav a', { hasText: 'History' }).click();

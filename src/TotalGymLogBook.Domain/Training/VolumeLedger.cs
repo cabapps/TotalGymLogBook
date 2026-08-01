@@ -160,23 +160,17 @@ public sealed class VolumeLedger
 
             if (v.DaysSinceTrained >= staleDays)
             {
-                notes.Add($"You haven't worked {Label(v.Muscle)} in {v.DaysSinceTrained} days.");
+                notes.Add($"You haven't worked {v.Muscle.Label()} in {v.DaysSinceTrained} days.");
             }
             else if (v.BelowMinimum(target))
             {
                 notes.Add(
-                    $"{Label(v.Muscle)} is at {v.WeeklySets:0.#} sets this week. "
-                    + $"About {target.MinimumEffectiveSets:0} is where growth starts.");
+                    $"{v.Muscle.Label()} {v.Muscle.IsAre()} at {MuscleGroups.Sets(v.WeeklySets)} "
+                    + $"this week. About {target.MinimumEffectiveSets:0} is where growth starts.");
             }
         }
 
         return notes;
     }
 
-    private static string Label(MuscleGroup m) => m switch
-    {
-        MuscleGroup.Quadriceps => "quads",
-        MuscleGroup.Core => "your core",
-        _ => m.ToString().ToLowerInvariant()
-    };
 }

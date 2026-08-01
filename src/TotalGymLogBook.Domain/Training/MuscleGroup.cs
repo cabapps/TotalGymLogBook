@@ -15,6 +15,37 @@ public enum MuscleGroup
 }
 
 /// <summary>
+/// Shared vocabulary for anything the coach says out loud. One place, because the alternative
+/// is "quads" on one screen and "quadriceps" on the next, and "shoulders is at 1 sets" on both.
+/// </summary>
+public static class MuscleGroups
+{
+    /// <summary>What a trainee calls it. Anatomy-lecture names help nobody mid-set.</summary>
+    public static string Label(this MuscleGroup muscle) => muscle switch
+    {
+        MuscleGroup.Quadriceps => "quads",
+        _ => muscle.ToString().ToLowerInvariant()
+    };
+
+    /// <summary>
+    /// "is" or "are" for this muscle's label. Most of them are plural -- shoulders, quads,
+    /// glutes, calves -- and lifters say "biceps are", not "biceps is".
+    /// </summary>
+    public static string IsAre(this MuscleGroup muscle) => muscle switch
+    {
+        MuscleGroup.Chest or MuscleGroup.Back or MuscleGroup.Core => "is",
+        _ => "are"
+    };
+
+    /// <summary>
+    /// A set count that reads like English. Fractional counts are normal here -- indirect work
+    /// counts as half a set -- so 1 is "1 set" while 1.5 is "1.5 sets".
+    /// </summary>
+    public static string Sets(double count) =>
+        $"{count:0.#} set{(Math.Abs(count - 1) < 0.001 ? "" : "s")}";
+}
+
+/// <summary>
 /// How much one set of an exercise counts toward a muscle's weekly volume.
 ///
 /// Fractional accounting matters more on a Total Gym than on isolation machines, because

@@ -39,6 +39,12 @@ public static class LogbookMapper
             ? new SettingsDto()
             : JsonSerializer.Deserialize(json, LogbookJson.Default.SettingsDto) ?? new SettingsDto();
 
+    /// <summary>The selected exercise id, or empty before the shell has configured itself.</summary>
+    public static string ParseFocusExerciseId(string? json) =>
+        (string.IsNullOrWhiteSpace(json) || json == "null"
+            ? null
+            : JsonSerializer.Deserialize(json, LogbookJson.Default.FocusDto)?.ExerciseId) ?? "";
+
     public static SessionDto? ParseSession(string? json) =>
         string.IsNullOrWhiteSpace(json) || json == "null"
             ? null
