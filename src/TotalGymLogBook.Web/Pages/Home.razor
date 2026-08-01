@@ -163,6 +163,7 @@ else
         var phase = await Logbook.GetPhaseAsync(today);
         var trend = await Logbook.GetBodyweightTrendAsync();
         var experience = await Logbook.GetExperienceAsync();
+        var settings = await Logbook.GetSettingsAsync();
 
         _setCount = histories.Sum(h => h.Sets.Count);
         _exerciseCount = histories.Count;
@@ -182,7 +183,10 @@ else
             new VolumeLedger(histories, Catalog.ById).Summary(today),
             Catalog,
             VolumeTarget.For(experience, phase.Balance),
-            ownedAttachments: null,
+            // Null means "never configured", which filters nothing -- the coach must not suggest
+            // a squat-stand movement to someone who has said they do not own one, and must not
+            // go silent on someone who has never opened the equipment panel.
+            ownedAttachments: settings.OwnedAttachments,
             familiarExerciseIds: histories.Select(h => h.ExerciseId).ToList());
 
         _loaded = true;

@@ -96,6 +96,9 @@ public sealed record SettingsDto
     [JsonPropertyName("experienceOverride")] public string? ExperienceOverride { get; init; }
     [JsonPropertyName("units")] public string? Units { get; init; }
     [JsonPropertyName("defaultMachineId")] public string? DefaultMachineId { get; init; }
+
+    /// <summary>Null means never configured, which filters nothing. See ExerciseCatalog.Available.</summary>
+    [JsonPropertyName("ownedAttachments")] public string[]? OwnedAttachments { get; init; }
 }
 
 /// <summary>In-flight shell state, not a stored record. See src/client/src/focus.ts.</summary>

@@ -20,12 +20,14 @@ import type { SetLogger } from './set-logger.js';
 import type { SessionList } from './session-list.js';
 import type { RestTimer } from './rest-timer.js';
 import type { WeighIn } from './weigh-in.js';
+import type { Equipment } from './equipment.js';
 import { smoothedLb, toReadings } from '../bodyweight.js';
 
 import './set-logger.js';
 import './session-list.js';
 import './rest-timer.js';
 import './weigh-in.js';
+import './equipment.js';
 import './data-safety.js';
 
 const DEFAULT_REST_SECONDS = 90;
@@ -64,6 +66,8 @@ export class AppShell extends HTMLElement {
   #profiles?: RailProfileTable;
   #profile?: RailProfile;
   #machineId?: string;
+  /** Accessories owned. Undefined means never configured, which shows every exercise. */
+  #owned: readonly string[] | undefined;
   /** Smoothed -- what the resistance calculation uses (docs/adr/0004). */
   #bodyweightLb = 0;
   /** Raw latest scale reading, snapshotted alongside for auditability. */
@@ -99,6 +103,7 @@ export class AppShell extends HTMLElement {
     }
 
     this.#profile = this.#profiles!.get(machine.railProfileId);
+    this.#owned = (await db.getSettings()).ownedAttachments;
     await this.#refreshBodyweight();
 
     // docs/adr/0005: never auto-close an orphan (discards data) and never auto-resume
@@ -241,6 +246,8 @@ export class AppShell extends HTMLElement {
 
       <button class="ghost" id="finish">Finish workout</button>
 
+      <tg-equipment id="equipment"></tg-equipment>
+
       <!-- Blazor's #blazor-root is projected here (see index.html). The coach and history are
            the payoff for logging, so they sit directly under the workout rather than below the
            data card, where nobody scrolled to find them. The slot exists only on this screen:
@@ -260,8 +267,18 @@ export class AppShell extends HTMLElement {
       profile: this.#profile!,
       bodyweightLb: this.#bodyweightLb,
       bodyweightRawLb: this.#bodyweightRawLb,
+      ...(this.#owned !== undefined && { ownedAttachments: this.#owned }),
       // Resolved at log time, so no session exists until the trainee actually works.
       sessionId: () => this.#ensureSession(),
+    });
+
+    const equipment = this.#root.getElementById('equipment') as Equipment;
+    equipment.configure({ catalog: this.#catalog! });
+
+    // Ticking an accessory reshapes the exercise list immediately, rather than at next launch.
+    equipment.addEventListener('equipment-changed', (event) => {
+      this.#owned = (event as CustomEvent<{ ownedAttachments: string[] }>).detail.ownedAttachments;
+      logger.setOwnedAttachments(this.#owned);
     });
     list.configure({ catalog: this.#catalog!, ...(this.#session && { sessionId: this.#session.id }) });
 

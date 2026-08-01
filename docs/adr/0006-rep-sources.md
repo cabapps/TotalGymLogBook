@@ -182,6 +182,21 @@ glideboard where they cannot see it. The trainee counts out loud and the number 
   rule below. A false trigger there writes a wrong set into the history everything else is
   derived from.
 
+### Stopping is not the same problem as starting
+
+Both sources start on a tap. They do **not** stop the same way, and the asymmetry is about what
+a source costs while it is idle:
+
+| | On "Log set" | Why |
+|---|---|---|
+| **Voice** | stops listening | A live microphone through a two-minute rest is hearing a conversation it has no business hearing, and nothing on screen tells the trainee it is on. |
+| **Motion** | keeps counting | An accelerometer costs nothing idle, and re-arming it before every set is friction with no upside. |
+
+There is also an explicit **Stop** button whenever a source is running. Toggling the lit-up
+mode button off does the same thing and always did — but that is discoverable to whoever built
+it and to nobody else, and the microphone is precisely the thing a trainee wants an unambiguous
+way to switch off.
+
 **Not claimed:** that this works well in a noisy gym, or through heavy breathing. It is
 untested outside a browser on a desk. The guards are built so that when it fails it fails
 quiet — a rejected count changes nothing — and the stepper is always one tap away.

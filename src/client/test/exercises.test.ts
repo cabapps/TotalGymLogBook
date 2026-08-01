@@ -53,7 +53,7 @@ describe('exercise catalogue', () => {
     // Must match TotalGymLogBook.Domain.Training.MuscleGroup.
     const known = new Set([
       'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps',
-      'Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Core',
+      'Quadriceps', 'Hamstrings', 'Adductors', 'Glutes', 'Calves', 'Core',
     ]);
 
     for (const e of catalog.all) {
@@ -69,6 +69,40 @@ describe('exercise catalogue', () => {
                           'Quadriceps', 'Glutes', 'Calves', 'Core']) {
       expect(covered, `nothing trains ${muscle}`).toContain(muscle);
     }
+  });
+
+  it('shows everything until the trainee says what they own', () => {
+    // Undefined is UNCONFIGURED, not owns-nothing. Conflating them would hide squats from
+    // someone who has been logging squats for months.
+    expect(catalog.available()).toHaveLength(catalog.all.length);
+    expect(catalog.available([]).length).toBeLessThan(catalog.all.length);
+  });
+
+  it('groups exercises for the picker', () => {
+    const groups = catalog.grouped();
+
+    expect(groups.size).toBeGreaterThan(3);
+    expect([...groups.values()].flat()).toHaveLength(catalog.all.length);
+    expect([...groups.keys()].every((c) => c.length > 0)).toBe(true);
+  });
+
+  it('groups only what the trainee owns', () => {
+    const groups = catalog.grouped([]);
+    expect([...groups.values()].flat().every((e) => e.attachment === null)).toBe(true);
+  });
+
+  it('marks stretches so they cannot count as training volume', () => {
+    // A stretch is not a hard set. Counting them would tell a trainee their hamstrings are
+    // covered because they stretched them (docs/adr/0010).
+    const stretches = catalog.all.filter((e) => e.kind === 'stretch');
+
+    expect(stretches.length).toBeGreaterThan(0);
+    expect(catalog.all.every((e) => e.kind === 'strength' || e.kind === 'stretch')).toBe(true);
+    expect(stretches.every((e) => /stretch|twist/i.test(e.name))).toBe(true);
+  });
+
+  it('gives every exercise a category', () => {
+    expect(catalog.all.every((e) => e.category.length > 0)).toBe(true);
   });
 
   it('filters to what the trainee actually owns', () => {

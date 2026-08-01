@@ -104,7 +104,7 @@ public sealed class SessionAdvisor
         IReadOnlyList<Exercise> available,
         IReadOnlySet<string> familiar) =>
         available
-            .Where(e => e.InvolvementOf(muscle) >= MuscleInvolvement.Direct)
+            .Where(e => e.CountsAsVolume && e.InvolvementOf(muscle) >= MuscleInvolvement.Direct)
             .OrderByDescending(e => familiar.Contains(e.Id))
             .Take(FixesPerGap)
             .ToList();

@@ -93,6 +93,10 @@ public sealed class VolumeLedger
         {
             if (!_catalog.TryGetValue(history.ExerciseId, out var exercise)) continue;
 
+            // A stretch is not a hard set. Counting the stretch catalogue as volume would tell
+            // a trainee their hamstrings are covered because they stretched them.
+            if (!exercise.CountsAsVolume) continue;
+
             var sets = history.Sets.Count(s => s.On > from && s.On <= asOf);
             if (sets == 0) continue;
 
@@ -114,7 +118,7 @@ public sealed class VolumeLedger
         foreach (var history in _histories)
         {
             if (!_catalog.TryGetValue(history.ExerciseId, out var exercise)) continue;
-            if (exercise.InvolvementOf(muscle) <= 0) continue;
+            if (!exercise.CountsAsVolume || exercise.InvolvementOf(muscle) <= 0) continue;
 
             foreach (var set in history.Sets.Where(s => s.On <= asOf))
             {

@@ -82,6 +82,16 @@ slow-moving parameter under a fast-moving algorithm, so `ProgressionEngine` deli
 touch set count — it has three levers (reps, level, added weight), and volume is tracked
 separately by `VolumeLedger` as a monitored metric.
 
+### A stretch is not a set
+
+The catalogue carries `kind`: `strength` counts toward weekly volume, `stretch` does not.
+
+Without it, adding ten stretches to the catalogue would have silently inflated every muscle's
+weekly set count — and the failure is worse than cosmetic, because it runs the wrong way. The
+coach would tell a trainee their hamstrings were covered *because they stretched them*, and
+then stop suggesting the hamstring work they actually needed. `SessionAdvisor` also refuses to
+offer a stretch as the fix for a volume gap, for the same reason.
+
 ### Sets are counted fractionally per muscle
 
 Total Gym work is unusually compound, so a raw set count is meaningless. One set of chest press

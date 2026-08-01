@@ -44,13 +44,22 @@ public sealed class ExerciseCatalog
     public IReadOnlyList<Exercise> PrimaryFor(MuscleGroup muscle) =>
         All.Where(e => e.InvolvementOf(muscle) >= MuscleInvolvement.Direct).ToList();
 
-    /// <summary>Only what the trainee can actually do with the accessories they own.</summary>
+    /// <summary>Distinct accessories the catalogue references, for the equipment picker.</summary>
+    public IReadOnlyList<string> Attachments =>
+        All.Select(e => e.Attachment).OfType<string>().Distinct().Order().ToList();
+
+    /// <summary>
+    /// Only what the trainee can actually do with the accessories they own.
+    ///
+    /// NULL means UNCONFIGURED and filters nothing. An empty list means "configured, owns no
+    /// accessories" and filters hard. The distinction matters: treating unconfigured as
+    /// owns-nothing would hide squats from someone who has been logging squats for months.
+    /// </summary>
     public IReadOnlyList<Exercise> Available(IReadOnlyCollection<string>? ownedAttachments = null)
     {
-        var owned = ownedAttachments is null
-            ? new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-            : new HashSet<string>(ownedAttachments, StringComparer.OrdinalIgnoreCase);
+        if (ownedAttachments is null) return All;
 
+        var owned = new HashSet<string>(ownedAttachments, StringComparer.OrdinalIgnoreCase);
         return All.Where(e => e.Attachment is null || owned.Contains(e.Attachment)).ToList();
     }
 
@@ -85,6 +94,10 @@ public sealed class ExerciseCatalog
     {
         Id = dto.Id,
         Name = dto.Name,
+        Category = dto.Category,
+        Kind = string.Equals(dto.Kind, "stretch", StringComparison.OrdinalIgnoreCase)
+            ? ExerciseKind.Stretch
+            : ExerciseKind.Strength,
         UsesPulley = dto.UsesPulley,
         BodyFraction = dto.BodyFraction,
         Attachment = dto.Attachment,
@@ -103,6 +116,8 @@ internal sealed record CatalogDocument
     {
         public string Id { get; init; } = "";
         public string Name { get; init; } = "";
+        public string Category { get; init; } = "";
+        public string Kind { get; init; } = "strength";
         public bool UsesPulley { get; init; }
         public double BodyFraction { get; init; } = 1.0;
         public string? Attachment { get; init; }

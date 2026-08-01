@@ -1,0 +1,363 @@
+#!/usr/bin/env python3
+"""Regenerates data/exercises.json. Run from the repo root: python3 tools/gen-exercises.py
+
+The generator is the source of truth for the catalogue -- editing 84 entries of hand-indented
+JSON by hand is how a stray pulley flag gets in, and a wrong pulley flag halves or doubles the
+recorded load for every set of that movement.
+
+Every cue is written from scratch (docs/adr/0004): exercise NAMES are unprotectable short
+phrases and the movements are unprotectable methods, but Total Gym's instructional prose and
+artwork are theirs. Nothing here is transcribed.
+"""
+import json, collections
+
+# id, name, category, kind, pulley, bodyFraction, attachment, cue, muscles
+E = collections.namedtuple("E", "id name category kind pulley bf att cue muscles")
+D, I = 1.0, 0.5  # direct / indirect involvement
+
+STAND = "Squat stand"
+BARS = "Press-up bars"
+LEGPULL = "Leg pull accessory"
+ANKLE = "Ankle straps"
+
+EX = [
+    # ---------------------------------------------------------------- chest
+    E("chest-press", "Chest Press", "Chest", "strength", True, 1.0, None,
+      "Lie face up, handles level with your chest, press until your arms are straight.",
+      [("Chest", D), ("Triceps", I), ("Shoulders", I)]),
+    E("chest-fly", "Chest Fly", "Chest", "strength", True, 1.0, None,
+      "Lie face up with arms wide and elbows softly bent, sweep the handles together over your chest.",
+      [("Chest", D), ("Shoulders", I)]),
+    E("incline-chest-fly", "Incline Chest Fly", "Chest", "strength", True, 1.0, None,
+      "Same sweep as a chest fly, set a notch or two higher so the top of the chest takes more of it.",
+      [("Chest", D), ("Shoulders", I)]),
+    E("single-arm-chest-press", "Single-Arm Chest Press", "Chest", "strength", True, 1.0, None,
+      "Press one handle at a time. Keep both hips flat on the board so you don't twist into it.",
+      [("Chest", D), ("Triceps", I), ("Core", I)]),
+    E("close-grip-chest-press", "Close-Grip Chest Press", "Chest", "strength", True, 1.0, None,
+      "Press with your elbows tucked close to your ribs. Most of the work moves to the triceps.",
+      [("Triceps", D), ("Chest", D), ("Shoulders", I)]),
+    E("chest-crossover", "Chest Crossover", "Chest", "strength", True, 1.0, None,
+      "Fly the handles together and let your hands cross past each other at the top.",
+      [("Chest", D), ("Shoulders", I)]),
+    E("pullover", "Pullover", "Chest", "strength", True, 1.0, None,
+      "Arms straight overhead, pull the handles down over your chest in a wide arc.",
+      [("Back", D), ("Chest", I), ("Triceps", I)]),
+    E("decline-push-up", "Decline Push-Up", "Chest", "strength", False, 1.0, BARS,
+      "Face down with your head lower than your feet, hands on the bars, press the board away.",
+      [("Chest", D), ("Triceps", I), ("Core", I)]),
+
+    # ---------------------------------------------------------------- back
+    E("lat-pulldown", "Lat Pulldown", "Back", "strength", True, 1.0, None,
+      "Reach overhead and pull the handles down past your shoulders, leading with your elbows.",
+      [("Back", D), ("Biceps", I)]),
+    E("wide-grip-pulldown", "Wide-Grip Pulldown", "Back", "strength", True, 1.0, None,
+      "A pulldown with your hands set wide. Pull your elbows down and out to the sides.",
+      [("Back", D), ("Shoulders", I), ("Biceps", I)]),
+    E("reverse-grip-pulldown", "Reverse-Grip Pulldown", "Back", "strength", True, 1.0, None,
+      "Pull down with your palms facing you. The biceps get a full share of this one.",
+      [("Back", D), ("Biceps", D)]),
+    E("straight-arm-pulldown", "Straight-Arm Pulldown", "Back", "strength", True, 1.0, None,
+      "Keep your arms straight and sweep the handles from overhead down to your hips.",
+      [("Back", D), ("Triceps", I)]),
+    E("seated-row", "Seated Row", "Back", "strength", True, 0.85, None,
+      "Sit upright, pull the handles to your waist and squeeze your shoulder blades together.",
+      [("Back", D), ("Biceps", I), ("Shoulders", I)]),
+    E("wide-grip-row", "Wide-Grip Row", "Back", "strength", True, 0.85, None,
+      "Row with your hands wide and your elbows flared out, finishing at the ribs.",
+      [("Back", D), ("Shoulders", I)]),
+    E("high-row", "High Row", "Back", "strength", True, 0.85, None,
+      "Row towards your collarbones with your elbows high. Upper back and rear shoulders.",
+      [("Back", D), ("Shoulders", I)]),
+    E("low-row", "Low Row", "Back", "strength", True, 0.85, None,
+      "Row low and tight to your body, finishing at the hips with elbows brushing your sides.",
+      [("Back", D), ("Biceps", I)]),
+    E("single-arm-row", "Single-Arm Row", "Back", "strength", True, 0.85, None,
+      "Row one handle at a time. Resist the pull to rotate; that is the core's job here.",
+      [("Back", D), ("Biceps", I), ("Core", I)]),
+    E("reverse-fly", "Reverse Fly", "Back", "strength", True, 0.85, None,
+      "Arms out in front, sweep them wide and back. Small movement, rear shoulders and upper back.",
+      [("Shoulders", D), ("Back", D)]),
+    E("pull-up", "Pull-Up", "Back", "strength", False, 1.0, BARS,
+      "Grip the bars overhead and pull your chest towards them. The incline sets how hard it is.",
+      [("Back", D), ("Biceps", I)]),
+    E("chin-up", "Chin-Up", "Back", "strength", False, 1.0, BARS,
+      "Pull-up with your palms facing you, which brings the biceps in properly.",
+      [("Back", D), ("Biceps", D)]),
+
+    # ---------------------------------------------------------------- shoulders
+    E("shoulder-press", "Shoulder Press", "Shoulders", "strength", True, 0.85, None,
+      "Sit upright, handles at shoulder height, press straight overhead.",
+      [("Shoulders", D), ("Triceps", I)]),
+    E("front-raise", "Front Raise", "Shoulders", "strength", True, 0.85, None,
+      "Arms straight, raise the handles in front of you to about eye level.",
+      [("Shoulders", D)]),
+    E("lateral-raise", "Lateral Raise", "Shoulders", "strength", True, 0.85, None,
+      "Arms straight, raise the handles out to the sides until they're level with your shoulders.",
+      [("Shoulders", D)]),
+    E("scaption-raise", "Scaption Raise", "Shoulders", "strength", True, 0.85, None,
+      "Raise the handles halfway between straight ahead and straight out. Kinder on the shoulder joint.",
+      [("Shoulders", D)]),
+    E("upright-row", "Upright Row", "Shoulders", "strength", True, 0.85, None,
+      "Pull the handles up along your body to chest height, elbows leading and above your wrists.",
+      [("Shoulders", D), ("Back", I), ("Biceps", I)]),
+    E("shoulder-shrug", "Shoulder Shrug", "Shoulders", "strength", True, 0.85, None,
+      "Arms straight, lift your shoulders towards your ears without bending your elbows.",
+      [("Shoulders", D), ("Back", I)]),
+    E("external-rotation", "External Rotation", "Shoulders", "strength", True, 0.85, None,
+      "Elbow tucked at your side and bent, rotate your forearm outwards. Light loads, this is rotator cuff work.",
+      [("Shoulders", D)]),
+    E("internal-rotation", "Internal Rotation", "Shoulders", "strength", True, 0.85, None,
+      "Elbow tucked and bent, rotate your forearm across your body. Light loads.",
+      [("Shoulders", D)]),
+
+    # ---------------------------------------------------------------- biceps
+    E("biceps-curl", "Biceps Curl", "Arms", "strength", True, 0.85, None,
+      "Sit upright, elbows fixed at your sides, curl the handles up to your shoulders.",
+      [("Biceps", D)]),
+    E("hammer-curl", "Hammer Curl", "Arms", "strength", True, 0.85, None,
+      "Curl with your palms facing each other the whole way, like holding a hammer.",
+      [("Biceps", D)]),
+    E("reverse-curl", "Reverse Curl", "Arms", "strength", True, 0.85, None,
+      "Curl with your palms facing down. Harder than it looks, and it hits the forearms.",
+      [("Biceps", D)]),
+    E("wide-grip-curl", "Wide-Grip Curl", "Arms", "strength", True, 0.85, None,
+      "Curl with your hands set wide and elbows out slightly.",
+      [("Biceps", D)]),
+    E("concentration-curl", "Concentration Curl", "Arms", "strength", True, 0.85, None,
+      "One arm, elbow braced against your inner thigh, curl slowly and don't swing.",
+      [("Biceps", D)]),
+    E("single-arm-curl", "Single-Arm Curl", "Arms", "strength", True, 0.85, None,
+      "Curl one handle at a time and keep your shoulders square as you do it.",
+      [("Biceps", D), ("Core", I)]),
+
+    # ---------------------------------------------------------------- triceps
+    E("triceps-extension", "Triceps Extension", "Arms", "strength", True, 0.85, None,
+      "Elbows high and still, straighten your arms against the cable.",
+      [("Triceps", D)]),
+    E("triceps-pushdown", "Triceps Pushdown", "Arms", "strength", True, 0.85, None,
+      "Elbows pinned to your sides, push the handles down until your arms lock out.",
+      [("Triceps", D)]),
+    E("overhead-triceps-extension", "Overhead Triceps Extension", "Arms", "strength", True, 1.0, None,
+      "Lie back with the handles behind your head, straighten your arms without moving your elbows.",
+      [("Triceps", D)]),
+    E("triceps-kickback", "Triceps Kickback", "Arms", "strength", True, 0.85, None,
+      "Upper arm still and parallel to the board, straighten your elbow behind you.",
+      [("Triceps", D)]),
+    E("triceps-dip", "Triceps Dip", "Arms", "strength", False, 1.0, BARS,
+      "Hands on the bars behind you, lower until your elbows are bent, then press back up.",
+      [("Triceps", D), ("Chest", I), ("Shoulders", I)]),
+
+    # ---------------------------------------------------------------- legs
+    E("squat", "Squat", "Legs", "strength", False, 1.0, STAND,
+      "Feet flat on the squat stand, lower until your knees are bent, then drive the board back up.",
+      [("Quadriceps", D), ("Glutes", D), ("Hamstrings", I)]),
+    E("wide-stance-squat", "Wide-Stance Squat", "Legs", "strength", False, 1.0, STAND,
+      "Squat with your feet wide and toes turned out. More glute and inner thigh.",
+      [("Quadriceps", D), ("Glutes", D), ("Adductors", I)]),
+    E("narrow-stance-squat", "Narrow-Stance Squat", "Legs", "strength", False, 1.0, STAND,
+      "Squat with your feet close together. The quads take most of it.",
+      [("Quadriceps", D), ("Glutes", I)]),
+    E("single-leg-squat", "Single-Leg Squat", "Legs", "strength", False, 1.0, STAND,
+      "One foot on the stand, the other tucked away. Keep your knee tracking over your toes.",
+      [("Quadriceps", D), ("Glutes", D), ("Hamstrings", I)]),
+    E("split-squat", "Split Squat", "Legs", "strength", False, 1.0, STAND,
+      "One foot high on the stand and one low, lower and drive back up without shifting your weight.",
+      [("Quadriceps", D), ("Glutes", D)]),
+    E("jump-squat", "Jump Squat", "Legs", "strength", False, 1.0, STAND,
+      "Squat down and push off hard enough that your feet leave the stand. Land soft.",
+      [("Quadriceps", D), ("Glutes", D), ("Calves", I)]),
+    E("hip-bridge", "Hip Bridge", "Legs", "strength", False, 1.0, STAND,
+      "Feet on the stand, drive your hips up until your body is a straight line, then lower.",
+      [("Glutes", D), ("Hamstrings", D)]),
+    E("calf-raise", "Calf Raise", "Legs", "strength", False, 1.0, STAND,
+      "Balls of your feet on the edge of the stand, press up onto your toes and lower slowly.",
+      [("Calves", D)]),
+    E("single-leg-calf-raise", "Single-Leg Calf Raise", "Legs", "strength", False, 1.0, STAND,
+      "One foot on the edge of the stand, press up onto your toes and lower under control.",
+      [("Calves", D)]),
+    E("toe-press", "Toe Press", "Legs", "strength", False, 1.0, STAND,
+      "Legs almost straight, push the board using only your ankles.",
+      [("Calves", D)]),
+    E("hip-abduction", "Hip Abduction", "Legs", "strength", False, 1.0, STAND,
+      "Lie on your side and press the board away with the top leg, opening the hip.",
+      [("Glutes", D), ("Quadriceps", I)]),
+    E("hip-adduction", "Hip Adduction", "Legs", "strength", False, 1.0, STAND,
+      "Lie on your side and press with the bottom leg, drawing it in towards the midline.",
+      [("Adductors", D), ("Glutes", I)]),
+    E("side-lying-leg-lift", "Side-Lying Leg Lift", "Legs", "strength", False, 1.0, None,
+      "On your side, lift the top leg against the incline. Small, controlled, no swinging.",
+      [("Glutes", D)]),
+    E("hamstring-curl", "Hamstring Curl", "Legs", "strength", True, 1.0, ANKLE,
+      "Face down with the straps on your ankles, bend your knees to draw your heels towards you.",
+      [("Hamstrings", D), ("Glutes", I)]),
+    E("leg-extension", "Leg Extension", "Legs", "strength", True, 0.85, ANKLE,
+      "Seated with the straps on your ankles, straighten your knees against the cable.",
+      [("Quadriceps", D)]),
+    E("glute-kickback", "Glute Kickback", "Legs", "strength", True, 1.0, ANKLE,
+      "Strap on one ankle, push that leg back and up without arching your lower back.",
+      [("Glutes", D), ("Hamstrings", I)]),
+
+    # ---------------------------------------------------------------- core
+    E("crunch", "Crunch", "Core", "strength", False, 0.75, None,
+      "Lie back on the board and curl your ribs towards your hips. Short range, no pulling on your neck.",
+      [("Core", D)]),
+    E("cable-crunch", "Cable Crunch", "Core", "strength", True, 0.85, None,
+      "Hold the handles by your head and crunch down against the cable.",
+      [("Core", D)]),
+    E("oblique-crunch", "Oblique Crunch", "Core", "strength", False, 0.75, None,
+      "Crunch up and across, taking one shoulder towards the opposite hip.",
+      [("Core", D)]),
+    E("reverse-crunch", "Reverse Crunch", "Core", "strength", False, 0.9, None,
+      "Knees bent, curl your hips up off the board. The legs stay passive.",
+      [("Core", D)]),
+    E("bicycle-crunch", "Bicycle Crunch", "Core", "strength", False, 0.75, None,
+      "Alternate elbow to opposite knee, extending the other leg as you go.",
+      [("Core", D)]),
+    E("knee-tuck", "Knee Tuck", "Core", "strength", False, 1.0, None,
+      "Face down in a plank on the board, draw both knees up towards your chest.",
+      [("Core", D), ("Quadriceps", I)]),
+    E("pike", "Pike", "Core", "strength", False, 1.0, None,
+      "From the same plank, keep your legs straight and lift your hips towards the ceiling.",
+      [("Core", D), ("Shoulders", I)]),
+    E("plank-hold", "Plank Hold", "Core", "strength", False, 1.0, None,
+      "Forearms on the board, body in a straight line, and hold. Count time, not reps.",
+      [("Core", D), ("Shoulders", I)]),
+    E("side-plank", "Side Plank", "Core", "strength", False, 1.0, None,
+      "One forearm down, hips stacked and lifted. Hold, then swap sides.",
+      [("Core", D)]),
+    E("hanging-knee-raise", "Hanging Knee Raise", "Core", "strength", False, 1.0, BARS,
+      "Hold the bars overhead and draw your knees up towards your chest.",
+      [("Core", D)]),
+    E("leg-pull", "Leg Pull", "Core", "strength", True, 0.9, LEGPULL,
+      "Feet in the accessory, pull your legs down and in against the cable.",
+      [("Core", D), ("Quadriceps", I)]),
+    E("torso-rotation", "Torso Rotation", "Core", "strength", True, 0.85, None,
+      "Arms out in front, rotate your ribcage away from the cable and return slowly.",
+      [("Core", D)]),
+    E("cable-woodchop", "Cable Woodchop", "Core", "strength", True, 0.85, None,
+      "Pull the handle diagonally across your body, high to low, turning through the trunk.",
+      [("Core", D), ("Shoulders", I)]),
+
+    # ---------------------------------------------------------------- total body
+    E("pullover-to-press", "Pullover to Press", "Total body", "strength", True, 1.0, None,
+      "Pull over from overhead, then press straight up from your chest. One rep is both halves.",
+      [("Back", D), ("Chest", D), ("Triceps", I)]),
+    E("row-to-curl", "Row to Curl", "Total body", "strength", True, 0.85, None,
+      "Row to your waist, then curl the handles up to your shoulders before lowering.",
+      [("Back", D), ("Biceps", D)]),
+    E("press-to-fly", "Press to Fly", "Total body", "strength", True, 1.0, None,
+      "Press up, then open your arms wide and sweep them back together.",
+      [("Chest", D), ("Shoulders", I), ("Triceps", I)]),
+    E("mountain-climber", "Mountain Climber", "Total body", "strength", False, 1.0, None,
+      "Plank on the board, drive one knee up at a time at a steady pace.",
+      [("Core", D), ("Shoulders", I), ("Quadriceps", I)]),
+    E("board-burpee", "Board Burpee", "Total body", "strength", False, 1.0, STAND,
+      "Tuck your knees in, press the board out to a plank, then pull back and drive out through your feet.",
+      [("Quadriceps", D), ("Core", D), ("Chest", I)]),
+    E("sprinter-start", "Sprinter Start", "Total body", "strength", False, 1.0, STAND,
+      "One foot loaded on the stand, drive it out explosively and return under control.",
+      [("Quadriceps", D), ("Glutes", D), ("Calves", I)]),
+
+    # ---------------------------------------------------------------- stretch
+    E("hamstring-stretch", "Hamstring Stretch", "Stretch", "stretch", True, 1.0, None,
+      "Lie back, straighten one leg towards the ceiling and draw it gently in. Hold and breathe.",
+      [("Hamstrings", D)]),
+    E("quad-stretch", "Quad Stretch", "Stretch", "stretch", False, 1.0, None,
+      "Kneel on the board and ease your hips forward until you feel the front of the thigh open.",
+      [("Quadriceps", D)]),
+    E("hip-flexor-stretch", "Hip Flexor Stretch", "Stretch", "stretch", False, 1.0, None,
+      "Half-kneeling, let the incline carry your hips forward. Front of the hip, not the lower back.",
+      [("Quadriceps", D)]),
+    E("glute-stretch", "Glute Stretch", "Stretch", "stretch", False, 1.0, None,
+      "Ankle crossed over the opposite knee, draw both legs in towards your chest.",
+      [("Glutes", D)]),
+    E("adductor-stretch", "Inner Thigh Stretch", "Stretch", "stretch", False, 1.0, STAND,
+      "Feet wide on the stand, let your knees ease apart and hold where it's comfortable.",
+      [("Adductors", D)]),
+    E("calf-stretch", "Calf Stretch", "Stretch", "stretch", False, 1.0, STAND,
+      "Ball of one foot on the edge of the stand, let the heel drop and hold.",
+      [("Calves", D)]),
+    E("chest-stretch", "Chest Stretch", "Stretch", "stretch", True, 1.0, None,
+      "Arms wide with the handles, let them draw your chest open. Stop well short of pain.",
+      [("Chest", D)]),
+    E("lat-stretch", "Lat Stretch", "Stretch", "stretch", True, 1.0, None,
+      "Reach overhead, hold the handles and let your ribs lengthen away from your hips.",
+      [("Back", D)]),
+    E("shoulder-stretch", "Shoulder Stretch", "Stretch", "stretch", True, 1.0, None,
+      "One arm across your body, use the other to draw it in until the back of the shoulder opens.",
+      [("Shoulders", D)]),
+    E("spinal-twist", "Spinal Twist", "Stretch", "stretch", False, 1.0, None,
+      "Lie back, drop both knees to one side and keep both shoulders on the board.",
+      [("Core", D)]),
+]
+
+COMMENT = [
+    "Total Gym exercise catalogue. See docs/adr/0004 for the copyright position.",
+    "",
+    "Exercise NAMES are unprotectable short phrases (37 C.F.R. 202.1(a)) and the movements",
+    "themselves are unprotectable systems or methods (Bikram's Yoga College v. Evolation Yoga,",
+    "9th Cir. 2015). What IS protected is Total Gym's photography, illustration, and",
+    "instructional prose -- so every 'cue' line here is written from scratch and no artwork is",
+    "reproduced.",
+    "",
+    "NOT A TRANSCRIPTION OF THE TRAINING DECK. Total Gym sells a deck of 80 exercise cards, and",
+    "no public source enumerates it. This catalogue is built from the movements the machine",
+    "actually supports, organised under the same categories the deck advertises (chest, back,",
+    "shoulders, arms, legs, abs, total body, stretch). Overlap is inevitable and expected -- a",
+    "chest press is a chest press -- but the selection here is ours and the card numbering is",
+    "not reproduced.",
+    "",
+    "category    : grouping for the exercise picker. Presentation only.",
+    "kind        : 'strength' counts toward weekly training volume; 'stretch' does not. Without",
+    "              this, adding stretches would silently inflate every muscle's set count and",
+    "              make the coach's volume advice wrong (docs/adr/0010).",
+    "usesPulley  : true when the movement routes through the cable, which halves the load.",
+    "bodyFraction: share of bodyweight actually riding the glideboard. Supine work is ~1.0;",
+    "              seated and kneeling positions put less of the trainee on the board.",
+    "              THESE ARE ESTIMATES, not measurements -- see the open item in docs/adr/README.",
+    "              Getting them wrong shifts absolute load but not progression, because every",
+    "              set for an exercise uses the same figure.",
+    "muscles     : fraction 1.0 = prime mover, 0.5 = meaningful secondary involvement.",
+    "              Fractional accounting matters because Total Gym work is almost all compound;",
+    "              see docs/adr/0010.",
+]
+
+def main():
+    seen = set()
+    for e in EX:
+        assert e.id not in seen, f"duplicate id {e.id}"
+        seen.add(e.id)
+        assert e.cue and e.cue[0].isupper() and e.cue.endswith("."), e.id
+        assert e.muscles, e.id
+
+    doc = {
+        "$comment": COMMENT,
+        "version": 2,
+        "exercises": [
+            {
+                "id": e.id,
+                "name": e.name,
+                "category": e.category,
+                "kind": e.kind,
+                "usesPulley": e.pulley,
+                "bodyFraction": e.bf,
+                "attachment": e.att,
+                "cue": e.cue,
+                "muscles": [{"muscle": m, "fraction": f} for m, f in e.muscles],
+            }
+            for e in EX
+        ],
+    }
+
+    with open("data/exercises.json", "w") as fh:
+        json.dump(doc, fh, indent=2)
+        fh.write("\n")
+
+    by_cat = collections.Counter(e.category for e in EX)
+    print(f"{len(EX)} exercises")
+    for cat, n in by_cat.items():
+        print(f"  {cat:12} {n}")
+
+if __name__ == "__main__":
+    main()

@@ -8,6 +8,17 @@
     "instructional prose -- so every 'cue' line here is written from scratch and no artwork is",
     "reproduced.",
     "",
+    "NOT A TRANSCRIPTION OF THE TRAINING DECK. Total Gym sells a deck of 80 exercise cards, and",
+    "no public source enumerates it. This catalogue is built from the movements the machine",
+    "actually supports, organised under the same categories the deck advertises (chest, back,",
+    "shoulders, arms, legs, abs, total body, stretch). Overlap is inevitable and expected -- a",
+    "chest press is a chest press -- but the selection here is ours and the card numbering is",
+    "not reproduced.",
+    "",
+    "category    : grouping for the exercise picker. Presentation only.",
+    "kind        : 'strength' counts toward weekly training volume; 'stretch' does not. Without",
+    "              this, adding stretches would silently inflate every muscle's set count and",
+    "              make the coach's volume advice wrong (docs/adr/0010).",
     "usesPulley  : true when the movement routes through the cable, which halves the load.",
     "bodyFraction: share of bodyweight actually riding the glideboard. Supine work is ~1.0;",
     "              seated and kneeling positions put less of the trainee on the board.",
@@ -18,192 +29,1614 @@
     "              Fractional accounting matters because Total Gym work is almost all compound;",
     "              see docs/adr/0010."
   ],
-  "version": 1,
+  "version": 2,
   "exercises": [
     {
       "id": "chest-press",
       "name": "Chest Press",
+      "category": "Chest",
+      "kind": "strength",
       "usesPulley": true,
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Lie face up, handles level with your chest, press until your arms are straight.",
       "muscles": [
-        { "muscle": "Chest", "fraction": 1.0 },
-        { "muscle": "Triceps", "fraction": 0.5 },
-        { "muscle": "Shoulders", "fraction": 0.5 }
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Triceps",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
       ]
     },
     {
       "id": "chest-fly",
       "name": "Chest Fly",
+      "category": "Chest",
+      "kind": "strength",
       "usesPulley": true,
       "bodyFraction": 1.0,
       "attachment": null,
-      "cue": "Lie face up, arms wide with a soft elbow, bring the handles together above you.",
+      "cue": "Lie face up with arms wide and elbows softly bent, sweep the handles together over your chest.",
       "muscles": [
-        { "muscle": "Chest", "fraction": 1.0 },
-        { "muscle": "Shoulders", "fraction": 0.5 }
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "incline-chest-fly",
+      "name": "Incline Chest Fly",
+      "category": "Chest",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Same sweep as a chest fly, set a notch or two higher so the top of the chest takes more of it.",
+      "muscles": [
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "single-arm-chest-press",
+      "name": "Single-Arm Chest Press",
+      "category": "Chest",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Press one handle at a time. Keep both hips flat on the board so you don't twist into it.",
+      "muscles": [
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Triceps",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Core",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "close-grip-chest-press",
+      "name": "Close-Grip Chest Press",
+      "category": "Chest",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Press with your elbows tucked close to your ribs. Most of the work moves to the triceps.",
+      "muscles": [
+        {
+          "muscle": "Triceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "chest-crossover",
+      "name": "Chest Crossover",
+      "category": "Chest",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Fly the handles together and let your hands cross past each other at the top.",
+      "muscles": [
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
       ]
     },
     {
       "id": "pullover",
       "name": "Pullover",
+      "category": "Chest",
+      "kind": "strength",
       "usesPulley": true,
       "bodyFraction": 1.0,
       "attachment": null,
-      "cue": "Lie face up, arms overhead, pull the handles down in an arc toward your hips.",
+      "cue": "Arms straight overhead, pull the handles down over your chest in a wide arc.",
       "muscles": [
-        { "muscle": "Back", "fraction": 1.0 },
-        { "muscle": "Chest", "fraction": 0.5 },
-        { "muscle": "Triceps", "fraction": 0.5 }
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Chest",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Triceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "decline-push-up",
+      "name": "Decline Push-Up",
+      "category": "Chest",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Press-up bars",
+      "cue": "Face down with your head lower than your feet, hands on the bars, press the board away.",
+      "muscles": [
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Triceps",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Core",
+          "fraction": 0.5
+        }
       ]
     },
     {
       "id": "lat-pulldown",
       "name": "Lat Pulldown",
+      "category": "Back",
+      "kind": "strength",
       "usesPulley": true,
       "bodyFraction": 1.0,
       "attachment": null,
-      "cue": "Lie face up, reach overhead, pull down and back with your elbows leading.",
+      "cue": "Reach overhead and pull the handles down past your shoulders, leading with your elbows.",
       "muscles": [
-        { "muscle": "Back", "fraction": 1.0 },
-        { "muscle": "Biceps", "fraction": 0.5 }
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "wide-grip-pulldown",
+      "name": "Wide-Grip Pulldown",
+      "category": "Back",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "A pulldown with your hands set wide. Pull your elbows down and out to the sides.",
+      "muscles": [
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "reverse-grip-pulldown",
+      "name": "Reverse-Grip Pulldown",
+      "category": "Back",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Pull down with your palms facing you. The biceps get a full share of this one.",
+      "muscles": [
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "straight-arm-pulldown",
+      "name": "Straight-Arm Pulldown",
+      "category": "Back",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Keep your arms straight and sweep the handles from overhead down to your hips.",
+      "muscles": [
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Triceps",
+          "fraction": 0.5
+        }
       ]
     },
     {
       "id": "seated-row",
       "name": "Seated Row",
+      "category": "Back",
+      "kind": "strength",
       "usesPulley": true,
       "bodyFraction": 0.85,
       "attachment": null,
-      "cue": "Sit upright facing the tower, pull the handles to your ribs, squeeze the shoulder blades.",
+      "cue": "Sit upright, pull the handles to your waist and squeeze your shoulder blades together.",
       "muscles": [
-        { "muscle": "Back", "fraction": 1.0 },
-        { "muscle": "Biceps", "fraction": 0.5 },
-        { "muscle": "Shoulders", "fraction": 0.5 }
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
       ]
     },
     {
-      "id": "shoulder-press",
-      "name": "Shoulder Press",
+      "id": "wide-grip-row",
+      "name": "Wide-Grip Row",
+      "category": "Back",
+      "kind": "strength",
       "usesPulley": true,
       "bodyFraction": 0.85,
       "attachment": null,
-      "cue": "Sit facing away from the tower, press the handles overhead.",
+      "cue": "Row with your hands wide and your elbows flared out, finishing at the ribs.",
       "muscles": [
-        { "muscle": "Shoulders", "fraction": 1.0 },
-        { "muscle": "Triceps", "fraction": 0.5 }
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
       ]
     },
     {
-      "id": "upright-row",
-      "name": "Upright Row",
+      "id": "high-row",
+      "name": "High Row",
+      "category": "Back",
+      "kind": "strength",
       "usesPulley": true,
       "bodyFraction": 0.85,
       "attachment": null,
-      "cue": "Sit upright, draw the handles toward your collarbone with high elbows.",
+      "cue": "Row towards your collarbones with your elbows high. Upper back and rear shoulders.",
       "muscles": [
-        { "muscle": "Shoulders", "fraction": 1.0 },
-        { "muscle": "Back", "fraction": 0.5 },
-        { "muscle": "Biceps", "fraction": 0.5 }
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
       ]
     },
     {
-      "id": "biceps-curl",
-      "name": "Biceps Curl",
+      "id": "low-row",
+      "name": "Low Row",
+      "category": "Back",
+      "kind": "strength",
       "usesPulley": true,
       "bodyFraction": 0.85,
       "attachment": null,
-      "cue": "Sit facing the tower, elbows tucked, curl the handles toward your shoulders.",
-      "muscles": [{ "muscle": "Biceps", "fraction": 1.0 }]
+      "cue": "Row low and tight to your body, finishing at the hips with elbows brushing your sides.",
+      "muscles": [
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 0.5
+        }
+      ]
     },
     {
-      "id": "triceps-extension",
-      "name": "Triceps Extension",
+      "id": "single-arm-row",
+      "name": "Single-Arm Row",
+      "category": "Back",
+      "kind": "strength",
       "usesPulley": true,
       "bodyFraction": 0.85,
       "attachment": null,
-      "cue": "Sit facing away, elbows high and still, straighten your arms.",
-      "muscles": [{ "muscle": "Triceps", "fraction": 1.0 }]
-    },
-    {
-      "id": "squat",
-      "name": "Squat",
-      "usesPulley": false,
-      "bodyFraction": 1.0,
-      "attachment": "Squat stand",
-      "cue": "Lie face up with both feet on the platform, push away until your legs are straight.",
+      "cue": "Row one handle at a time. Resist the pull to rotate; that is the core's job here.",
       "muscles": [
-        { "muscle": "Quadriceps", "fraction": 1.0 },
-        { "muscle": "Glutes", "fraction": 1.0 },
-        { "muscle": "Hamstrings", "fraction": 0.5 }
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Core",
+          "fraction": 0.5
+        }
       ]
     },
     {
-      "id": "single-leg-squat",
-      "name": "Single Leg Squat",
-      "usesPulley": false,
-      "bodyFraction": 1.0,
-      "attachment": "Squat stand",
-      "cue": "As the squat, one foot at a time. Keep the knee tracking over the toes.",
-      "muscles": [
-        { "muscle": "Quadriceps", "fraction": 1.0 },
-        { "muscle": "Glutes", "fraction": 1.0 },
-        { "muscle": "Hamstrings", "fraction": 0.5 }
-      ]
-    },
-    {
-      "id": "calf-raise",
-      "name": "Calf Raise",
-      "usesPulley": false,
-      "bodyFraction": 1.0,
-      "attachment": "Squat stand",
-      "cue": "Toes on the edge of the platform, push through the balls of your feet.",
-      "muscles": [{ "muscle": "Calves", "fraction": 1.0 }]
-    },
-    {
-      "id": "leg-pull",
-      "name": "Leg Pull",
+      "id": "reverse-fly",
+      "name": "Reverse Fly",
+      "category": "Back",
+      "kind": "strength",
       "usesPulley": true,
-      "bodyFraction": 0.9,
-      "attachment": "Leg pull accessory",
-      "cue": "Hook your feet in the strap and draw your knees toward your chest.",
-      "muscles": [
-        { "muscle": "Core", "fraction": 1.0 },
-        { "muscle": "Quadriceps", "fraction": 0.5 }
-      ]
-    },
-    {
-      "id": "crunch",
-      "name": "Crunch",
-      "usesPulley": false,
-      "bodyFraction": 0.75,
+      "bodyFraction": 0.85,
       "attachment": null,
-      "cue": "Lie face up, curl your ribs toward your hips without pulling on your neck.",
-      "muscles": [{ "muscle": "Core", "fraction": 1.0 }]
-    },
-    {
-      "id": "hip-abduction",
-      "name": "Hip Abduction",
-      "usesPulley": false,
-      "bodyFraction": 1.0,
-      "attachment": "Squat stand",
-      "cue": "Lie on your side, drive the top leg away from the midline.",
+      "cue": "Arms out in front, sweep them wide and back. Small movement, rear shoulders and upper back.",
       "muscles": [
-        { "muscle": "Glutes", "fraction": 1.0 },
-        { "muscle": "Quadriceps", "fraction": 0.5 }
+        {
+          "muscle": "Shoulders",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        }
       ]
     },
     {
       "id": "pull-up",
       "name": "Pull-Up",
+      "category": "Back",
+      "kind": "strength",
       "usesPulley": false,
       "bodyFraction": 1.0,
       "attachment": "Press-up bars",
-      "cue": "Lie face up under the bars, pull your chest toward your hands.",
+      "cue": "Grip the bars overhead and pull your chest towards them. The incline sets how hard it is.",
       "muscles": [
-        { "muscle": "Back", "fraction": 1.0 },
-        { "muscle": "Biceps", "fraction": 0.5 }
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "chin-up",
+      "name": "Chin-Up",
+      "category": "Back",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Press-up bars",
+      "cue": "Pull-up with your palms facing you, which brings the biceps in properly.",
+      "muscles": [
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "shoulder-press",
+      "name": "Shoulder Press",
+      "category": "Shoulders",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Sit upright, handles at shoulder height, press straight overhead.",
+      "muscles": [
+        {
+          "muscle": "Shoulders",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Triceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "front-raise",
+      "name": "Front Raise",
+      "category": "Shoulders",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Arms straight, raise the handles in front of you to about eye level.",
+      "muscles": [
+        {
+          "muscle": "Shoulders",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "lateral-raise",
+      "name": "Lateral Raise",
+      "category": "Shoulders",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Arms straight, raise the handles out to the sides until they're level with your shoulders.",
+      "muscles": [
+        {
+          "muscle": "Shoulders",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "scaption-raise",
+      "name": "Scaption Raise",
+      "category": "Shoulders",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Raise the handles halfway between straight ahead and straight out. Kinder on the shoulder joint.",
+      "muscles": [
+        {
+          "muscle": "Shoulders",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "upright-row",
+      "name": "Upright Row",
+      "category": "Shoulders",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Pull the handles up along your body to chest height, elbows leading and above your wrists.",
+      "muscles": [
+        {
+          "muscle": "Shoulders",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Back",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "shoulder-shrug",
+      "name": "Shoulder Shrug",
+      "category": "Shoulders",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Arms straight, lift your shoulders towards your ears without bending your elbows.",
+      "muscles": [
+        {
+          "muscle": "Shoulders",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Back",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "external-rotation",
+      "name": "External Rotation",
+      "category": "Shoulders",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Elbow tucked at your side and bent, rotate your forearm outwards. Light loads, this is rotator cuff work.",
+      "muscles": [
+        {
+          "muscle": "Shoulders",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "internal-rotation",
+      "name": "Internal Rotation",
+      "category": "Shoulders",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Elbow tucked and bent, rotate your forearm across your body. Light loads.",
+      "muscles": [
+        {
+          "muscle": "Shoulders",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "biceps-curl",
+      "name": "Biceps Curl",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Sit upright, elbows fixed at your sides, curl the handles up to your shoulders.",
+      "muscles": [
+        {
+          "muscle": "Biceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "hammer-curl",
+      "name": "Hammer Curl",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Curl with your palms facing each other the whole way, like holding a hammer.",
+      "muscles": [
+        {
+          "muscle": "Biceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "reverse-curl",
+      "name": "Reverse Curl",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Curl with your palms facing down. Harder than it looks, and it hits the forearms.",
+      "muscles": [
+        {
+          "muscle": "Biceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "wide-grip-curl",
+      "name": "Wide-Grip Curl",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Curl with your hands set wide and elbows out slightly.",
+      "muscles": [
+        {
+          "muscle": "Biceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "concentration-curl",
+      "name": "Concentration Curl",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "One arm, elbow braced against your inner thigh, curl slowly and don't swing.",
+      "muscles": [
+        {
+          "muscle": "Biceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "single-arm-curl",
+      "name": "Single-Arm Curl",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Curl one handle at a time and keep your shoulders square as you do it.",
+      "muscles": [
+        {
+          "muscle": "Biceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Core",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "triceps-extension",
+      "name": "Triceps Extension",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Elbows high and still, straighten your arms against the cable.",
+      "muscles": [
+        {
+          "muscle": "Triceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "triceps-pushdown",
+      "name": "Triceps Pushdown",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Elbows pinned to your sides, push the handles down until your arms lock out.",
+      "muscles": [
+        {
+          "muscle": "Triceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "overhead-triceps-extension",
+      "name": "Overhead Triceps Extension",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Lie back with the handles behind your head, straighten your arms without moving your elbows.",
+      "muscles": [
+        {
+          "muscle": "Triceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "triceps-kickback",
+      "name": "Triceps Kickback",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Upper arm still and parallel to the board, straighten your elbow behind you.",
+      "muscles": [
+        {
+          "muscle": "Triceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "triceps-dip",
+      "name": "Triceps Dip",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Press-up bars",
+      "cue": "Hands on the bars behind you, lower until your elbows are bent, then press back up.",
+      "muscles": [
+        {
+          "muscle": "Triceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Chest",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "squat",
+      "name": "Squat",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Feet flat on the squat stand, lower until your knees are bent, then drive the board back up.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Hamstrings",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "wide-stance-squat",
+      "name": "Wide-Stance Squat",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Squat with your feet wide and toes turned out. More glute and inner thigh.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Adductors",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "narrow-stance-squat",
+      "name": "Narrow-Stance Squat",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Squat with your feet close together. The quads take most of it.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "single-leg-squat",
+      "name": "Single-Leg Squat",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "One foot on the stand, the other tucked away. Keep your knee tracking over your toes.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Hamstrings",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "split-squat",
+      "name": "Split Squat",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "One foot high on the stand and one low, lower and drive back up without shifting your weight.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "jump-squat",
+      "name": "Jump Squat",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Squat down and push off hard enough that your feet leave the stand. Land soft.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Calves",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "hip-bridge",
+      "name": "Hip Bridge",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Feet on the stand, drive your hips up until your body is a straight line, then lower.",
+      "muscles": [
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Hamstrings",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "calf-raise",
+      "name": "Calf Raise",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Balls of your feet on the edge of the stand, press up onto your toes and lower slowly.",
+      "muscles": [
+        {
+          "muscle": "Calves",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "single-leg-calf-raise",
+      "name": "Single-Leg Calf Raise",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "One foot on the edge of the stand, press up onto your toes and lower under control.",
+      "muscles": [
+        {
+          "muscle": "Calves",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "toe-press",
+      "name": "Toe Press",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Legs almost straight, push the board using only your ankles.",
+      "muscles": [
+        {
+          "muscle": "Calves",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "hip-abduction",
+      "name": "Hip Abduction",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Lie on your side and press the board away with the top leg, opening the hip.",
+      "muscles": [
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Quadriceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "hip-adduction",
+      "name": "Hip Adduction",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Lie on your side and press with the bottom leg, drawing it in towards the midline.",
+      "muscles": [
+        {
+          "muscle": "Adductors",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "side-lying-leg-lift",
+      "name": "Side-Lying Leg Lift",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "On your side, lift the top leg against the incline. Small, controlled, no swinging.",
+      "muscles": [
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "hamstring-curl",
+      "name": "Hamstring Curl",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": "Ankle straps",
+      "cue": "Face down with the straps on your ankles, bend your knees to draw your heels towards you.",
+      "muscles": [
+        {
+          "muscle": "Hamstrings",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "leg-extension",
+      "name": "Leg Extension",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": "Ankle straps",
+      "cue": "Seated with the straps on your ankles, straighten your knees against the cable.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "glute-kickback",
+      "name": "Glute Kickback",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": "Ankle straps",
+      "cue": "Strap on one ankle, push that leg back and up without arching your lower back.",
+      "muscles": [
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Hamstrings",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "crunch",
+      "name": "Crunch",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 0.75,
+      "attachment": null,
+      "cue": "Lie back on the board and curl your ribs towards your hips. Short range, no pulling on your neck.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "cable-crunch",
+      "name": "Cable Crunch",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Hold the handles by your head and crunch down against the cable.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "oblique-crunch",
+      "name": "Oblique Crunch",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 0.75,
+      "attachment": null,
+      "cue": "Crunch up and across, taking one shoulder towards the opposite hip.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "reverse-crunch",
+      "name": "Reverse Crunch",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 0.9,
+      "attachment": null,
+      "cue": "Knees bent, curl your hips up off the board. The legs stay passive.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "bicycle-crunch",
+      "name": "Bicycle Crunch",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 0.75,
+      "attachment": null,
+      "cue": "Alternate elbow to opposite knee, extending the other leg as you go.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "knee-tuck",
+      "name": "Knee Tuck",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Face down in a plank on the board, draw both knees up towards your chest.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Quadriceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "pike",
+      "name": "Pike",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "From the same plank, keep your legs straight and lift your hips towards the ceiling.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "plank-hold",
+      "name": "Plank Hold",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Forearms on the board, body in a straight line, and hold. Count time, not reps.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "side-plank",
+      "name": "Side Plank",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "One forearm down, hips stacked and lifted. Hold, then swap sides.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "hanging-knee-raise",
+      "name": "Hanging Knee Raise",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Press-up bars",
+      "cue": "Hold the bars overhead and draw your knees up towards your chest.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "leg-pull",
+      "name": "Leg Pull",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.9,
+      "attachment": "Leg pull accessory",
+      "cue": "Feet in the accessory, pull your legs down and in against the cable.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Quadriceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "torso-rotation",
+      "name": "Torso Rotation",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Arms out in front, rotate your ribcage away from the cable and return slowly.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "cable-woodchop",
+      "name": "Cable Woodchop",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Pull the handle diagonally across your body, high to low, turning through the trunk.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "pullover-to-press",
+      "name": "Pullover to Press",
+      "category": "Total body",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Pull over from overhead, then press straight up from your chest. One rep is both halves.",
+      "muscles": [
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Triceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "row-to-curl",
+      "name": "Row to Curl",
+      "category": "Total body",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": null,
+      "cue": "Row to your waist, then curl the handles up to your shoulders before lowering.",
+      "muscles": [
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "press-to-fly",
+      "name": "Press to Fly",
+      "category": "Total body",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Press up, then open your arms wide and sweep them back together.",
+      "muscles": [
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Triceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "mountain-climber",
+      "name": "Mountain Climber",
+      "category": "Total body",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Plank on the board, drive one knee up at a time at a steady pace.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Quadriceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "board-burpee",
+      "name": "Board Burpee",
+      "category": "Total body",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Tuck your knees in, press the board out to a plank, then pull back and drive out through your feet.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Chest",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "sprinter-start",
+      "name": "Sprinter Start",
+      "category": "Total body",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "One foot loaded on the stand, drive it out explosively and return under control.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Calves",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "hamstring-stretch",
+      "name": "Hamstring Stretch",
+      "category": "Stretch",
+      "kind": "stretch",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Lie back, straighten one leg towards the ceiling and draw it gently in. Hold and breathe.",
+      "muscles": [
+        {
+          "muscle": "Hamstrings",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "quad-stretch",
+      "name": "Quad Stretch",
+      "category": "Stretch",
+      "kind": "stretch",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Kneel on the board and ease your hips forward until you feel the front of the thigh open.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "hip-flexor-stretch",
+      "name": "Hip Flexor Stretch",
+      "category": "Stretch",
+      "kind": "stretch",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Half-kneeling, let the incline carry your hips forward. Front of the hip, not the lower back.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "glute-stretch",
+      "name": "Glute Stretch",
+      "category": "Stretch",
+      "kind": "stretch",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Ankle crossed over the opposite knee, draw both legs in towards your chest.",
+      "muscles": [
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "adductor-stretch",
+      "name": "Inner Thigh Stretch",
+      "category": "Stretch",
+      "kind": "stretch",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Feet wide on the stand, let your knees ease apart and hold where it's comfortable.",
+      "muscles": [
+        {
+          "muscle": "Adductors",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "calf-stretch",
+      "name": "Calf Stretch",
+      "category": "Stretch",
+      "kind": "stretch",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Squat stand",
+      "cue": "Ball of one foot on the edge of the stand, let the heel drop and hold.",
+      "muscles": [
+        {
+          "muscle": "Calves",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "chest-stretch",
+      "name": "Chest Stretch",
+      "category": "Stretch",
+      "kind": "stretch",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Arms wide with the handles, let them draw your chest open. Stop well short of pain.",
+      "muscles": [
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "lat-stretch",
+      "name": "Lat Stretch",
+      "category": "Stretch",
+      "kind": "stretch",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Reach overhead, hold the handles and let your ribs lengthen away from your hips.",
+      "muscles": [
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "shoulder-stretch",
+      "name": "Shoulder Stretch",
+      "category": "Stretch",
+      "kind": "stretch",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "One arm across your body, use the other to draw it in until the back of the shoulder opens.",
+      "muscles": [
+        {
+          "muscle": "Shoulders",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "spinal-twist",
+      "name": "Spinal Twist",
+      "category": "Stretch",
+      "kind": "stretch",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Lie back, drop both knees to one side and keep both shoulders on the board.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        }
       ]
     }
   ]

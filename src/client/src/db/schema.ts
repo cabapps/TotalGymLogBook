@@ -123,6 +123,12 @@ export interface SettingsRecord extends SyncFields {
   units?: 'lb' | 'kg';
   defaultMachineId?: string;
   /**
+   * Accessories the trainee actually owns, so the picker stops offering movements they cannot
+   * do. UNDEFINED means never configured and filters nothing; an empty array means "I own
+   * none of these" and filters hard. See ExerciseCatalog.available.
+   */
+  ownedAttachments?: string[];
+  /**
    * Preferred rep-counting source, keyed by exercise id. Per-exercise and not global, because
    * motion counting works for chest press and not at all for standing cable work -- one global
    * setting would feel broken half the time (docs/adr/0006).
