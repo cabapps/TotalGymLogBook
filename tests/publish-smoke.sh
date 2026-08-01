@@ -115,6 +115,20 @@ else
 fi
 check_contains "published SW was swapped in"       "$WWWROOT/service-worker.js" 'self.assetsManifest'
 
+# The Blazor mount point is a light-DOM child of the shell, projected into <slot name="derived">
+# so the coach lands under the workout rather than below the data card. Both halves live in
+# files that get rewritten by different toolchains, and a mismatch is silent: an unslotted child
+# is not rendered, so the coach simply never appears.
+check_contains "Blazor root is slotted"            "$WWWROOT/index.html"        'slot="derived"'
+check_contains "shell exposes the derived slot"    "$WWWROOT/dist/shell.js"     'name="derived"'
+
+# The update handshake. Without SKIP_WAITING a new build sits in 'waiting' forever on an
+# installed iOS PWA, because resuming from the app switcher never retires the old client; without
+# clients.claim the page never sees controllerchange and the Update button does nothing.
+check_contains "SW answers the update handshake"   "$WWWROOT/service-worker.js" 'SKIP_WAITING'
+check_contains "SW claims clients on activate"     "$WWWROOT/service-worker.js" 'clients.claim'
+check_contains "shell registers the SW"            "$WWWROOT/dist/shell.js"     'service-worker.js'
+
 if grep -qi 'bootstrap' "$WWWROOT/index.html"; then
   printf '  \033[31mFAIL\033[0m  template Bootstrap still referenced\n'; fail=$((fail + 1))
 else

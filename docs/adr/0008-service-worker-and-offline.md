@@ -101,6 +101,46 @@ The template won't do this for you: an installed PWA can run for days without a 
 navigation and will never notice an update. Call `registration.update()` on `visibilitychange`
 when the app regains focus, throttled to roughly hourly.
 
+#### Implemented after it bit a real user
+
+This section was written and then not built, which is worse than not having written it: the app
+shipped with the stock template's bare `navigator.serviceWorker.register(...)` in `index.html`
+and nothing else. A trainee running the installed app on an iPhone stayed on the build they
+first installed, across several deploys, with nothing anywhere to say so.
+
+The mechanism is worth stating plainly, because "the PWA is cached" is the wrong diagnosis and
+sends you hunting through cache headers that are already correct. A new worker **installs
+fine** and precaches **the correct new assets**. It then parks in `waiting` until every client
+of the old worker is gone. A desktop tab satisfies that overnight. An iOS home-screen app does
+not — resuming from the app switcher is not a navigation and does not retire the client — so
+the queue never drains, and nothing in the UI hints that a newer build is sitting right there.
+
+Now, in `src/client/src/updates.ts` and `<tg-update-banner>`:
+
+- **Ask.** `registration.update()` on load, on every `visibilitychange` back to visible, and
+  hourly for sessions left open.
+- **Offer.** A worker in `installed` *while a controller exists* is a new build; without a
+  controller it is a first install and must not be announced, or every new user is told to
+  update to what they just downloaded.
+- **Hand over.** `SKIP_WAITING` on accept, `clients.claim()` in `activate`, reload on
+  `controllerchange`. Both halves are required: without the claim, `controllerchange` never
+  fires and the Update button does nothing.
+
+**Prompted, not automatic.** `skipWaiting()` at install would swap fingerprinted `_framework`
+assets out from under a running Blazor app, and the reps sitting in the stepper are not in
+IndexedDB yet.
+
+**One-time cost of having shipped without this:** the fix can only be delivered *by* the broken
+mechanism. Users on the old worker get the new one installed and waiting as usual, and it takes
+over the first time they genuinely close the app — force-quitting from the app switcher, once.
+Every deploy after that is a tap.
+
+`e2e/update-check.mjs` covers it, and it is the only check in the suite that involves a second
+build: nothing single-build can observe a handover. Note that headless Chromium never fires
+`visibilitychange` — `bringToFront()` on another tab does not background the first — so the
+check dispatches the event. Firing it on resume is the platform's guarantee; what a test can
+verify is the handler.
+
 ## Verified, not assumed
 
 `.claude/skills/run-totalgymlogbook/offline-check.mjs` publishes, serves the output from a

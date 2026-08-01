@@ -107,6 +107,13 @@ jobs:
       - name: Offline and published-build check
         run: node e2e/offline-check.mjs
 
+      # The only check that involves a SECOND build, which is where the update path lives.
+      # Without the handshake it verifies, a new deploy never reaches an installed iOS PWA:
+      # the worker installs, parks in 'waiting', and stays there because resuming from the app
+      # switcher never retires the old client. See docs/adr/0008.
+      - name: Update handshake check
+        run: node e2e/update-check.mjs
+
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4

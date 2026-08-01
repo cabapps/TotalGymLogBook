@@ -10,8 +10,10 @@
 // Registering the custom elements is the point of importing this module -- index.html loads
 // it as a side effect, and <tg-app-shell> upgrades as soon as it evaluates.
 import './shell/app-shell.js';
+import './shell/update-banner.js';
 import { installBridge } from './db/bridge.js';
 import { captureInstallPrompt, requestPersistence } from './storage.js';
+import { registerServiceWorker } from './updates.js';
 
 // Publish the read-only data bridge before Blazor.start() runs, so [JSImport] can resolve it
 // the moment the runtime comes up (docs/adr/0003).
@@ -26,7 +28,14 @@ captureInstallPrompt();
 // elsewhere it is a no-op. Fire-and-forget -- nothing depends on the answer.
 void requestPersistence();
 
+// Offline support, and the reason a new deploy actually reaches an installed home-screen app.
+// Registered here rather than inline in index.html because noticing an update and offering it
+// is code, not a one-liner. See updates.ts.
+registerServiceWorker();
+
 export { AppShell } from './shell/app-shell.js';
+export { UpdateBanner } from './shell/update-banner.js';
+export { applyUpdate, isUpdateReady, registerServiceWorker } from './updates.js';
 
 export * as db from './db/repository.js';
 export { exportBackup, exportBackupJson, importBackup, clearAllData } from './db/backup.js';
