@@ -84,6 +84,7 @@
   <ItemGroup>
     <DomainData Include="$(MSBuildProjectDirectory)/../../data/rail-profiles.json" />
     <DomainData Include="$(MSBuildProjectDirectory)/../../data/exercises.json" />
+    <DomainData Include="$(MSBuildProjectDirectory)/../../data/programs.json" />
   </ItemGroup>
 
   <Target Name="CopyDomainData" BeforeTargets="BeforeBuild">

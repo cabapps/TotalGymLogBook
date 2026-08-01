@@ -85,6 +85,9 @@ internal static partial class DbBridge
     [JSImport(Global + ".listMachinesJson")]
     internal static partial Task<string> ListMachinesJson();
 
+    [JSImport(Global + ".getActiveProgramJson")]
+    internal static partial Task<string> GetActiveProgramJson();
+
     [JSImport(Global + ".getFocusJson")]
     internal static partial string GetFocusJson();
 

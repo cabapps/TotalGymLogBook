@@ -48,6 +48,26 @@ export class ExerciseCatalog {
     return new ExerciseCatalog(doc.exercises);
   }
 
+  /**
+   * The built-in catalog plus the trainee's own movements.
+   *
+   * Custom exercises come LAST within their category, so the built-ins keep their order and a
+   * new addition is where the trainee expects to find it -- at the bottom of the group they
+   * filed it under.
+   *
+   * A custom exercise whose id collides with a built-in replaces it. That is how editing a
+   * shipped entry works: same id, the trainee's values win.
+   */
+  withCustom(custom: readonly Exercise[]): ExerciseCatalog {
+    if (custom.length === 0) return this;
+
+    const overrides = new Map(custom.map((e) => [e.id, e]));
+    const kept = this.all.map((e) => overrides.get(e.id) ?? e);
+    const added = custom.filter((e) => !this.#byId.has(e.id));
+
+    return new ExerciseCatalog([...kept, ...added]);
+  }
+
   static async load(url = 'data/exercises.json'): Promise<ExerciseCatalog> {
     const res = await fetch(url);
     if (!res.ok) throw new Error(`Could not load ${url}: ${res.status}`);

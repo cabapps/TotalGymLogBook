@@ -17,7 +17,9 @@ import {
   type BodyweightRecord,
   type Instant,
   type IsoDate,
+  type CustomExerciseRecord,
   type MachineRecord,
+  type ProgramRecord,
   type SessionRecord,
   type SetLogRecord,
   type SettingsRecord,
@@ -36,6 +38,9 @@ export interface StartSessionInput {
   bodyweightRawLb?: number;
   bodyweightSmoothedLb?: number;
   routineId?: string;
+  /** Stamped when the workout was started from a program, so the rotation can be derived. */
+  programId?: string;
+  programSessionId?: string;
 }
 
 /**
@@ -59,6 +64,8 @@ export async function startSession(input: StartSessionInput): Promise<SessionRec
       bodyweightSmoothedLb: input.bodyweightSmoothedLb,
     }),
     ...(input.routineId !== undefined && { routineId: input.routineId }),
+    ...(input.programId !== undefined && { programId: input.programId }),
+    ...(input.programSessionId !== undefined && { programSessionId: input.programSessionId }),
   };
 
   await transact(Store.Sessions, 'readwrite', (tx) => put(tx, Store.Sessions, record));
@@ -356,4 +363,143 @@ export async function saveSettings(
 
   publishChange(Store.Settings, [SETTINGS_ID]);
   return record;
+}
+
+// ---------------------------------------------------------------- programs
+
+export async function listPrograms(): Promise<ProgramRecord[]> {
+  return alive(await transact(Store.Programs, 'readonly', (tx) => getAll<ProgramRecord>(tx, Store.Programs)));
+}
+
+export async function getActiveProgram(): Promise<ProgramRecord | undefined> {
+  return (await listPrograms()).find((p) => p.isActive);
+}
+
+export async function getProgram(id: string): Promise<ProgramRecord | undefined> {
+  const record = await transact(Store.Programs, 'readonly', (tx) =>
+    getById<ProgramRecord>(tx, Store.Programs, id),
+  );
+  return record && !record.deletedAt ? record : undefined;
+}
+
+export type SaveProgramInput = Omit<ProgramRecord, keyof SyncFields | 'isActive'> &
+  Partial<Pick<ProgramRecord, 'id' | 'isActive'>>;
+
+/**
+ * Creates or updates a program.
+ *
+ * Activating one deactivates the rest in the SAME transaction. Two active programs would make
+ * "which session is next" ambiguous, and the ambiguity would only surface as the app quietly
+ * naming the wrong day.
+ */
+export async function saveProgram(input: SaveProgramInput): Promise<ProgramRecord> {
+  const record = await transact(Store.Programs, 'readwrite', async (tx) => {
+    const existing = input.id ? await getById<ProgramRecord>(tx, Store.Programs, input.id) : undefined;
+
+    const next: ProgramRecord = {
+      ...existing,
+      ...input,
+      id: input.id ?? newId(),
+      isActive: input.isActive ?? existing?.isActive ?? false,
+      updatedAt: now(),
+    };
+
+    if (next.isActive) {
+      for (const other of await getAll<ProgramRecord>(tx, Store.Programs)) {
+        if (other.id === next.id || !other.isActive) continue;
+        await put(tx, Store.Programs, { ...other, isActive: false, updatedAt: now() });
+      }
+    }
+
+    await put(tx, Store.Programs, next);
+    return next;
+  });
+
+  publishChange(Store.Programs, [record.id]);
+  return record;
+}
+
+export async function setActiveProgram(id: string | undefined): Promise<void> {
+  const programs = await listPrograms();
+  const touched: string[] = [];
+
+  await transact(Store.Programs, 'readwrite', async (tx) => {
+    for (const program of programs) {
+      const shouldBeActive = program.id === id;
+      if (program.isActive === shouldBeActive) continue;
+
+      await put(tx, Store.Programs, { ...program, isActive: shouldBeActive, updatedAt: now() });
+      touched.push(program.id);
+    }
+  });
+
+  if (touched.length > 0) publishChange(Store.Programs, touched);
+}
+
+/** Soft delete, so a future sync peer sees the removal rather than resurrecting the row. */
+export async function deleteProgram(id: string): Promise<boolean> {
+  const removed = await transact(Store.Programs, 'readwrite', async (tx) => {
+    const existing = await getById<ProgramRecord>(tx, Store.Programs, id);
+    if (!existing || existing.deletedAt) return false;
+
+    await put(tx, Store.Programs, { ...existing, isActive: false, deletedAt: now(), updatedAt: now() });
+    return true;
+  });
+
+  if (removed) publishChange(Store.Programs, [id]);
+  return removed;
+}
+
+// ------------------------------------------------------- custom exercises
+
+export async function listCustomExercises(): Promise<CustomExerciseRecord[]> {
+  return alive(
+    await transact(Store.CustomExercises, 'readonly', (tx) =>
+      getAll<CustomExerciseRecord>(tx, Store.CustomExercises),
+    ),
+  );
+}
+
+export type SaveCustomExerciseInput = Omit<CustomExerciseRecord, keyof SyncFields> &
+  Partial<Pick<CustomExerciseRecord, 'id'>>;
+
+export async function saveCustomExercise(
+  input: SaveCustomExerciseInput,
+): Promise<CustomExerciseRecord> {
+  const record = await transact(Store.CustomExercises, 'readwrite', async (tx) => {
+    const existing = input.id
+      ? await getById<CustomExerciseRecord>(tx, Store.CustomExercises, input.id)
+      : undefined;
+
+    const next: CustomExerciseRecord = {
+      ...existing,
+      ...input,
+      id: input.id ?? newId(),
+      updatedAt: now(),
+    };
+
+    await put(tx, Store.CustomExercises, next);
+    return next;
+  });
+
+  publishChange(Store.CustomExercises, [record.id]);
+  return record;
+}
+
+/**
+ * Soft delete. The exercise disappears from the picker; sets already logged against it keep
+ * their id and stay in the history, and ExerciseCatalog.nameOf falls back to a de-slugged name
+ * so they remain readable.
+ */
+export async function deleteCustomExercise(id: string): Promise<boolean> {
+  const removed = await transact(Store.CustomExercises, 'readwrite', async (tx) => {
+    const existing = await getById<CustomExerciseRecord>(tx, Store.CustomExercises, id);
+    if (!existing || existing.deletedAt) return false;
+
+    await put(tx, Store.CustomExercises, { ...existing, deletedAt: now(), updatedAt: now() });
+    return true;
+  });
+
+  if (removed) publishChange(Store.CustomExercises, [id]);
+  return removed;
 }

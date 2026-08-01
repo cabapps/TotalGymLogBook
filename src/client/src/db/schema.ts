@@ -20,7 +20,7 @@
 export const DB_NAME = 'totalgymlogbook';
 
 /** Bump when adding a store or index, and add a matching step to MIGRATIONS. */
-export const DB_VERSION = 1;
+export const DB_VERSION = 2;
 
 export const Store = {
   Sessions: 'sessions',
@@ -28,6 +28,8 @@ export const Store = {
   Bodyweight: 'bodyweight',
   Machines: 'machines',
   Settings: 'settings',
+  Programs: 'programs',
+  CustomExercises: 'customExercises',
 } as const;
 
 export type StoreName = (typeof Store)[keyof typeof Store];
@@ -60,6 +62,15 @@ export interface SessionRecord extends SyncFields {
   bodyweightRawLb?: number;
   bodyweightSmoothedLb?: number;
   routineId?: string;
+  /**
+   * The program session this workout was started from, if any.
+   *
+   * Recorded so the rotation can be DERIVED from history rather than tracked by a stored
+   * cursor. A cursor drifts the moment anyone trains out of order, skips a day, or logs on a
+   * second device; history cannot drift, because it is what actually happened.
+   */
+  programId?: string;
+  programSessionId?: string;
   notes?: string;
 }
 
@@ -112,6 +123,61 @@ export interface MachineRecord extends SyncFields {
   isDefault?: boolean;
 }
 
+/** One movement in a planned session. */
+export interface PlannedExercise {
+  exerciseId: string;
+  /** Target working sets. Programming, not progression -- see docs/adr/0010. */
+  sets: number;
+}
+
+/**
+ * One training session in a program: a name and an ordered list of movements.
+ *
+ * The id is stable within its program and is what a logged workout points at, so renaming
+ * "Push" to "Push A" does not orphan the history.
+ */
+export interface ProgramSession {
+  id: string;
+  name: string;
+  exercises: PlannedExercise[];
+}
+
+/**
+ * A training program: an ordered rotation of sessions.
+ *
+ * ORDERED, NOT SCHEDULED. There is no day-of-week anywhere in here, deliberately -- see
+ * docs/adr/0007. "Next in the rotation" survives a missed Monday; "it's Wednesday, do legs"
+ * starts nagging the first time life happens, which for a home-gym population is constantly.
+ */
+export interface ProgramRecord extends SyncFields {
+  name: string;
+  description: string;
+  /** The built-in template this was created from, if any. Absent for a program built by hand. */
+  templateId?: string;
+  sessions: ProgramSession[];
+  /** Exactly one program is active at a time. */
+  isActive: boolean;
+}
+
+/**
+ * An exercise the trainee added themselves.
+ *
+ * Shape matches the built-in catalog entries so the two merge into one list. Stored rather
+ * than shipped, which means the resistance inputs are the trainee's own estimates -- the UI
+ * has to make `usesPulley` in particular hard to get wrong, because it halves or doubles every
+ * load recorded against the movement.
+ */
+export interface CustomExerciseRecord extends SyncFields {
+  name: string;
+  category: string;
+  kind: 'strength' | 'stretch';
+  usesPulley: boolean;
+  bodyFraction: number;
+  attachment: string | null;
+  cue: string;
+  muscles: Array<{ muscle: string; fraction: number }>;
+}
+
 /** Single-row key/value store for user preferences. */
 export interface SettingsRecord extends SyncFields {
   id: 'settings';
@@ -141,7 +207,9 @@ export type AnyRecord =
   | SetLogRecord
   | BodyweightRecord
   | MachineRecord
-  | SettingsRecord;
+  | SettingsRecord
+  | ProgramRecord
+  | CustomExerciseRecord;
 
 interface IndexSpec {
   name: string;
@@ -188,6 +256,14 @@ export const STORES: StoreSpec[] = [
     name: Store.Settings,
     indexes: [],
   },
+  {
+    name: Store.Programs,
+    indexes: [{ name: 'by-active', keyPath: 'isActive' }],
+  },
+  {
+    name: Store.CustomExercises,
+    indexes: [],
+  },
 ];
 
 /**
@@ -198,6 +274,20 @@ export const MIGRATIONS: Array<(db: IDBDatabase, tx: IDBTransaction) => void> = 
   // v1 -- initial schema
   (db) => {
     for (const spec of STORES) {
+      if (spec.name === Store.Programs || spec.name === Store.CustomExercises) continue;
+
+      const store = db.createObjectStore(spec.name, { keyPath: 'id' });
+      for (const index of spec.indexes) {
+        store.createIndex(index.name, index.keyPath, { unique: index.unique ?? false });
+      }
+    }
+  },
+
+  // v2 -- programs and user-added exercises
+  (db) => {
+    for (const spec of STORES) {
+      if (spec.name !== Store.Programs && spec.name !== Store.CustomExercises) continue;
+
       const store = db.createObjectStore(spec.name, { keyPath: 'id' });
       for (const index of spec.indexes) {
         store.createIndex(index.name, index.keyPath, { unique: index.unique ?? false });

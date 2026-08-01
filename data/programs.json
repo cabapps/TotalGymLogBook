@@ -1,0 +1,170 @@
+{
+  "$comment": [
+    "Built-in training program templates. See docs/adr/0007 for the terminology and the",
+    "rotation-not-calendar decision.",
+    "",
+    "A SPLIT is how the body's musculature is divided across sessions -- full body, upper/lower,",
+    "push-pull-legs. A PROGRAM is the split plus exercise selection and a set prescription, which",
+    "is what these are. Progression is not in here: that is ProgressionEngine's job, session to",
+    "session, and baking target loads into a template would freeze them.",
+    "",
+    "ORDERED, NOT SCHEDULED. No day-of-week appears anywhere, deliberately. 'Next in the rotation'",
+    "survives a missed Monday; 'it's Wednesday, do legs' starts nagging the first time life",
+    "happens.",
+    "",
+    "Set counts are per session. The weekly total per muscle is what actually matters (docs/adr",
+    "/0010), and the app computes that from the rotation rather than asking anyone to do the",
+    "arithmetic -- which is also how you can see, before committing, that a program leaves your",
+    "biceps under the effective dose.",
+    "",
+    "Every exerciseId must exist in exercises.json; a test enforces it. Sessions deliberately lead",
+    "with the biggest compound movements, because those are the ones worth doing while fresh.",
+    "",
+    "These are starting points, not prescriptions. The trainee can edit any of them."
+  ],
+  "version": 1,
+  "templates": [
+    {
+      "id": "full-body",
+      "name": "Full Body",
+      "description": "Three sessions a week, everything each time. The most forgiving split there is: miss a day and you have still trained every muscle group that week.",
+      "bestFor": "Starting out, or training two to three times a week.",
+      "sessions": [
+        {
+          "id": "full-a",
+          "name": "Full Body A",
+          "exercises": [
+            { "exerciseId": "squat", "sets": 3 },
+            { "exerciseId": "chest-press", "sets": 3 },
+            { "exerciseId": "seated-row", "sets": 3 },
+            { "exerciseId": "shoulder-press", "sets": 2 },
+            { "exerciseId": "biceps-curl", "sets": 2 },
+            { "exerciseId": "crunch", "sets": 2 }
+          ]
+        },
+        {
+          "id": "full-b",
+          "name": "Full Body B",
+          "exercises": [
+            { "exerciseId": "split-squat", "sets": 3 },
+            { "exerciseId": "lat-pulldown", "sets": 3 },
+            { "exerciseId": "chest-fly", "sets": 3 },
+            { "exerciseId": "lateral-raise", "sets": 2 },
+            { "exerciseId": "triceps-extension", "sets": 2 },
+            { "exerciseId": "calf-raise", "sets": 4 }
+          ]
+        },
+        {
+          "id": "full-c",
+          "name": "Full Body C",
+          "exercises": [
+            { "exerciseId": "hip-bridge", "sets": 3 },
+            { "exerciseId": "pullover", "sets": 3 },
+            { "exerciseId": "close-grip-chest-press", "sets": 3 },
+            { "exerciseId": "reverse-fly", "sets": 2 },
+            { "exerciseId": "hammer-curl", "sets": 2 },
+            { "exerciseId": "leg-pull", "sets": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "upper-lower",
+      "name": "Upper / Lower",
+      "description": "Alternates upper body and lower body. Four sessions gets every muscle twice a week, which is the easiest way to fit real volume in without any one session dragging.",
+      "bestFor": "Training three to four times a week.",
+      "sessions": [
+        {
+          "id": "upper-a",
+          "name": "Upper A",
+          "exercises": [
+            { "exerciseId": "chest-press", "sets": 4 },
+            { "exerciseId": "seated-row", "sets": 4 },
+            { "exerciseId": "shoulder-press", "sets": 3 },
+            { "exerciseId": "lat-pulldown", "sets": 3 },
+            { "exerciseId": "biceps-curl", "sets": 3 },
+            { "exerciseId": "triceps-extension", "sets": 3 }
+          ]
+        },
+        {
+          "id": "lower-a",
+          "name": "Lower A",
+          "exercises": [
+            { "exerciseId": "squat", "sets": 4 },
+            { "exerciseId": "hip-bridge", "sets": 3 },
+            { "exerciseId": "hamstring-curl", "sets": 3 },
+            { "exerciseId": "calf-raise", "sets": 4 },
+            { "exerciseId": "crunch", "sets": 3 }
+          ]
+        },
+        {
+          "id": "upper-b",
+          "name": "Upper B",
+          "exercises": [
+            { "exerciseId": "chest-fly", "sets": 4 },
+            { "exerciseId": "wide-grip-pulldown", "sets": 4 },
+            { "exerciseId": "lateral-raise", "sets": 3 },
+            { "exerciseId": "low-row", "sets": 3 },
+            { "exerciseId": "hammer-curl", "sets": 3 },
+            { "exerciseId": "triceps-pushdown", "sets": 3 }
+          ]
+        },
+        {
+          "id": "lower-b",
+          "name": "Lower B",
+          "exercises": [
+            { "exerciseId": "split-squat", "sets": 4 },
+            { "exerciseId": "glute-kickback", "sets": 3 },
+            { "exerciseId": "leg-extension", "sets": 3 },
+            { "exerciseId": "single-leg-calf-raise", "sets": 3 },
+            { "exerciseId": "leg-pull", "sets": 3 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "push-pull-legs",
+      "name": "Push / Pull / Legs",
+      "description": "Splits training by movement direction: pressing, pulling, then legs. Each session is short and focused, and nothing you train today is sore for tomorrow's.",
+      "bestFor": "Training three to six times a week.",
+      "sessions": [
+        {
+          "id": "push",
+          "name": "Push",
+          "exercises": [
+            { "exerciseId": "chest-press", "sets": 4 },
+            { "exerciseId": "shoulder-press", "sets": 3 },
+            { "exerciseId": "incline-chest-fly", "sets": 3 },
+            { "exerciseId": "lateral-raise", "sets": 3 },
+            { "exerciseId": "triceps-extension", "sets": 3 },
+            { "exerciseId": "triceps-pushdown", "sets": 2 }
+          ]
+        },
+        {
+          "id": "pull",
+          "name": "Pull",
+          "exercises": [
+            { "exerciseId": "lat-pulldown", "sets": 4 },
+            { "exerciseId": "seated-row", "sets": 4 },
+            { "exerciseId": "reverse-fly", "sets": 3 },
+            { "exerciseId": "shoulder-shrug", "sets": 2 },
+            { "exerciseId": "biceps-curl", "sets": 3 },
+            { "exerciseId": "hammer-curl", "sets": 2 }
+          ]
+        },
+        {
+          "id": "legs",
+          "name": "Legs",
+          "exercises": [
+            { "exerciseId": "squat", "sets": 4 },
+            { "exerciseId": "split-squat", "sets": 3 },
+            { "exerciseId": "hamstring-curl", "sets": 3 },
+            { "exerciseId": "hip-bridge", "sets": 3 },
+            { "exerciseId": "calf-raise", "sets": 4 },
+            { "exerciseId": "crunch", "sets": 4 }
+          ]
+        }
+      ]
+    }
+  ]
+}

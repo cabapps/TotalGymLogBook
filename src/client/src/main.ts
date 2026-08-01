@@ -36,6 +36,17 @@ registerServiceWorker();
 export { AppShell } from './shell/app-shell.js';
 export { UpdateBanner } from './shell/update-banner.js';
 export { RepAssist, type AssistMode } from './shell/rep-assist.js';
+export { ProgramPanel } from './shell/program-panel.js';
+export { ExerciseEditor } from './shell/exercise-editor.js';
+export { Equipment } from './shell/equipment.js';
+export {
+  ProgramLibrary,
+  nextExercise,
+  nextSession,
+  sessionPosition,
+  sessionProgress,
+  type ProgramTemplate,
+} from './programs.js';
 export {
   MAX_REPS,
   MAX_SPOKEN_JUMP,
@@ -70,6 +81,7 @@ export {
   listMachinesJson,
   listSessionsJson,
   getSessionHistoryJson,
+  getActiveProgramJson,
   deleteSessionJson,
   purgeEmptySessionsJson,
   subscribeToChanges,
