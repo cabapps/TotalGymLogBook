@@ -60,7 +60,7 @@ Related: **exercise names** are unprotectable short phrases (37 C.F.R. § 202.1(
 9th Cir. 2015). **Do not** copy their photographs, illustrations, instructional prose, or a
 curated program's selection and arrangement wholesale.
 
-### The catalogue is ours, not a copy of the training deck
+### The catalog is ours, not a copy of the training deck
 
 Total Gym sells a deck of 80 exercise cards. Reproducing the *names* would be fine on the
 authority above; reproducing the deck's **selection and arrangement** is the one thing the
@@ -69,7 +69,7 @@ deck. Searching finds the product listing and its advertised categories (chest, 
 shoulders, arms, legs, abs, total body, stretch) and nothing more.
 
 So [`data/exercises.json`](../../data/exercises.json) is built from what the machine actually
-supports, organised under those categories. Overlap with their deck is inevitable and expected
+supports, organized under those categories. Overlap with their deck is inevitable and expected
 — a chest press is a chest press — but the selection is ours, every cue is written from
 scratch, and the card numbering is not reproduced.
 
@@ -127,7 +127,7 @@ SetLog {
   bodyweightRawLb, bodyweightSmoothedLb,   // smoothed value feeds the calc
   angleDeg, boardWeightLb, pulleyFactor, bodyFraction,
   vestLb, barLb, directLoadLb,
-  computedLb,                              // denormalised result
+  computedLb,                              // denormalized result
   formulaVersion                           // makes migration deliberate
 }
 ```

@@ -1,5 +1,5 @@
 /**
- * The exercise catalogue, loaded from data/exercises.json.
+ * The exercise catalog, loaded from data/exercises.json.
  *
  * Lives in the instant tier because logging a set needs an exercise's `usesPulley` and
  * `bodyFraction` to compute the load, and that must happen before Blazor boots (docs/adr/0003).
@@ -14,7 +14,7 @@ export interface MuscleInvolvement {
 /**
  * Whether a logged set of this movement is TRAINING VOLUME.
  *
- * Without the distinction, the stretch catalogue would silently inflate every muscle's weekly
+ * Without the distinction, the stretch catalog would silently inflate every muscle's weekly
  * set count and make the coach's volume advice wrong -- a stretch is not a hard set.
  */
 export type ExerciseKind = 'strength' | 'stretch';
@@ -78,7 +78,7 @@ export class ExerciseCatalog {
     return this.all.filter((e) => e.attachment === null || owned.has(e.attachment));
   }
 
-  /** Available movements grouped for the picker, in catalogue order. */
+  /** Available movements grouped for the picker, in catalog order. */
   grouped(ownedAttachments?: readonly string[]): ReadonlyMap<string, readonly Exercise[]> {
     const groups = new Map<string, Exercise[]>();
 
@@ -91,7 +91,7 @@ export class ExerciseCatalog {
     return groups;
   }
 
-  /** Distinct attachments referenced by the catalogue, for the equipment picker. */
+  /** Distinct attachments referenced by the catalog, for the equipment picker. */
   get attachments(): readonly string[] {
     return [...new Set(this.all.map((e) => e.attachment).filter((a): a is string => a !== null))]
       .sort();

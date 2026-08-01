@@ -32,7 +32,7 @@ public sealed record SessionAdvice(string Headline, IReadOnlyList<MuscleGap> Gap
 /// Two things this deliberately does not do:
 ///
 ///   It never nags about a muscle that has NEVER been trained. Skipping calves entirely is a
-///   programme choice, not a gap, and an app that cannot tell the difference reads as broken.
+///   program choice, not a gap, and an app that cannot tell the difference reads as broken.
 ///   <see cref="VolumeLedger.BelowEffectiveDose"/> already draws that line; this respects it.
 ///
 ///   It never says "you are doing too much". There is no upper bound in
@@ -89,7 +89,7 @@ public sealed class SessionAdvisor
 
         var best = trained.MaxBy(v => v.WeeklySets)!;
 
-        return new SessionAdvice(Capitalise(Headline(gaps, best, target)), gaps);
+        return new SessionAdvice(Capitalize(Headline(gaps, best, target)), gaps);
     }
 
     /// <summary>
@@ -110,7 +110,7 @@ public sealed class SessionAdvisor
             .ToList();
 
     /// <summary>Muscle labels are lowercase by design, and half of them start a sentence.</summary>
-    private static string Capitalise(string text) =>
+    private static string Capitalize(string text) =>
         text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
 
     private static string Headline(

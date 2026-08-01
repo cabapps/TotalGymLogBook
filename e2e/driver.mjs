@@ -9,7 +9,7 @@
  * Usage (from repo root):
  *   node e2e/driver.mjs
  *   node e2e/driver.mjs --keep     # leave the server running
- *   node e2e/driver.mjs --dark     # dark colour scheme
+ *   node e2e/driver.mjs --dark     # dark color scheme
  *   PORT=5300 node e2e/driver.mjs
  *
  * Exit code 0 = the whole loop worked with no console errors.
@@ -325,7 +325,7 @@ async function main() {
   // chest press, which made it wrong the moment anyone trained anything else -- telling you to
   // move up a notch on the press while you stood at the squat stand.
   //
-  // No programme and no prediction needed: the selector already says. This asserts the whole
+  // No program and no prediction needed: the selector already says. This asserts the whole
   // path -- dropdown -> focus.ts -> change bus -> Blazor re-read.
   const named = await page.locator('#focus-exercise').innerText();
   check('coach names the selected exercise', /Chest Press/i.test(named), named.trim());
@@ -403,7 +403,7 @@ async function main() {
 
   // Onboarding must be cleared first. The derived slot only exists on the workout screen, so
   // #empty-state renders nowhere until then -- attached to the DOM but not slotted, which is
-  // the intended behaviour and would otherwise read here as a boot failure.
+  // the intended behavior and would otherwise read here as a boot failure.
   await safariPage.selectOption('#notches', { label: '14 levels' });
   await safariPage.click('#start');
   await safariPage.waitForSelector('tg-set-logger #log', { timeout: 30_000 });
@@ -544,7 +544,7 @@ async function main() {
   await phone.locator('tg-equipment summary').click();
   const boxes = phone.locator('tg-equipment input[type=checkbox]');
   const boxCount = await boxes.count();
-  check('lists every accessory the catalogue needs', boxCount >= 3, `${boxCount} accessories`);
+  check('lists every accessory the catalog needs', boxCount >= 3, `${boxCount} accessories`);
 
   for (let i = 0; i < boxCount; i++) await boxes.nth(i).uncheck();
 
@@ -583,7 +583,7 @@ async function main() {
   // ---- Rep assist: voice ----
   //
   // Headless Chromium has no speech service, so a real SpeechRecognition either does nothing
-  // or errors out -- neither of which tests OUR code. Stubbing the recogniser puts the whole
+  // or errors out -- neither of which tests OUR code. Stubbing the recognizer puts the whole
   // path under test instead: transcript parsing, the counter's guards, the reps field, and the
   // microphone actually being released when the set ends.
   console.log('\nRep assist (voice):');
@@ -614,7 +614,7 @@ async function main() {
     }
     window.__listening = false;
     // BOTH names. Chromium ships the unprefixed SpeechRecognition, and the source prefers it,
-    // so stubbing only the webkit- name leaves the real (serviceless) recogniser in play.
+    // so stubbing only the webkit- name leaves the real (serviceless) recognizer in play.
     window.SpeechRecognition = FakeRecognition;
     window.webkitSpeechRecognition = FakeRecognition;
   });

@@ -4,12 +4,12 @@ using System.Text.Json.Serialization;
 namespace TotalGymLogBook.Domain.Training;
 
 /// <summary>
-/// The exercise catalogue, parsed from data/exercises.json.
+/// The exercise catalog, parsed from data/exercises.json.
 ///
 /// The TypeScript shell has always had this, because it needs <c>usesPulley</c> and
 /// <c>bodyFraction</c> to compute a load before Blazor exists (docs/adr/0003). .NET did not,
 /// which is why the coach could only ever say "chest-press" — it had ids and no names, and
-/// <see cref="VolumeLedger"/> had no catalogue to weigh sets against.
+/// <see cref="VolumeLedger"/> had no catalog to weigh sets against.
 ///
 /// Same file, two parsers, same argument as the resistance calculator: one source of truth on
 /// disk, mirrored where the load-time principle demands it (docs/adr/0009).
@@ -35,8 +35,8 @@ public sealed class ExerciseCatalog
 
     /// <summary>
     /// A display name for an id, falling back to a de-slugged version. The fallback matters:
-    /// a set logged against an exercise later removed from the catalogue must still be
-    /// nameable, because the history is permanent and the catalogue is not.
+    /// a set logged against an exercise later removed from the catalog must still be
+    /// nameable, because the history is permanent and the catalog is not.
     /// </summary>
     public string NameOf(string id) => TryGet(id)?.Name ?? Prettify(id);
 
@@ -44,7 +44,7 @@ public sealed class ExerciseCatalog
     public IReadOnlyList<Exercise> PrimaryFor(MuscleGroup muscle) =>
         All.Where(e => e.InvolvementOf(muscle) >= MuscleInvolvement.Direct).ToList();
 
-    /// <summary>Distinct accessories the catalogue references, for the equipment picker.</summary>
+    /// <summary>Distinct accessories the catalog references, for the equipment picker.</summary>
     public IReadOnlyList<string> Attachments =>
         All.Select(e => e.Attachment).OfType<string>().Distinct().Order().ToList();
 
@@ -71,7 +71,7 @@ public sealed class ExerciseCatalog
         // docs/adr/0002 enables, and only after publish -- never in a debug run, which is what
         // makes that class of failure expensive to find.
         var document = JsonSerializer.Deserialize(json, ExerciseCatalogJson.Default.CatalogDocument)
-            ?? throw new FormatException("Exercise catalogue is empty.");
+            ?? throw new FormatException("Exercise catalog is empty.");
 
         return new ExerciseCatalog(document.Exercises.Select(ToExercise));
     }
@@ -84,7 +84,7 @@ public sealed class ExerciseCatalog
     private static MuscleGroup ParseMuscle(string name) =>
         Enum.TryParse<MuscleGroup>(name, ignoreCase: true, out var muscle)
             ? muscle
-            : throw new FormatException($"Unknown muscle group '{name}' in the exercise catalogue.");
+            : throw new FormatException($"Unknown muscle group '{name}' in the exercise catalog.");
 
     private static string Prettify(string id) =>
         string.Join(' ', id.Split('-').Where(w => w.Length > 0)

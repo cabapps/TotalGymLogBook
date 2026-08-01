@@ -81,7 +81,7 @@ export class SetLogger extends HTMLElement {
     this.#root.adoptedStyleSheets = [styles];
   }
 
-  /** Called by the shell once the catalogue and machine are known. */
+  /** Called by the shell once the catalog and machine are known. */
   configure(opts: {
     catalog: ExerciseCatalog;
     profile: RailProfile;

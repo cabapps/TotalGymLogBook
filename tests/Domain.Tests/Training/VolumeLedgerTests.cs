@@ -185,7 +185,7 @@ public class VolumeLedgerTests
     [Fact]
     public void DoesNotNagAboutMusclesNeverTrained()
     {
-        // Not training calves is a programme choice, not a gap to be scolded about.
+        // Not training calves is a program choice, not a gap to be scolded about.
         var ledger = new VolumeLedger([Sets(ChestPress, 6, daysAgo: 2)], Catalog);
         var below = ledger.BelowEffectiveDose(Today, VolumeTarget.For(ExperienceLevel.Novice));
 

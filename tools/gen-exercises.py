@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Regenerates data/exercises.json. Run from the repo root: python3 tools/gen-exercises.py
 
-The generator is the source of truth for the catalogue -- editing 84 entries of hand-indented
+The generator is the source of truth for the catalog -- editing 84 entries of hand-indented
 JSON by hand is how a stray pulley flag gets in, and a wrong pulley flag halves or doubles the
 recorded load for every set of that movement.
 
@@ -293,7 +293,7 @@ EX = [
 ]
 
 COMMENT = [
-    "Total Gym exercise catalogue. See docs/adr/0004 for the copyright position.",
+    "Total Gym exercise catalog. See docs/adr/0004 for the copyright position.",
     "",
     "Exercise NAMES are unprotectable short phrases (37 C.F.R. 202.1(a)) and the movements",
     "themselves are unprotectable systems or methods (Bikram's Yoga College v. Evolation Yoga,",
@@ -302,8 +302,8 @@ COMMENT = [
     "reproduced.",
     "",
     "NOT A TRANSCRIPTION OF THE TRAINING DECK. Total Gym sells a deck of 80 exercise cards, and",
-    "no public source enumerates it. This catalogue is built from the movements the machine",
-    "actually supports, organised under the same categories the deck advertises (chest, back,",
+    "no public source enumerates it. This catalog is built from the movements the machine",
+    "actually supports, organized under the same categories the deck advertises (chest, back,",
     "shoulders, arms, legs, abs, total body, stretch). Overlap is inevitable and expected -- a",
     "chest press is a chest press -- but the selection here is ours and the card numbering is",
     "not reproduced.",

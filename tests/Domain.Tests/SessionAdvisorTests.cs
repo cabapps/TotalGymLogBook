@@ -53,7 +53,7 @@ public sealed class ExerciseCatalogTests
     [Fact]
     public void Names_an_exercise_that_is_no_longer_in_the_catalogue()
     {
-        // History is permanent; the catalogue is not. A set logged against a removed exercise
+        // History is permanent; the catalog is not. A set logged against a removed exercise
         // must still be nameable.
         Assert.Equal("Cable Woodchop", ExerciseCatalog.Parse(Json).NameOf("cable-woodchop"));
     }
@@ -150,7 +150,7 @@ public sealed class SessionAdvisorTests
     [Fact]
     public void Never_nags_about_a_muscle_that_has_never_been_trained()
     {
-        // Skipping calves entirely is a programme choice, not a gap.
+        // Skipping calves entirely is a program choice, not a gap.
         var summary = new List<MuscleVolume>
         {
             Volume(MuscleGroup.Quadriceps, 9),

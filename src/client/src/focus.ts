@@ -5,7 +5,7 @@
  * trained anything else: it would tell you to move up a notch on chest press while you were
  * standing at the squat stand.
  *
- * The fix needs no programme and no prediction. The trainee has ALREADY told the app which
+ * The fix needs no program and no prediction. The trainee has ALREADY told the app which
  * exercise is next -- they picked it in the set logger, before the first rep. This module is
  * that selection, published so the derived tier can read it.
  *

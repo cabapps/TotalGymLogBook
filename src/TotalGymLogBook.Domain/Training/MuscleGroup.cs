@@ -74,7 +74,7 @@ public sealed record MuscleInvolvement(MuscleGroup Muscle, double Fraction)
 /// <summary>
 /// Whether a logged set of this movement is TRAINING VOLUME.
 ///
-/// Without the distinction, adding the stretch catalogue would silently inflate every muscle's
+/// Without the distinction, adding the stretch catalog would silently inflate every muscle's
 /// weekly set count and make the coach's volume advice wrong -- a stretch is not a hard set.
 /// </summary>
 public enum ExerciseKind
@@ -104,7 +104,7 @@ public sealed record Exercise
 
     public required IReadOnlyList<MuscleInvolvement> Muscles { get; init; }
 
-    /// <summary>Accessory required, if any. Used to filter the catalogue to what the user owns.</summary>
+    /// <summary>Accessory required, if any. Used to filter the catalog to what the user owns.</summary>
     public string? Attachment { get; init; }
 
     public double InvolvementOf(MuscleGroup muscle) =>

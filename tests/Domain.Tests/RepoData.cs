@@ -29,7 +29,7 @@ internal static class RepoData
 
     public static T ReadJson<T>(string fileName) =>
         JsonSerializer.Deserialize<T>(Read(fileName), JsonOpts)
-        ?? throw new InvalidDataException($"{fileName} deserialised to null.");
+        ?? throw new InvalidDataException($"{fileName} deserialized to null.");
 
     public static readonly JsonSerializerOptions JsonOpts = new()
     {

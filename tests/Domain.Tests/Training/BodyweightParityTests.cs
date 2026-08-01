@@ -67,7 +67,7 @@ public class BodyweightParityTests
     }
 
     /// <summary>
-    /// The behaviour smoothing exists for: one noisy day must not move the number the load
+    /// The behavior smoothing exists for: one noisy day must not move the number the load
     /// calculation uses by anything like the size of the noise.
     /// </summary>
     [Fact]

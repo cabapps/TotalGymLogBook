@@ -73,7 +73,7 @@ export interface SetLogRecord extends SyncFields {
   sessionId: string;
   exerciseId: string;
   ts: Instant;
-  /** Calendar date of `ts`, denormalised so day-range queries can use an index. */
+  /** Calendar date of `ts`, denormalized so day-range queries can use an index. */
   on: IsoDate;
 
   reps: number;
@@ -90,7 +90,7 @@ export interface SetLogRecord extends SyncFields {
   barLb: number;
   directLoadLb: number;
 
-  /** Denormalised result. */
+  /** Denormalized result. */
   computedLb: number;
   /** Lets a future formula change migrate history deliberately rather than drifting. */
   formulaVersion: number;

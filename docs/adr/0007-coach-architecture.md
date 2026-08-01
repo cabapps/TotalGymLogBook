@@ -84,7 +84,7 @@ stood at the squat stand. The engine was always per-exercise; nothing ever told 
 
 ### The coach does not need to predict the next exercise
 
-The obvious answer is "it needs a programme". It does not, and waiting for one was the mistake.
+The obvious answer is "it needs a program". It does not, and waiting for one was the mistake.
 
 **The trainee has already said.** They pick the exercise in the set logger before the first
 rep, so the selection *is* the answer, available with no prediction, no schedule, and no
@@ -100,7 +100,7 @@ subscription, which keeps [0003](0003-blazor-web-components-boundary.md) rule 3'
 one-bus contract. `Logbook` special-cases it to *not* drop the history cache, or scrolling the
 selector would refetch the entire logbook per option.
 
-A programme, when it arrives, makes this better — it can say what is next *before* the trainee
+A program, when it arrives, makes this better — it can say what is next *before* the trainee
 picks — but it was never a prerequisite.
 
 ### Terminology, corrected against the literature
@@ -109,9 +109,9 @@ Worth writing down, because the everyday usage and the textbook usage differ in 
 matters for the data model:
 
 - **Split** — how the body's musculature is divided across sessions. *Full body, upper/lower,
-  push-pull-legs are splits, not programmes.* This is the correction: they describe only the
+  push-pull-legs are splits, not programs.* This is the correction: they describe only the
   division of work.
-- **Programme** — the split *plus* exercise selection, set and rep prescription, and a
+- **Program** — the split *plus* exercise selection, set and rep prescription, and a
   progression scheme. PPL alone does not tell you what to do on Monday.
 - **Microcycle** — the repeating block, conventionally a week. "Week" is the right word for the
   UI; the term is only useful for knowing that the one-week assumption is a convention and not
@@ -122,7 +122,7 @@ matters for the data model:
   sessions. The framing of "hit every major muscle group for a target number of sets by the end
   of the week" is exactly right and is the modern mainstream view.
 
-One implication for [Slice B](README.md): **order the programme by rotation, not by calendar.**
+One implication for [Slice B](README.md): **order the program by rotation, not by calendar.**
 Day-of-week scheduling breaks the first time someone trains on Tuesday instead of Monday, and a
 home-gym population misses days constantly. "Next session in the rotation" degrades gracefully;
 "it's Wednesday, do legs" nags.

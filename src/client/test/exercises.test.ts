@@ -1,5 +1,5 @@
 /**
- * The exercise catalogue is data, so these tests mostly guard its integrity: the fields the
+ * The exercise catalog is data, so these tests mostly guard its integrity: the fields the
  * resistance calculation and the volume ledger depend on must be present and sane for every
  * entry, or a single bad row produces silently wrong loads.
  */
@@ -13,7 +13,7 @@ import { ExerciseCatalog } from '../src/exercises.js';
 const DATA = join(import.meta.dirname, '..', '..', '..', 'data');
 const catalog = ExerciseCatalog.parse(readFileSync(join(DATA, 'exercises.json'), 'utf8'));
 
-describe('exercise catalogue', () => {
+describe('exercise catalog', () => {
   it('loads every exercise', () => {
     expect(catalog.all.length).toBeGreaterThan(10);
   });
@@ -49,7 +49,7 @@ describe('exercise catalogue', () => {
     }
   });
 
-  it('names muscle groups the domain recognises', () => {
+  it('names muscle groups the domain recognizes', () => {
     // Must match TotalGymLogBook.Domain.Training.MuscleGroup.
     const known = new Set([
       'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps',
