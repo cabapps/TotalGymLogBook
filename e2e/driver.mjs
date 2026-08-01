@@ -380,8 +380,9 @@ async function main() {
   console.log('\nPrograms:');
   await page.locator('tg-program-panel #change').click().catch(() => {});
   await page.waitForSelector('tg-program-panel #use-0', { timeout: 15_000 });
-  check('offers the splits people actually run',
-    (await page.locator('tg-program-panel .choice h4').count()) === 3);
+  check('offers a program for every way of training',
+    (await page.locator('tg-program-panel .choice h4').count()) >= 5,
+    `${await page.locator('tg-program-panel .choice h4').count()} templates`);
 
   // Push/Pull/Legs -- its first session leads with chest press, which is already logged today,
   // so the tick list has something to show immediately.
@@ -405,7 +406,7 @@ async function main() {
   // replaces it.
   await page.locator('tg-program-panel #pick-1').click();
   const picked = await page.locator('tg-set-logger #exercise').inputValue();
-  check('tapping the plan selects that exercise', picked === 'shoulder-press', picked);
+  check('tapping the plan selects that exercise', picked === 'incline-chest-fly', picked);
 
   await page.locator('tg-set-logger #log').click();
 
@@ -432,6 +433,86 @@ async function main() {
   check('lists the sessions', sessionsListed === 3, `${sessionsListed} sessions`);
 
   await page.screenshot({ path: join(SHOTS, '14-program-critique.png'), fullPage: true });
+
+  // ---- Building a program ----
+  //
+  // The point of the editor is that the volume moves WHILE you choose, so the effective dose is
+  // a dial rather than a verdict you get afterwards. That is only observable end to end: the
+  // numbers come from the shell's own copy of the accounting, and they have to change on the
+  // same tap that changes the plan.
+  console.log('\nProgram editor:');
+  await page.locator('.tg-nav a', { hasText: 'Log' }).click().catch(() => {});
+  await page.waitForSelector('tg-program-panel #edit', { timeout: 30_000 });
+  await page.locator('tg-program-panel #edit').click();
+  await page.waitForSelector('tg-program-editor #volume', { timeout: 15_000 });
+
+  check('opens on the program you are running',
+    (await page.locator('tg-program-editor .session').count()) === 3,
+    `${await page.locator('tg-program-editor .session').count()} sessions`);
+
+  const chestBefore = await page.locator('tg-program-editor #volume li').first().innerText();
+  check('shows sets per muscle while you build', /\d/.test(chestBefore),
+    chestBefore.replace(/\s+/g, ' '));
+
+  // A movement's set count is the dial. Bumping it has to move the bar it feeds.
+  const setsBefore = await page.locator('tg-program-editor #sets-0-0').innerText();
+  await page.locator('tg-program-editor #plus-0-0').click();
+  await page.locator('tg-program-editor #plus-0-0').click();
+  const setsAfter = await page.locator('tg-program-editor #sets-0-0').innerText();
+  check('sets can be dialed up', Number(setsAfter) === Number(setsBefore) + 2,
+    `${setsBefore} -> ${setsAfter}`);
+
+  const chestAfter = await page.locator('tg-program-editor #volume li').first().innerText();
+  check('the volume moves as you edit', chestAfter !== chestBefore,
+    `${chestBefore.replace(/\s+/g, ' ')} -> ${chestAfter.replace(/\s+/g, ' ')}`);
+
+  // Ranking, not filtering: for someone building muscle the stretch-loaded movements come first,
+  // and everything else is still in the list.
+  const firstOption = await page.locator('tg-program-editor #add-0 option').nth(1).innerText();
+  check('offers stretch-loaded movements first for building muscle', /★/.test(firstOption),
+    firstOption.trim());
+
+  const optionCount = await page.locator('tg-program-editor #add-0 option').count();
+  check('still offers everything else', optionCount > 60, `${optionCount} movements`);
+
+  // Strip a session down to one arm movement: the gaps must be REPORTED and the save must
+  // still work. A program that ignores a muscle group is a choice, not an error.
+  for (const index of [2, 1]) {
+    await page.locator(`tg-program-editor #skill-${index}`).click();
+  }
+  const exerciseRows = await page.locator('tg-program-editor li.ex').count();
+  for (let i = exerciseRows - 1; i >= 1; i--) {
+    await page.locator(`tg-program-editor #drop-0-${i}`).click();
+  }
+
+  const verdictText = await waitForText(
+    page.locator('tg-program-editor #verdict'),
+    /Nothing in here trains/,
+  );
+  check('names the muscle groups a program ignores', /Nothing in here trains/.test(verdictText),
+    verdictText.replace(/\s+/g, ' ').slice(0, 80) + '…');
+
+  const saveEnabled = await page.locator('tg-program-editor #save').isEnabled();
+  check('a gap never blocks saving', saveEnabled);
+
+  await page.screenshot({ path: join(SHOTS, '15-program-editor.png'), fullPage: true });
+
+  await page.locator('tg-program-editor #save').click();
+  await page.waitForSelector('tg-program-panel #plan', { timeout: 15_000 });
+
+  const editedName = await page.locator('tg-program-panel #session-name').innerText();
+  check('the edited program becomes the one you are running', editedName.trim().length > 0,
+    editedName.trim());
+
+  // The panel refreshes asynchronously after the save, so poll rather than read once -- the
+  // stale row count is the old program, which looks exactly like the edit not sticking.
+  let planRows = 0;
+  for (let i = 0; i < 60; i++) {
+    planRows = await page.locator('tg-program-panel #plan li').count();
+    if (planRows === 1) break;
+    await page.waitForTimeout(150);
+  }
+  check('the plan reflects the edit', planRows === 1, `${planRows} movements`);
 
   // ---- History ----
   console.log('\nHistory:');

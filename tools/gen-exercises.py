@@ -15,6 +15,45 @@ import json, collections
 E = collections.namedtuple("E", "id name category kind pulley bf att cue muscles")
 D, I = 1.0, 0.5  # direct / indirect involvement
 
+# WHERE IN THE RANGE THE MUSCLE IS MOST LOADED.
+#
+# Everything not listed here is 'even'. Only clear cases are named, because a three-way label
+# applied to all hundred movements by guesswork would be worse than no label at all: the program
+# builder would then rank exercises on noise.
+#
+# Why it exists: training a muscle under load while it is LENGTHENED grows it more than the same
+# sets taken through a shortened range. The Total Gym is unusually good at this -- a cable holds
+# tension at the bottom of a fly where a dumbbell goes slack -- so a hypertrophy program built on
+# this machine should lean on it. See docs/adr/0010.
+#
+# This is a judgment about each movement's mechanics, in the same class as bodyFraction: informed,
+# reviewable, and not measured. Getting one wrong changes which exercise the builder suggests
+# first, never a recorded number.
+LENGTHENED = {
+    # Chest: the cable stays taut at the bottom, where the pec is longest.
+    "chest-press", "chest-fly", "incline-chest-fly", "chest-crossover",
+    "single-arm-chest-press", "shaper-bar-press", "decline-push-up", "chest-dip",
+    # Back: lats under load with the arms overhead.
+    "pullover", "lat-pulldown", "wide-grip-pulldown", "reverse-grip-pulldown",
+    "straight-arm-pulldown", "pull-up", "chin-up", "wide-grip-pull-up",
+    # Arms: the long head of the triceps and the biceps, loaded overhead.
+    "overhead-triceps-extension", "rope-overhead-extension", "overhead-cable-curl",
+    # Legs: the bottom of a squat, and a calf raise off the edge of the stand.
+    "squat", "wide-stance-squat", "narrow-stance-squat", "single-leg-squat", "split-squat",
+    "hip-bridge", "calf-raise", "single-leg-calf-raise", "pilates-frog",
+}
+
+# Load peaks where the muscle is already short. Not bad exercises -- several are the only way to
+# reach a muscle on this machine -- but a hypertrophy program should not be built out of them.
+SHORTENED = {
+    "lateral-raise", "front-raise", "scaption-raise", "shoulder-shrug", "upright-row",
+    "reverse-fly", "concentration-curl", "triceps-kickback", "triceps-pushdown",
+    "rope-pushdown", "leg-extension", "hamstring-curl", "wing-hamstring-curl",
+    "glute-kickback", "side-lying-leg-lift", "hip-adduction",
+    "crunch", "cable-crunch", "oblique-crunch", "reverse-crunch", "bicycle-crunch",
+    "knee-tuck", "pike", "abcrunch-curl-up", "abcrunch-oblique-twist",
+}
+
 # What an exercise REQUIRES. A capability, not a product: two different accessories can satisfy
 # the same requirement, which is the whole reason this is a separate vocabulary from the
 # accessory list below. See ACCESSORIES.
@@ -186,6 +225,9 @@ EX = [
     E("single-arm-curl", "Single-Arm Curl", "Arms", "strength", True, 0.85, None,
       "Curl one handle at a time and keep your shoulders square as you do it.",
       [("Biceps", D), ("Core", I)]),
+    E("overhead-cable-curl", "Overhead Cable Curl", "Arms", "strength", True, 1.0, None,
+      "Lie back with the cables coming from above your head and curl towards your forehead, elbows still.",
+      [("Biceps", D)]),
     E("rope-hammer-curl", "Rope Hammer Curl", "Arms", "strength", True, 0.85, ROPE,
       "Curl the rope with your palms facing each other and pull the ends apart at the top.",
       [("Biceps", D)]),
@@ -420,6 +462,13 @@ COMMENT = [
     "              this, adding stretches would silently inflate every muscle's set count and",
     "              make the coach's volume advice wrong (docs/adr/0010).",
     "usesPulley  : true when the movement routes through the cable, which halves the load.",
+    "peakTension : where in the range the muscle is most loaded -- 'lengthened', 'even', or",
+    "              'shortened'. Loaded work at long muscle lengths grows a muscle more than the",
+    "              same sets through a shortened range, and a cable machine holds tension at the",
+    "              bottom of a fly where a dumbbell goes slack, so a hypertrophy program built on",
+    "              this machine should lean on it (docs/adr/0010). A JUDGMENT about mechanics, in",
+    "              the same class as bodyFraction: it changes which exercise gets suggested first,",
+    "              never a recorded number.",
     "bodyFraction: share of bodyweight actually riding the glideboard. Supine work is ~1.0;",
     "              seated and kneeling positions put less of the trainee on the board.",
     "              THESE ARE ESTIMATES, not measurements -- see the open item in docs/adr/README.",
@@ -429,6 +478,12 @@ COMMENT = [
     "              Fractional accounting matters because Total Gym work is almost all compound;",
     "              see docs/adr/0010.",
 ]
+
+def peak(exercise_id):
+    if exercise_id in LENGTHENED:
+        return "lengthened"
+    return "shortened" if exercise_id in SHORTENED else "even"
+
 
 def main():
     seen = set()
@@ -449,6 +504,13 @@ def main():
     for a in ACCESSORIES:
         assert a.id not in ids, f"duplicate accessory id {a.id}"
         ids.add(a.id)
+
+    # A tension label on an id that no longer exists is a silent no-op, and the exercise it was
+    # meant for quietly reverts to 'even' -- so the program builder stops recommending it and
+    # nothing anywhere says why.
+    stray = (LENGTHENED | SHORTENED) - seen
+    assert not stray, f"tension labels for unknown exercises: {sorted(stray)}"
+    assert not (LENGTHENED & SHORTENED), sorted(LENGTHENED & SHORTENED)
 
     doc = {
         "$comment": COMMENT,
@@ -471,6 +533,7 @@ def main():
                 "category": e.category,
                 "kind": e.kind,
                 "usesPulley": e.pulley,
+                "peakTension": peak(e.id),
                 "bodyFraction": e.bf,
                 "attachment": e.att,
                 "cue": e.cue,

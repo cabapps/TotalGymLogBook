@@ -36,6 +36,11 @@ else
         @_critique.Verdict
     </p>
 
+    @if (_critique.EmphasisNote.Length > 0)
+    {
+        <p class="note small" id="program-emphasis">@_critique.EmphasisNote</p>
+    }
+
     @if (_critique.Warnings.Count > 0)
     {
         <ul class="warnings" id="program-warnings">
@@ -131,7 +136,18 @@ else
         {
             var phase = await Logbook.GetPhaseAsync(DateOnly.FromDateTime(DateTime.Now));
             var experience = await Logbook.GetExperienceAsync();
-            _critique = Analyzer.Critique(_program, Catalog, VolumeTarget.For(experience, phase.Balance));
+            var goal = await Logbook.GetGoalAsync();
+            var settings = await Logbook.GetSettingsAsync();
+
+            // The OBSERVED balance belongs here rather than in the shell. Whether the trainee is
+            // in a deficit is a phase call, and docs/adr/0010 puts phase calls in C# — so the
+            // builder ranks by what they said, and the coach is what notices they have been
+            // losing weight since.
+            var emphasis = ProgramEmphasisRules.For(
+                ProgramEmphasisRules.ParseAim(settings.Aim, goal.Primary), phase.Balance);
+
+            _critique = Analyzer.Critique(
+                _program, Catalog, VolumeTarget.For(experience, phase.Balance), emphasis);
         }
 
         _loaded = true;

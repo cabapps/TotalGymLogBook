@@ -253,6 +253,55 @@ profile that drives the math.
 
 "Lose weight" stays visible because it is why most people buy the machine.
 
+**The answer is stored as given, not only as its mapping.** `settings.aim` keeps the trainee's
+own answer alongside the derived `GoalType`. "Lose weight" and "build muscle" both derive
+hypertrophy — that part of this decision has not changed — but they are not the same request, and
+a program can act on the difference. Flattening the answer at the door made that permanently
+impossible: nothing downstream could tell the two apart, because by then they were the same value.
+
+### The goal picks the movements, not just the numbers
+
+`GoalParameters` covers reps, rest, RIR and load steps. That is the part of programming that
+shows up in numbers. `ProgramEmphasis` is the part that shows up in the exercise list:
+
+| Aim | Emphasis | What the builder leads with |
+|---|---|---|
+| Build muscle | `Lengthened` | movements loaded at long muscle lengths |
+| Lose weight *(or an observed deficit)* | `LargestMuscles` | the biggest muscles first |
+| Get stronger | `HeavyCompounds` | few movements, more sets each |
+| Improve endurance | `Circuit` | whole-body work, short rests |
+| Recover from an injury | `Gentle` | nothing that pulls hard into a stretch |
+
+**Lengthened, for growth.** Loaded work at long muscle lengths grows a muscle more than the same
+sets through a shortened range, and this machine is unusually good at delivering it: a cable holds
+tension at the bottom of a fly where a dumbbell goes slack. So `peakTension` is recorded per
+exercise and the hypertrophy templates are built out of the `lengthened` ones — a claim the tests
+hold the shipped templates to, rather than a sentence in a description.
+
+**Largest muscles, for fat loss.** Training does not burn a meaningful share of a deficit; its job
+there is keeping and adding lean mass, and a pound of muscle on the quads or back does more for
+resting metabolism than the same effort spent on arms. So the fat-loss emphasis ranks by
+`MuscleGroups.RelativeMass` — approximate numbers whose only real claim is the ordering.
+
+**An observed deficit counts the same as a stated one.** Someone who set out to build muscle but
+has been losing weight for a month is training in a deficit whatever they intended. The stated aim
+is intent, the trend is evidence, and either is enough — which is the same reasoning as the
+phase-inference rules above, applied to exercise selection.
+
+**The observed half stays in C#.** Whether the trainee is in a deficit is a phase call, and phase
+calls are C#'s (below). So the shell's builder ranks by the *stated* aim only, and the coach is
+what notices they have been losing weight since. The shell never quietly relabels a goal
+underneath the person who set it.
+
+### The yardstick follows the goal
+
+The minimum effective dose is a hypertrophy number. `ProgramAnalyzer` applies it for the
+hypertrophy, fat-loss and strength emphases and **suppresses it for circuit and rehab programs** —
+holding a rehab program to a growth target has the app calling a program a failure for being
+exactly what the trainee asked for.
+
+Gaps are still *reported* under every goal. Suppressing a warning is not suppressing the fact.
+
 ### Advanced escape hatch
 
 Settings → **Training phase: `Auto (detected)` · `Cutting` · `Maintaining` · `Bulking`**, default

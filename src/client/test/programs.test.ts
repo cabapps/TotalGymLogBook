@@ -46,12 +46,24 @@ function logged(programSessionId: string, startedAt: number): SessionRecord {
 }
 
 describe('ProgramLibrary', () => {
-  it('ships the three splits people actually run', () => {
-    expect(library.templates.map((t) => t.id).sort()).toEqual([
-      'full-body',
-      'push-pull-legs',
-      'upper-lower',
-    ]);
+  it('ships a program for every way of training the app asks about', () => {
+    // One per emphasis, because the onboarding question offers five answers and an answer with
+    // no program behind it is a question the app had no business asking.
+    const emphases = new Set(library.templates.map((t) => t.emphasis));
+
+    expect(emphases).toEqual(
+      new Set(['lengthened', 'largest-muscles', 'heavy-compounds', 'circuit', 'gentle']),
+    );
+    expect(library.templates.map((t) => t.id)).toContain('full-body');
+  });
+
+  it('offers the templates built for what the trainee is training for first', () => {
+    // Ordered, never filtered: someone training for strength who wants a hypertrophy split is
+    // allowed to have one, and hiding it would be the app overruling their decision.
+    const forFatLoss = library.forEmphasis('largest-muscles');
+
+    expect(forFatLoss[0]!.emphasis).toBe('largest-muscles');
+    expect(forFatLoss).toHaveLength(library.templates.length);
   });
 
   it('only plans exercises that exist', () => {
@@ -270,6 +282,7 @@ describe('custom exercises', () => {
     category: 'Core',
     kind: 'strength' as const,
     usesPulley: true,
+    peakTension: 'even' as const,
     bodyFraction: 0.85,
     attachment: null,
     cue: 'Pull across your body.',

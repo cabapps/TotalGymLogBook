@@ -172,6 +172,8 @@ export interface CustomExerciseRecord extends SyncFields {
   category: string;
   kind: 'strength' | 'stretch';
   usesPulley: boolean;
+  /** Where the load peaks. Absent means 'even' -- see PeakTension in exercises.ts. */
+  peakTension?: 'lengthened' | 'even' | 'shortened';
   bodyFraction: number;
   attachment: string | null;
   cue: string;
@@ -183,6 +185,15 @@ export interface SettingsRecord extends SyncFields {
   id: 'settings';
   goalPrimary?: string;
   goalSecondary?: string;
+  /**
+   * What the trainee SAID they are training for, as they said it -- see emphasis.ts.
+   *
+   * Stored alongside goalPrimary rather than instead of it. "Lose weight" and "build muscle"
+   * both derive the same training style, which docs/adr/0010 settles, but they are not the same
+   * request: one of them should be built out of the biggest muscles. Flattening the answer at
+   * the door means the program can never act on the difference.
+   */
+  aim?: string;
   /** 'auto' or a pinned phase -- the advanced override from docs/adr/0010. */
   phaseOverride?: string;
   experienceOverride?: string;

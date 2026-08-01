@@ -23,11 +23,15 @@ import {
   type PlannedProgress,
 } from '../programs.js';
 import type { ProgramRecord, ProgramSession } from '../db/schema.js';
+import type { ProgramEmphasis } from '../emphasis.js';
 import { toIsoDate } from '../db/schema.js';
 
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
   :host { display: block; margin-bottom: .75rem; }
+  /* Without this the host's own display:block wins over [hidden], and the panel stays on
+     screen while the trainee is editing the very plan it is showing. */
+  :host([hidden]) { display: none; }
   .card {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: .75rem; padding: .9rem 1rem;
@@ -74,6 +78,7 @@ export class ProgramPanel extends HTMLElement {
   #session: ProgramSession | undefined;
   #progress: PlannedProgress[] = [];
   #picking = false;
+  #emphasis: ProgramEmphasis = 'lengthened';
 
   constructor() {
     super();
@@ -81,9 +86,15 @@ export class ProgramPanel extends HTMLElement {
     this.#root.adoptedStyleSheets = [styles];
   }
 
-  configure(opts: { catalog: ExerciseCatalog; library: ProgramLibrary }): void {
+  configure(opts: {
+    catalog: ExerciseCatalog;
+    library: ProgramLibrary;
+    /** What the trainee is training for, which orders the templates. */
+    emphasis?: ProgramEmphasis;
+  }): void {
     this.#catalog = opts.catalog;
     this.#library = opts.library;
+    this.#emphasis = opts.emphasis ?? this.#emphasis;
     void this.refresh();
   }
 
@@ -144,6 +155,7 @@ export class ProgramPanel extends HTMLElement {
           ${done === this.#progress.length && this.#progress.length > 0
             ? '<span class="sub" id="session-complete">Session complete. Nice.</span>'
             : ''}
+          <button class="action" id="edit">Edit</button>
           <button class="action" id="change">Change program</button>
         </div>
       </div>
@@ -162,6 +174,16 @@ export class ProgramPanel extends HTMLElement {
         );
       });
     }
+
+    this.#root.getElementById('edit')!.addEventListener('click', () => {
+      this.dispatchEvent(
+        new CustomEvent('program-edit-requested', {
+          bubbles: true,
+          composed: true,
+          detail: { programId: this.#program!.id },
+        }),
+      );
+    });
 
     this.#root.getElementById('change')!.addEventListener('click', () => {
       this.#picking = true;
@@ -189,7 +211,10 @@ export class ProgramPanel extends HTMLElement {
   }
 
   #renderPicker(): void {
-    const templates = this.#library!.templates;
+    // Ordered by what the trainee is training for, never filtered. Someone training for strength
+    // who wants to run a hypertrophy split is allowed to; hiding it would be the app overruling
+    // a decision that is theirs.
+    const templates = this.#library!.forEmphasis(this.#emphasis);
 
     this.#root.innerHTML = `
       <div class="card">
@@ -213,6 +238,7 @@ export class ProgramPanel extends HTMLElement {
         </div>
 
         <div class="row">
+          <button class="action" id="build">Build my own</button>
           <button class="action" id="freestyle">
             ${this.#program ? 'Stop following a program' : 'No thanks &mdash; I&rsquo;ll freestyle'}
           </button>
@@ -240,6 +266,17 @@ export class ProgramPanel extends HTMLElement {
         this.#announce();
       });
     }
+
+    this.#root.getElementById('build')!.addEventListener('click', () => {
+      this.#picking = false;
+      this.dispatchEvent(
+        new CustomEvent('program-edit-requested', {
+          bubbles: true,
+          composed: true,
+          detail: {},
+        }),
+      );
+    });
 
     this.#root.getElementById('freestyle')!.addEventListener('click', async () => {
       await db.setActiveProgram(undefined);

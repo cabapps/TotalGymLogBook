@@ -8,10 +8,14 @@
  */
 
 import type { PlannedExercise, ProgramRecord, ProgramSession, SessionRecord } from './db/schema.js';
+import type { ExerciseCatalog } from './exercises.js';
+import type { ProgramEmphasis } from './emphasis.js';
 
 export interface ProgramTemplate {
   readonly id: string;
   readonly name: string;
+  /** What the template is built out of, matched against what the trainee is training for. */
+  readonly emphasis: ProgramEmphasis;
   readonly description: string;
   readonly bestFor: string;
   readonly sessions: readonly ProgramSession[];
@@ -39,6 +43,19 @@ export class ProgramLibrary {
     const template = this.templates.find((t) => t.id === id);
     if (!template) throw new Error(`No program template '${id}'.`);
     return template;
+  }
+
+  /**
+   * Templates ordered for this trainee: the ones built for what they are training for first.
+   *
+   * Ordered, never filtered. Someone training for strength who wants to run a hypertrophy split
+   * is allowed to, and hiding it would be the app overruling a decision that is theirs. The
+   * ordering is the recommendation; the list is still the list.
+   */
+  forEmphasis(emphasis: ProgramEmphasis): readonly ProgramTemplate[] {
+    return [...this.templates].sort(
+      (a, b) => Number(b.emphasis === emphasis) - Number(a.emphasis === emphasis),
+    );
   }
 }
 
@@ -111,3 +128,55 @@ export function sessionProgress(
 export function nextExercise(progress: readonly PlannedProgress[]): PlannedExercise | undefined {
   return progress.find((p) => !p.done)?.planned;
 }
+
+/**
+ * Sets per muscle for one full rotation, indirect work counted fractionally.
+ *
+ * The same accounting the volume ledger applies to logged history, applied to a PLAN. Mirrored
+ * from ProgramAnalyzer.WeeklySets in .NET, which computes it for the coach's critique; this copy
+ * exists because the program editor needs the numbers to move as the trainee edits, and editing
+ * is a write surface, which makes it the shell's (docs/adr/0003 and 0009). The tests on both
+ * sides assert the same figures for the same shipped template.
+ *
+ * One rotation is treated as one week -- the convention a program is written to, and what makes
+ * these figures comparable to a weekly target.
+ */
+export function plannedWeeklySets(
+  sessions: readonly ProgramSession[],
+  catalog: ExerciseCatalog,
+): Map<string, number> {
+  const totals = new Map<string, number>();
+
+  for (const session of sessions) {
+    for (const planned of session.exercises) {
+      const exercise = catalog.tryGet(planned.exerciseId);
+
+      // A plan can outlive the movement it names. Skipping understates the total, which is the
+      // safe direction: it can only make the app suggest more work, never less.
+      if (!exercise || exercise.kind !== 'strength') continue;
+
+      for (const involvement of exercise.muscles) {
+        totals.set(
+          involvement.muscle,
+          (totals.get(involvement.muscle) ?? 0) + planned.sets * involvement.fraction,
+        );
+      }
+    }
+  }
+
+  return totals;
+}
+
+/**
+ * Sets per muscle per week below which growth is not meaningfully driven.
+ *
+ * Mirrors VolumeTarget.MinimumEffectiveDose. A floor, not a target, and deliberately reachable
+ * for someone training a couple of times a week.
+ */
+export const MINIMUM_EFFECTIVE_DOSE = 4.0;
+
+/** Every muscle the app knows about, in the order a trainee expects to read them. */
+export const MUSCLES: readonly string[] = [
+  'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps',
+  'Quadriceps', 'Hamstrings', 'Glutes', 'Adductors', 'Calves', 'Core',
+];

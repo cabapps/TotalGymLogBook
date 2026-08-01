@@ -23,8 +23,37 @@ import type { RestTimer } from './rest-timer.js';
 import type { WeighIn } from './weigh-in.js';
 import type { Equipment } from './equipment.js';
 import type { ProgramPanel } from './program-panel.js';
+import type { ProgramEditor } from './program-editor.js';
 import type { ExerciseEditor } from './exercise-editor.js';
 import { smoothedLb, toReadings } from '../bodyweight.js';
+import {
+  emphasisFor,
+  goalFor,
+  type ProgramEmphasis,
+  type TrainingAim,
+} from '../emphasis.js';
+
+/**
+ * The trainee's stated aim, falling back to what their goal implies.
+ *
+ * The fallback is for logbooks written before the aim was recorded: they answered the same
+ * question, and the answer was flattened to a training style on the way in. Recovering the aim
+ * from it loses only the fat-loss distinction, which was never stored to begin with.
+ */
+function aimOf(settings: { aim?: string; goalPrimary?: string }): TrainingAim {
+  if (settings.aim) return settings.aim as TrainingAim;
+
+  switch (settings.goalPrimary) {
+    case 'Strength':
+      return 'get-stronger';
+    case 'Aerobic':
+      return 'endurance';
+    case 'Rehab':
+      return 'rehab';
+    default:
+      return 'build-muscle';
+  }
+}
 import type { CustomExerciseRecord } from '../db/schema.js';
 import type { Exercise } from '../exercises.js';
 
@@ -36,6 +65,7 @@ function toExercise(record: CustomExerciseRecord): Exercise {
     category: record.category,
     kind: record.kind,
     usesPulley: record.usesPulley,
+    peakTension: record.peakTension ?? 'even',
     bodyFraction: record.bodyFraction,
     attachment: record.attachment,
     cue: record.cue,
@@ -48,6 +78,7 @@ import './session-list.js';
 import './rest-timer.js';
 import './weigh-in.js';
 import './program-panel.js';
+import './program-editor.js';
 import './exercise-editor.js';
 import './equipment.js';
 import './data-safety.js';
@@ -93,6 +124,15 @@ export class AppShell extends HTMLElement {
   #machineId?: string;
   /** Accessories owned. Undefined means never configured, which shows every exercise. */
   #owned: readonly string[] | undefined;
+  /**
+   * What the program builder ranks movements by.
+   *
+   * Derived from the STATED aim only. Whether the trainee is actually in a deficit is a phase
+   * call, and docs/adr/0010 puts phase calls in C# -- the shell observes, the coach labels. So a
+   * trainee who set out to build muscle but has been losing weight hears about it from the
+   * coach, and the shell does not quietly relabel their goal underneath them.
+   */
+  #emphasis: ProgramEmphasis = 'lengthened';
   /** Smoothed -- what the resistance calculation uses (docs/adr/0004). */
   #bodyweightLb = 0;
   /** Raw latest scale reading, snapshotted alongside for auditability. */
@@ -143,6 +183,7 @@ export class AppShell extends HTMLElement {
       settings.ownedAttachments,
       settings.equipmentVersion,
     );
+    this.#emphasis = emphasisFor(aimOf(settings));
     await this.#refreshBodyweight();
 
     // docs/adr/0005: never auto-close an orphan (discards data) and never auto-resume
@@ -219,11 +260,11 @@ export class AppShell extends HTMLElement {
 
       <label for="goal">What are you working toward?</label>
       <select id="goal">
-        <option value="Hypertrophy">Build muscle</option>
-        <option value="Hypertrophy">Lose weight</option>
-        <option value="Strength">Get stronger</option>
-        <option value="Aerobic">Improve endurance</option>
-        <option value="Rehab">Recover from an injury</option>
+        <option value="build-muscle">Build muscle</option>
+        <option value="lose-fat">Lose weight</option>
+        <option value="get-stronger">Get stronger</option>
+        <option value="endurance">Improve endurance</option>
+        <option value="rehab">Recover from an injury</option>
       </select>
 
       <button class="primary" id="start">Start logging</button>
@@ -232,7 +273,7 @@ export class AppShell extends HTMLElement {
     this.#root.getElementById('start')!.addEventListener('click', async () => {
       const lb = Number((this.#root.getElementById('bw') as HTMLInputElement).value);
       const railProfileId = (this.#root.getElementById('notches') as HTMLSelectElement).value;
-      const goal = (this.#root.getElementById('goal') as HTMLSelectElement).value;
+      const aim = (this.#root.getElementById('goal') as HTMLSelectElement).value as TrainingAim;
 
       if (!Number.isFinite(lb) || lb <= 0) return;
 
@@ -243,7 +284,10 @@ export class AppShell extends HTMLElement {
         isDefault: true,
       });
       await db.recordBodyweight(toIsoDate(Date.now()), lb);
-      await db.saveSettings({ goalPrimary: goal });
+      // Both: the derived training style everything downstream already reads, and the answer
+      // as given. "Lose weight" and "build muscle" derive the same style but are not the same
+      // request -- see SettingsRecord.aim.
+      await db.saveSettings({ aim, goalPrimary: goalFor(aim) });
 
       await this.#route();
     });
@@ -286,6 +330,7 @@ export class AppShell extends HTMLElement {
       <tg-rest-timer id="timer" hidden></tg-rest-timer>
       <tg-weigh-in id="weight"></tg-weigh-in>
       <tg-program-panel id="program"></tg-program-panel>
+      <tg-program-editor id="builder"></tg-program-editor>
       <tg-set-logger id="logger"></tg-set-logger>
       <tg-session-list id="list"></tg-session-list>
 
@@ -319,12 +364,38 @@ export class AppShell extends HTMLElement {
     });
 
     const program = this.#root.getElementById('program') as ProgramPanel;
-    program.configure({ catalog: this.#catalog!, library: this.#library! });
+    program.configure({ catalog: this.#catalog!, library: this.#library!, emphasis: this.#emphasis });
 
     // Tapping a planned movement selects it. The plan drives the picker; it never replaces it.
     program.addEventListener('plan-exercise-picked', (event) => {
       const { exerciseId } = (event as CustomEvent<{ exerciseId: string }>).detail;
       logger.selectExercise(exerciseId);
+    });
+
+    const builder = this.#root.getElementById('builder') as ProgramEditor;
+    builder.configure({
+      catalog: this.#catalog!,
+      emphasis: this.#emphasis,
+      ...(this.#owned !== undefined && { ownedAttachments: this.#owned }),
+    });
+
+    // Editing is a mode, not a screen: the panel steps aside while the builder is open so the
+    // trainee is never looking at today's plan and the plan they are rewriting at once.
+    program.addEventListener('program-edit-requested', async (event) => {
+      const { programId } = (event as CustomEvent<{ programId?: string }>).detail;
+      const existing = programId ? await db.getProgram(programId) : undefined;
+
+      program.hidden = true;
+      builder.edit(existing);
+    });
+
+    builder.addEventListener('editor-closed', () => {
+      program.hidden = false;
+    });
+
+    builder.addEventListener('program-changed', async () => {
+      program.hidden = false;
+      await program.refresh();
     });
 
     const editor = this.#root.getElementById('editor') as ExerciseEditor;

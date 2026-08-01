@@ -184,6 +184,28 @@ still offers the full catalog, the tick list counts sets logged *today* rather t
 this session record — closing the app mid-workout starts a new record but is obviously the same
 workout to the trainee — and doing four sets where the plan said three is not an error.
 
+### The trainee builds and edits their own
+
+`<tg-program-editor>` is in the **shell**, not Blazor, for the reason everything that writes is:
+IndexedDB is TypeScript's and the derived tier is read-only (0003, 0009). That forces a second
+implementation of the per-muscle volume accounting in `programs.ts`, mirroring
+`ProgramAnalyzer.WeeklySets` — paired tests on both sides assert the same figures for the same
+shipped template, the same way the resistance calculator is kept honest.
+
+**The volume moves while you choose.** The coach can already tell a trainee that a finished
+program leaves their biceps short, but that is the wrong moment — by then they have committed, and
+acting on it means coming back to edit. Showing sets-per-muscle *during* the edit turns the
+effective dose from a verdict into a dial they can watch themselves move.
+
+**Nothing in the editor blocks.** A program that ignores a muscle group saves like any other; the
+gap is named and the decision stays the trainee's. Real programs skip muscles on purpose, and an
+app that refuses to save one is wrong more often than the trainee is. Same line as *untrained is a
+choice; under-dosed is a gap*, above.
+
+**Ranked, never filtered.** The movement list is ordered by what the trainee is training for
+(0010) and still contains everything. A movement that scores badly for their goal may be exactly
+what they want for a reason the app cannot see.
+
 ## Consequences
 
 `TrainingGoal` and `Phase` are short, high-signal context that keep a small model on-topic far
