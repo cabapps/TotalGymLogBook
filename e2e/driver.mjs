@@ -9,7 +9,7 @@
  * Usage (from repo root):
  *   node e2e/driver.mjs
  *   node e2e/driver.mjs --keep     # leave the server running
- *   node e2e/driver.mjs --dark     # dark colour scheme
+ *   node e2e/driver.mjs --dark     # dark color scheme
  *   PORT=5300 node e2e/driver.mjs
  *
  * Exit code 0 = the whole loop worked with no console errors.
@@ -325,7 +325,7 @@ async function main() {
   // chest press, which made it wrong the moment anyone trained anything else -- telling you to
   // move up a notch on the press while you stood at the squat stand.
   //
-  // No programme and no prediction needed: the selector already says. This asserts the whole
+  // No program and no prediction needed: the selector already says. This asserts the whole
   // path -- dropdown -> focus.ts -> change bus -> Blazor re-read.
   const named = await page.locator('#focus-exercise').innerText();
   check('coach names the selected exercise', /Chest Press/i.test(named), named.trim());
@@ -403,7 +403,7 @@ async function main() {
 
   // Onboarding must be cleared first. The derived slot only exists on the workout screen, so
   // #empty-state renders nowhere until then -- attached to the DOM but not slotted, which is
-  // the intended behaviour and would otherwise read here as a boot failure.
+  // the intended behavior and would otherwise read here as a boot failure.
   await safariPage.selectOption('#notches', { label: '14 levels' });
   await safariPage.click('#start');
   await safariPage.waitForSelector('tg-set-logger #log', { timeout: 30_000 });
@@ -518,8 +518,147 @@ async function main() {
   const loggedReps = await phone.locator('tg-session-list .reps').first().innerText();
   check('the counted set logs with the counted reps', loggedReps === String(corrected), loggedReps);
 
+  // Motion is deliberately NOT stopped by logging a set -- the sensor costs nothing idle and
+  // re-arming it every set is friction. Voice is, and that is covered separately below.
+  await phone.waitForSelector('tg-rep-assist #stop', { timeout: 10_000 });
+  check('motion keeps counting after a set is logged', true);
+
+  await phone.locator('tg-rep-assist #stop').click();
+  const stopped = await phone.locator('tg-rep-assist #stop').count();
+  check('an explicit Stop switches the source off', stopped === 0);
+
   check('no page errors during rep assist', phoneErrors.length === 0, phoneErrors.slice(0, 2).join(' | '));
+
+  // ---- Equipment ----
+  //
+  // Eighty-odd exercises is a long list to scroll past things you cannot do. The filter is a
+  // stored setting, so it survives the session, and it must reshape the picker immediately
+  // rather than at next launch.
+  console.log('\nEquipment filter:');
+  const allOptions = await phone.locator('tg-set-logger #exercise option').count();
+  check('the picker starts unfiltered', allOptions > 50, `${allOptions} exercises`);
+
+  const groups = await phone.locator('tg-set-logger #exercise optgroup').count();
+  check('the picker is grouped by body part', groups >= 6, `${groups} groups`);
+
+  await phone.locator('tg-equipment summary').click();
+  const boxes = phone.locator('tg-equipment input[type=checkbox]');
+  const boxCount = await boxes.count();
+  check('lists every accessory the catalog needs', boxCount >= 3, `${boxCount} accessories`);
+
+  for (let i = 0; i < boxCount; i++) await boxes.nth(i).uncheck();
+
+  // Wait on a specific option leaving. A plain document.querySelector cannot reach into
+  // <tg-app-shell>'s shadow root from inside evaluate(), but Playwright's locator engine
+  // pierces open roots -- so let it do the waiting.
+  await phone.waitForSelector('tg-set-logger #exercise option[value="squat"]', {
+    state: 'detached',
+    timeout: 15_000,
+  });
+
+  const filtered = await phone.locator('tg-set-logger #exercise option').count();
+  check('unowned accessories drop out of the picker', filtered < allOptions,
+    `${allOptions} -> ${filtered} exercises`);
+
+  const stillListed = await phone.locator('tg-set-logger #exercise option[value="squat"]').count();
+  check('a squat-stand movement is gone', stillListed === 0);
+
+  // The selection must not silently fall through to whatever ends up first in the list.
+  const selected = await phone.locator('tg-set-logger #exercise').inputValue();
+  const selectable = await phone
+    .locator(`tg-set-logger #exercise option[value="${selected}"]`)
+    .count();
+  check('the selected exercise is still in the list', selectable === 1, selected);
+
+  await phone.screenshot({ path: join(SHOTS, '11-equipment.png'), fullPage: true });
+
+  // Survives a reload: it is a setting, not session state.
+  await phone.reload({ waitUntil: 'domcontentloaded' });
+  await phone.waitForSelector('tg-set-logger #exercise', { timeout: 30_000 });
+  const afterReload = await phone.locator('tg-set-logger #exercise option').count();
+  check('the equipment choice is remembered', afterReload === filtered, `${afterReload} exercises`);
+
   await phoneCtx.close();
+
+  // ---- Rep assist: voice ----
+  //
+  // Headless Chromium has no speech service, so a real SpeechRecognition either does nothing
+  // or errors out -- neither of which tests OUR code. Stubbing the recognizer puts the whole
+  // path under test instead: transcript parsing, the counter's guards, the reps field, and the
+  // microphone actually being released when the set ends.
+  console.log('\nRep assist (voice):');
+  const voiceCtx = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+  });
+  await voiceCtx.addInitScript(() => {
+    class FakeRecognition extends EventTarget {
+      constructor() {
+        super();
+        this.lang = '';
+        this.continuous = false;
+        this.interimResults = false;
+        this.maxAlternatives = 1;
+        this.onresult = null;
+        this.onerror = null;
+        this.onend = null;
+        window.__recognition = this;
+      }
+      start() { window.__listening = true; }
+      stop() { window.__listening = false; this.onend?.(); }
+      abort() { window.__listening = false; }
+      say(transcript) {
+        this.onresult?.({ resultIndex: 0, results: [[{ transcript, confidence: 0.9 }]] });
+      }
+    }
+    window.__listening = false;
+    // BOTH names. Chromium ships the unprefixed SpeechRecognition, and the source prefers it,
+    // so stubbing only the webkit- name leaves the real (serviceless) recognizer in play.
+    window.SpeechRecognition = FakeRecognition;
+    window.webkitSpeechRecognition = FakeRecognition;
+  });
+
+  const voice = await voiceCtx.newPage();
+  const voiceErrors = [];
+  voice.on('pageerror', (e) => voiceErrors.push(e.message));
+
+  await voice.goto(URL, { waitUntil: 'domcontentloaded' });
+  await voice.waitForSelector('#bw', { timeout: 30_000 });
+  await voice.selectOption('#notches', { label: '14 levels' });
+  await voice.click('#start');
+  await voice.waitForSelector('tg-set-logger #log', { timeout: 30_000 });
+
+  await voice.locator('tg-rep-assist #mode-voice').click();
+  // The click handler kicks off an async start, so the click resolving is not the same as
+  // the microphone being live.
+  await voice.waitForFunction(() => window.__listening === true, null, { timeout: 15_000 });
+  check('voice assist starts listening', true);
+
+  // Counting out loud, including a dropped word. The count still lands correctly, which is the
+  // whole reason voice reports totals rather than events.
+  for (const said of ['one', 'two', 'four']) {
+    await voice.evaluate((text) => window.__recognition.say(text), said);
+  }
+  const heard = Number(await voice.locator('tg-set-logger #reps').inputValue());
+  check('counts what the trainee says, over a dropped word', heard === 4, `${heard} reps`);
+
+  // The misrecognition that matters: "four" through gritted teeth comes back as "forty".
+  await voice.evaluate(() => window.__recognition.say('forty'));
+  const afterWild = Number(await voice.locator('tg-set-logger #reps').inputValue());
+  check('ignores a wildly wrong number', afterWild === heard, `${afterWild} reps`);
+
+  await voice.locator('tg-set-logger #log').click();
+  await voice.waitForSelector('tg-session-list li', { timeout: 10_000 });
+
+  check('logging a set releases the microphone',
+    await voice.evaluate(() => window.__listening === false));
+  const voiceStatus = await voice.locator('tg-rep-assist #status').innerText();
+  check('and says so', /stopped listening/i.test(voiceStatus), voiceStatus.trim());
+
+  await voice.screenshot({ path: join(SHOTS, '12-voice.png'), fullPage: true });
+  check('no page errors during voice assist', voiceErrors.length === 0, voiceErrors.slice(0, 2).join(' | '));
+  await voiceCtx.close();
 
   console.log('\nConsole:');
   check('no console errors', errors.length === 0, errors.slice(0, 2).join(' | '));

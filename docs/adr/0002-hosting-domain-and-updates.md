@@ -68,7 +68,7 @@ The relevant test is nominative fair use (*New Kids on the Block v. News America
 1. The product is not identifiable without the mark — an app for Total Gym owners cannot
    describe itself otherwise.
 2. Use no more of the mark than necessary — the words only. Never their logo, stylised
-   wordmark, product photography, colours, or trade dress.
+   wordmark, product photography, colors, or trade dress.
 3. Suggest no sponsorship — "Not affiliated with, endorsed by, or sponsored by Total Gym
    Fitness LLC" in the footer, About page, and PWA manifest description. Never "official."
 

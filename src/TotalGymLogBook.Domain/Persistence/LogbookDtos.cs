@@ -96,6 +96,9 @@ public sealed record SettingsDto
     [JsonPropertyName("experienceOverride")] public string? ExperienceOverride { get; init; }
     [JsonPropertyName("units")] public string? Units { get; init; }
     [JsonPropertyName("defaultMachineId")] public string? DefaultMachineId { get; init; }
+
+    /// <summary>Null means never configured, which filters nothing. See ExerciseCatalog.Available.</summary>
+    [JsonPropertyName("ownedAttachments")] public string[]? OwnedAttachments { get; init; }
 }
 
 /// <summary>In-flight shell state, not a stored record. See src/client/src/focus.ts.</summary>
@@ -105,7 +108,7 @@ public sealed record FocusDto
 }
 
 /// <summary>
-/// Source-generated serialisation. Reflection-based System.Text.Json breaks under the IL
+/// Source-generated serialization. Reflection-based System.Text.Json breaks under the IL
 /// trimming enabled in docs/adr/0002, and the failure only appears after publish -- never in
 /// a debug run, which is what makes it expensive to find late.
 /// </summary>

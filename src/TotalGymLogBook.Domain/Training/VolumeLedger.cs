@@ -60,7 +60,7 @@ public sealed record MuscleVolume(MuscleGroup Muscle, double WeeklySets, int? Da
 /// Read-only rollup of weekly sets per muscle, with indirect work counted at its fractional
 /// rate.
 ///
-/// This is a MONITORING concern, not a progression one. Changing set count is a programme
+/// This is a MONITORING concern, not a progression one. Changing set count is a program
 /// change — driven by experience and goals — whereas reps and load move session to session.
 /// <see cref="ProgressionEngine"/> deliberately does not touch it.
 /// </summary>
@@ -93,6 +93,10 @@ public sealed class VolumeLedger
         {
             if (!_catalog.TryGetValue(history.ExerciseId, out var exercise)) continue;
 
+            // A stretch is not a hard set. Counting the stretch catalog as volume would tell
+            // a trainee their hamstrings are covered because they stretched them.
+            if (!exercise.CountsAsVolume) continue;
+
             var sets = history.Sets.Count(s => s.On > from && s.On <= asOf);
             if (sets == 0) continue;
 
@@ -114,7 +118,7 @@ public sealed class VolumeLedger
         foreach (var history in _histories)
         {
             if (!_catalog.TryGetValue(history.ExerciseId, out var exercise)) continue;
-            if (exercise.InvolvementOf(muscle) <= 0) continue;
+            if (!exercise.CountsAsVolume || exercise.InvolvementOf(muscle) <= 0) continue;
 
             foreach (var set in history.Sets.Where(s => s.On <= asOf))
             {
@@ -139,7 +143,7 @@ public sealed class VolumeLedger
     /// <summary>
     /// Muscles that have seen work but are under the effective dose. Deliberately excludes
     /// muscles never trained at all — a user who does not train calves does not need nagging
-    /// about calves; that is a programme choice, not a gap.
+    /// about calves; that is a program choice, not a gap.
     /// </summary>
     public IReadOnlyList<MuscleVolume> BelowEffectiveDose(
         DateOnly asOf, VolumeTarget target, int windowDays = DefaultWindowDays) =>

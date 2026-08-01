@@ -1,9 +1,9 @@
 namespace TotalGymLogBook.Domain.Training;
 
 /// <summary>
-/// What the programme is FOR. Deliberately separate from <see cref="EnergyBalance"/>, which is
+/// What the program is FOR. Deliberately separate from <see cref="EnergyBalance"/>, which is
 /// what the body is DOING. Losing weight is not a training style: a weight-loss user gets a
-/// hypertrophy programme, because the job of resistance training in a deficit is preserving
+/// hypertrophy program, because the job of resistance training in a deficit is preserving
 /// lean mass, and that needs mechanical tension. See docs/adr/0010.
 /// </summary>
 public enum GoalType

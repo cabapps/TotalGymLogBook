@@ -191,7 +191,7 @@ a clear failure into a hang.
 
 The lesson generalises: a file-existence smoke test passes happily on a completely broken
 deployable, and a local server that serves everything is not simulating a host that withholds
-things. Assert on *content*, on *behaviour in a browser*, and against *the real deployment*.
+things. Assert on *content*, on *behavior in a browser*, and against *the real deployment*.
 
 ### Keep the dev/prod split
 

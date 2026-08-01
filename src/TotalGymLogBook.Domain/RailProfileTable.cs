@@ -41,7 +41,7 @@ public sealed class RailProfileTable
     public static RailProfileTable Parse(string json)
     {
         var doc = JsonSerializer.Deserialize(json, RailProfileJson.Default.RailProfileFileDto)
-                  ?? throw new InvalidDataException("rail-profiles.json deserialised to null.");
+                  ?? throw new InvalidDataException("rail-profiles.json deserialized to null.");
 
         var profiles = doc.Profiles.Select(p => new RailProfile
         {

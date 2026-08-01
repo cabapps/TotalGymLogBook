@@ -36,6 +36,7 @@ styles.replaceSync(`
   button[aria-pressed="true"] {
     background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
   }
+  button.stop { border-color: #b45309; color: #b45309; font-weight: 600; }
   .status { font-size: .7rem; color: var(--muted); margin: .4rem 0 0; line-height: 1.4; }
   .status.live { color: var(--accent); }
   .status.bad { color: #b45309; }
@@ -128,6 +129,26 @@ export class RepAssist extends HTMLElement {
     this.#renderStatus();
   }
 
+  /**
+   * The set is done.
+   *
+   * Voice stops listening; motion keeps going. The asymmetry is deliberate and is about what
+   * the source costs while it is idle. A live microphone through a two-minute rest period is
+   * listening to a conversation it has no business hearing, and the trainee has no way to tell
+   * that it is on. An accelerometer costs nothing and re-arming it before every set is friction
+   * with no upside.
+   */
+  async finishSet(): Promise<void> {
+    if (this.#mode === 'voice') {
+      await this.#stop();
+      this.#say('Stopped listening. Tap to count the next set.', 'idle');
+      this.#render();
+      return;
+    }
+
+    this.reset();
+  }
+
   /** Switches source without a user gesture. Only ever used to turn assist OFF. */
   async setMode(mode: AssistMode): Promise<void> {
     if (mode !== 'off') throw new Error('Turning assist on requires a user gesture.');
@@ -214,6 +235,11 @@ export class RepAssist extends HTMLElement {
       return;
     }
 
+    // An explicit Stop, not just "tap the pressed button again". Toggling a lit-up button off
+    // is discoverable to whoever built it and to nobody else, and the microphone is exactly the
+    // thing a trainee wants an unambiguous way to switch off.
+    const stop = this.#mode === 'off' ? '' : '<button class="stop" id="stop">Stop</button>';
+
     this.#root.innerHTML = `
       <div class="bar">
         <span class="label">Count for me:</span>
@@ -223,6 +249,7 @@ export class RepAssist extends HTMLElement {
               `<button id="mode-${mode}" aria-pressed="${this.#mode === mode}">${source.label}</button>`,
           )
           .join('')}
+        ${stop}
       </div>
       <p class="status" id="status"></p>
     `;
@@ -232,6 +259,10 @@ export class RepAssist extends HTMLElement {
         .getElementById(`mode-${mode}`)!
         .addEventListener('click', () => void this.#choose(mode));
     }
+
+    this.#root.getElementById('stop')?.addEventListener('click', () => {
+      void this.#choose(this.#mode);
+    });
 
     this.#renderStatus();
   }

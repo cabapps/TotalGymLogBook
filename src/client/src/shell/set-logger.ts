@@ -71,6 +71,8 @@ export class SetLogger extends HTMLElement {
   /** Raw scale reading, stored alongside for auditability. */
   #bodyweightRawLb = 180;
   #resolveSessionId?: () => Promise<string>;
+  /** Undefined means unconfigured, which filters nothing. See ExerciseCatalog.available. */
+  #owned: readonly string[] | undefined;
   #state: UiState = { exerciseId: '', level: 8, reps: 10, vestLb: 0, barLb: 0 };
 
   constructor() {
@@ -79,7 +81,7 @@ export class SetLogger extends HTMLElement {
     this.#root.adoptedStyleSheets = [styles];
   }
 
-  /** Called by the shell once the catalogue and machine are known. */
+  /** Called by the shell once the catalog and machine are known. */
   configure(opts: {
     catalog: ExerciseCatalog;
     profile: RailProfile;
@@ -87,6 +89,8 @@ export class SetLogger extends HTMLElement {
     bodyweightLb: number;
     /** Raw scale reading, snapshotted for auditability. */
     bodyweightRawLb?: number;
+    /** Accessories owned. Undefined means unconfigured, which shows everything. */
+    ownedAttachments?: readonly string[];
     /** Resolved at log time so a session is only created once the trainee actually works. */
     sessionId: () => Promise<string>;
   }): void {
@@ -95,14 +99,38 @@ export class SetLogger extends HTMLElement {
     this.#bodyweightLb = opts.bodyweightLb;
     this.#bodyweightRawLb = opts.bodyweightRawLb ?? opts.bodyweightLb;
     this.#resolveSessionId = opts.sessionId;
+    this.#owned = opts.ownedAttachments;
 
     this.#state = { ...this.#state, ...this.#restore() };
-    if (!this.#catalog.tryGet(this.#state.exerciseId)) {
-      this.#state.exerciseId = this.#catalog.all[0]!.id;
-    }
+    this.#repairSelection();
     this.#state.level = Math.min(this.#state.level, opts.profile.levelCount);
 
     this.#render();
+  }
+
+  /**
+   * Applied when the trainee changes what equipment they own.
+   *
+   * Re-renders, because the option list itself changed. Repairs the selection first: a select
+   * whose selected option has just been filtered away silently falls back to its first option,
+   * so the trainee's next set would be logged against a movement they never picked.
+   */
+  setOwnedAttachments(ownedAttachments: readonly string[] | undefined): void {
+    this.#owned = ownedAttachments;
+    if (!this.#catalog || !this.#profile) return;
+
+    this.#repairSelection();
+    this.#render();
+  }
+
+  /** Keeps the selected exercise pointing at something that is actually in the list. */
+  #repairSelection(): void {
+    const available = this.#catalog!.available(this.#owned);
+    const stillThere = available.some((e) => e.id === this.#state.exerciseId);
+
+    if (!stillThere) {
+      this.#state.exerciseId = available[0]?.id ?? this.#catalog!.all[0]!.id;
+    }
   }
 
   /** Applied after a weigh-in, so the load readout reflects it without losing UI state. */
@@ -149,12 +177,17 @@ export class SetLogger extends HTMLElement {
       <div class="card">
         <label for="exercise">Exercise</label>
         <select id="exercise">
-          ${catalog.all
+          ${[...catalog.grouped(this.#owned)]
             .map(
-              (e) =>
-                `<option value="${e.id}"${e.id === s.exerciseId ? ' selected' : ''}>${e.name}${
-                  e.attachment ? ` (${e.attachment})` : ''
-                }</option>`,
+              ([category, exercises]) => `
+                <optgroup label="${category}">
+                  ${exercises
+                    .map(
+                      (e) =>
+                        `<option value="${e.id}"${e.id === s.exerciseId ? ' selected' : ''}>${e.name}</option>`,
+                    )
+                    .join('')}
+                </optgroup>`,
             )
             .join('')}
         </select>
@@ -294,9 +327,11 @@ export class SetLogger extends HTMLElement {
         formulaVersion: FORMULA_VERSION,
       });
 
-      // The next set counts from zero. The source keeps running -- the trainee is mid-workout,
-      // and making them re-grant the microphone between sets would defeat the point.
-      this.#assist.reset();
+      // Finishing a set ends the count. Voice also stops LISTENING here: a hot microphone
+      // through the rest period is the wrong default for something that has no reason to hear
+      // anything until the next set starts. Motion keeps running -- the sensor costs the
+      // trainee nothing and re-arming it every set is pure friction.
+      await this.#assist.finishSet();
 
       this.dispatchEvent(
         new CustomEvent('set-logged', { bubbles: true, composed: true, detail: { exerciseId: e.id } }),

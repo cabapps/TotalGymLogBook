@@ -9,6 +9,7 @@ public enum MuscleGroup
     Triceps,
     Quadriceps,
     Hamstrings,
+    Adductors,
     Glutes,
     Calves,
     Core
@@ -24,6 +25,7 @@ public static class MuscleGroups
     public static string Label(this MuscleGroup muscle) => muscle switch
     {
         MuscleGroup.Quadriceps => "quads",
+        MuscleGroup.Adductors => "inner thighs",
         _ => muscle.ToString().ToLowerInvariant()
     };
 
@@ -69,10 +71,30 @@ public sealed record MuscleInvolvement(MuscleGroup Muscle, double Fraction)
 /// One movement. <see cref="UsesPulley"/> and <see cref="BodyFraction"/> feed the resistance
 /// calculation (docs/adr/0004); <see cref="Muscles"/> feeds the volume ledger.
 /// </summary>
+/// <summary>
+/// Whether a logged set of this movement is TRAINING VOLUME.
+///
+/// Without the distinction, adding the stretch catalog would silently inflate every muscle's
+/// weekly set count and make the coach's volume advice wrong -- a stretch is not a hard set.
+/// </summary>
+public enum ExerciseKind
+{
+    Strength,
+    Stretch
+}
+
 public sealed record Exercise
 {
     public required string Id { get; init; }
     public required string Name { get; init; }
+
+    /// <summary>Grouping for the exercise picker. Presentation only.</summary>
+    public string Category { get; init; } = "";
+
+    public ExerciseKind Kind { get; init; } = ExerciseKind.Strength;
+
+    /// <summary>True when a set of this counts toward weekly volume.</summary>
+    public bool CountsAsVolume => Kind == ExerciseKind.Strength;
 
     /// <summary>True when the movement routes through the cable, which halves the load.</summary>
     public bool UsesPulley { get; init; }
@@ -82,7 +104,7 @@ public sealed record Exercise
 
     public required IReadOnlyList<MuscleInvolvement> Muscles { get; init; }
 
-    /// <summary>Accessory required, if any. Used to filter the catalogue to what the user owns.</summary>
+    /// <summary>Accessory required, if any. Used to filter the catalog to what the user owns.</summary>
     public string? Attachment { get; init; }
 
     public double InvolvementOf(MuscleGroup muscle) =>

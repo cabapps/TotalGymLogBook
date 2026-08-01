@@ -28,7 +28,7 @@ public sealed class Logbook
     /// <summary>Raised after the underlying data changes, so components can re-render.</summary>
     public event Action? Changed;
 
-    public async Task InitialiseAsync()
+    public async Task InitializeAsync()
     {
         await DbBridge.EnsureImportedAsync();
 
@@ -156,7 +156,7 @@ public sealed class Logbook
 
     /// <summary>
     /// The trainee's current phase, inferred from the scale rather than asked (docs/adr/0010).
-    /// Honours the advanced override when one is pinned.
+    /// Honors the advanced override when one is pinned.
     /// </summary>
     public async Task<Phase> GetPhaseAsync(DateOnly asOf)
     {
@@ -174,7 +174,7 @@ public sealed class Logbook
 
     /// <summary>
     /// Training age, inferred from history the same way phase is (docs/adr/0010): someone with
-    /// three weeks of logs is a novice whatever they would claim. Honours the advanced
+    /// three weeks of logs is a novice whatever they would claim. Honors the advanced
     /// override.
     ///
     /// The thresholds are session counts rather than calendar time, because someone who trained
@@ -221,7 +221,7 @@ public sealed class Logbook
     }
 
     /// <summary>
-    /// The trainee's machine, honouring any inclinometer calibration. Falls back to the
+    /// The trainee's machine, honoring any inclinometer calibration. Falls back to the
     /// 14-notch profile so the app is usable before onboarding completes.
     /// </summary>
     public async Task<RailProfile> GetRailProfileAsync()

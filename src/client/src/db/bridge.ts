@@ -46,7 +46,7 @@ export async function getRecentSetsJson(days = 7): Promise<string> {
 
 /**
  * Sets in a window, grouped into the ExerciseHistory shape the domain expects, so C# can
- * deserialise straight into its own records without reshaping.
+ * deserialize straight into its own records without reshaping.
  */
 export async function getHistoriesJson(days = 90): Promise<string> {
   const now = Date.now();

@@ -89,7 +89,7 @@ Both of the worst bugs found in this project were invisible to everything else:
   incremental publish, so the framework script tag 404'd.
 
 Both would have deployed green. A file-existence smoke test passes happily on a completely
-broken deployable — assert on content and on behaviour in a browser.
+broken deployable — assert on content and on behavior in a browser.
 
 ## Running the same checks locally
 

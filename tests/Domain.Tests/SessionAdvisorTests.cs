@@ -53,7 +53,7 @@ public sealed class ExerciseCatalogTests
     [Fact]
     public void Names_an_exercise_that_is_no_longer_in_the_catalogue()
     {
-        // History is permanent; the catalogue is not. A set logged against a removed exercise
+        // History is permanent; the catalog is not. A set logged against a removed exercise
         // must still be nameable.
         Assert.Equal("Cable Woodchop", ExerciseCatalog.Parse(Json).NameOf("cable-woodchop"));
     }
@@ -63,8 +63,28 @@ public sealed class ExerciseCatalogTests
     {
         var catalog = ExerciseCatalog.Parse(Json);
 
-        Assert.Single(catalog.Available());
+        // Unconfigured filters nothing; configured-but-empty filters hard. Conflating the two
+        // would hide squats from someone who has been logging squats for months.
+        Assert.Equal(2, catalog.Available().Count);
         Assert.Equal(2, catalog.Available(["Squat stand"]).Count);
+        Assert.Single(catalog.Available([]));
+    }
+
+    [Fact]
+    public void Lists_the_attachments_the_catalogue_references()
+    {
+        Assert.Equal(["Squat stand"], ExerciseCatalog.Parse(Json).Attachments);
+    }
+
+    [Fact]
+    public void Reads_kind_and_category()
+    {
+        var catalog = ExerciseCatalog.Parse(RepoData.Read("exercises.json"));
+
+        Assert.All(catalog.All, e => Assert.False(string.IsNullOrWhiteSpace(e.Category)));
+        Assert.Contains(catalog.All, e => e.Kind == ExerciseKind.Stretch);
+        Assert.All(catalog.All.Where(e => e.Kind == ExerciseKind.Stretch),
+            e => Assert.False(e.CountsAsVolume));
     }
 
     [Fact]
@@ -130,7 +150,7 @@ public sealed class SessionAdvisorTests
     [Fact]
     public void Never_nags_about_a_muscle_that_has_never_been_trained()
     {
-        // Skipping calves entirely is a programme choice, not a gap.
+        // Skipping calves entirely is a program choice, not a gap.
         var summary = new List<MuscleVolume>
         {
             Volume(MuscleGroup.Quadriceps, 9),
@@ -203,11 +223,29 @@ public sealed class SessionAdvisorTests
     }
 
     [Fact]
+    public void Never_suggests_a_stretch_to_close_a_volume_gap()
+    {
+        var withStretch = new ExerciseCatalog(
+        [
+            new Exercise
+            {
+                Id = "hamstring-stretch", Name = "Hamstring Stretch", Kind = ExerciseKind.Stretch,
+                Muscles = [new(MuscleGroup.Hamstrings, 1.0)],
+            },
+        ]);
+
+        var gap = Assert.Single(
+            _advisor.Advise([Volume(MuscleGroup.Hamstrings, 1)], withStretch, Target).Gaps);
+
+        Assert.Empty(gap.Fixes);
+    }
+
+    [Fact]
     public void Does_not_suggest_equipment_the_trainee_does_not_own()
     {
         var summary = new List<MuscleVolume> { Volume(MuscleGroup.Biceps, 1) };
 
-        var gap = Assert.Single(_advisor.Advise(summary, Catalog, Target).Gaps);
+        var gap = Assert.Single(_advisor.Advise(summary, Catalog, Target, [], null).Gaps);
 
         Assert.DoesNotContain(gap.Fixes, e => e.Id == "pull-up");
     }

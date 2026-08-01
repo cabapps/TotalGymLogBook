@@ -24,7 +24,7 @@ using (var http = new HttpClient { BaseAddress = new Uri(builder.HostEnvironment
     var profiles = await http.GetStringAsync("data/rail-profiles.json");
     builder.Services.AddSingleton(RailProfileTable.Parse(profiles));
 
-    // The same catalogue the shell parses. Blazor needs it for two things it could not do
+    // The same catalog the shell parses. Blazor needs it for two things it could not do
     // before: name an exercise rather than printing its id, and give VolumeLedger the
     // per-muscle involvement it needs to account for a set.
     var exercises = await http.GetStringAsync("data/exercises.json");
@@ -41,6 +41,6 @@ var host = builder.Build();
 
 // Import the bundle and subscribe to the change bus before the first render, so components
 // never have to special-case "bridge not ready yet".
-await host.Services.GetRequiredService<Logbook>().InitialiseAsync();
+await host.Services.GetRequiredService<Logbook>().InitializeAsync();
 
 await host.RunAsync();

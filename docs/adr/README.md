@@ -29,7 +29,7 @@ of logic that would otherwise belong in .NET.
 
 **2. The user's logbook is irreplaceable; everything else is a re-download.**
 There is no server. IndexedDB is the system of record. Every decision about caching, storage
-quota, domains, and updates resolves in favour of not losing workout history.
+quota, domains, and updates resolves in favor of not losing workout history.
 
 ## Open items
 

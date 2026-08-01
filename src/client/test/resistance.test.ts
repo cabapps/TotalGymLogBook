@@ -1,5 +1,5 @@
 /**
- * Behavioural tests for the resistance model. These assert the claims docs/adr/0004 makes,
+ * Behavioral tests for the resistance model. These assert the claims docs/adr/0004 makes,
  * so if the model changes, the documentation is provably wrong rather than quietly stale.
  */
 

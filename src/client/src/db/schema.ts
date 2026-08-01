@@ -73,7 +73,7 @@ export interface SetLogRecord extends SyncFields {
   sessionId: string;
   exerciseId: string;
   ts: Instant;
-  /** Calendar date of `ts`, denormalised so day-range queries can use an index. */
+  /** Calendar date of `ts`, denormalized so day-range queries can use an index. */
   on: IsoDate;
 
   reps: number;
@@ -90,7 +90,7 @@ export interface SetLogRecord extends SyncFields {
   barLb: number;
   directLoadLb: number;
 
-  /** Denormalised result. */
+  /** Denormalized result. */
   computedLb: number;
   /** Lets a future formula change migrate history deliberately rather than drifting. */
   formulaVersion: number;
@@ -122,6 +122,12 @@ export interface SettingsRecord extends SyncFields {
   experienceOverride?: string;
   units?: 'lb' | 'kg';
   defaultMachineId?: string;
+  /**
+   * Accessories the trainee actually owns, so the picker stops offering movements they cannot
+   * do. UNDEFINED means never configured and filters nothing; an empty array means "I own
+   * none of these" and filters hard. See ExerciseCatalog.available.
+   */
+  ownedAttachments?: string[];
   /**
    * Preferred rep-counting source, keyed by exercise id. Per-exercise and not global, because
    * motion counting works for chest press and not at all for standing cable work -- one global

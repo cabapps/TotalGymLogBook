@@ -1,5 +1,5 @@
 /**
- * The exercise catalogue, loaded from data/exercises.json.
+ * The exercise catalog, loaded from data/exercises.json.
  *
  * Lives in the instant tier because logging a set needs an exercise's `usesPulley` and
  * `bodyFraction` to compute the load, and that must happen before Blazor boots (docs/adr/0003).
@@ -11,9 +11,20 @@ export interface MuscleInvolvement {
   readonly fraction: number;
 }
 
+/**
+ * Whether a logged set of this movement is TRAINING VOLUME.
+ *
+ * Without the distinction, the stretch catalog would silently inflate every muscle's weekly
+ * set count and make the coach's volume advice wrong -- a stretch is not a hard set.
+ */
+export type ExerciseKind = 'strength' | 'stretch';
+
 export interface Exercise {
   readonly id: string;
   readonly name: string;
+  /** Grouping for the picker. Presentation only. */
+  readonly category: string;
+  readonly kind: ExerciseKind;
   /** Cable movements are halved by the pulley (docs/adr/0004). */
   readonly usesPulley: boolean;
   /** Share of bodyweight riding the glideboard. Estimated, not measured. */
@@ -53,14 +64,36 @@ export class ExerciseCatalog {
     return this.#byId.get(id);
   }
 
-  /** Only what the trainee can actually do with the accessories they own. */
-  available(ownedAttachments: readonly string[] = []): readonly Exercise[] {
+  /**
+   * Only what the trainee can actually do with the accessories they own.
+   *
+   * UNDEFINED means unconfigured and filters nothing. An empty array means "configured, owns
+   * no accessories" and filters hard. The distinction matters: treating unconfigured as
+   * owns-nothing would hide squats from someone who has been logging squats for months.
+   */
+  available(ownedAttachments?: readonly string[]): readonly Exercise[] {
+    if (ownedAttachments === undefined) return this.all;
+
     const owned = new Set(ownedAttachments);
     return this.all.filter((e) => e.attachment === null || owned.has(e.attachment));
   }
 
-  /** Distinct attachments referenced by the catalogue, for the equipment picker. */
+  /** Available movements grouped for the picker, in catalog order. */
+  grouped(ownedAttachments?: readonly string[]): ReadonlyMap<string, readonly Exercise[]> {
+    const groups = new Map<string, Exercise[]>();
+
+    for (const exercise of this.available(ownedAttachments)) {
+      const bucket = groups.get(exercise.category);
+      if (bucket) bucket.push(exercise);
+      else groups.set(exercise.category, [exercise]);
+    }
+
+    return groups;
+  }
+
+  /** Distinct attachments referenced by the catalog, for the equipment picker. */
   get attachments(): readonly string[] {
-    return [...new Set(this.all.map((e) => e.attachment).filter((a): a is string => a !== null))];
+    return [...new Set(this.all.map((e) => e.attachment).filter((a): a is string => a !== null))]
+      .sort();
   }
 }

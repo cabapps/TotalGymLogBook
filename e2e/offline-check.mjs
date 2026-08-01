@@ -4,7 +4,7 @@
  *
  * This CANNOT be tested against `dotnet run`. Blazor ships a no-op service-worker.js for
  * development and swaps in service-worker.published.js only on publish (docs/adr/0008), so the
- * dev server proves nothing about offline behaviour. This script publishes, serves the output
+ * dev server proves nothing about offline behavior. This script publishes, serves the output
  * from a static server with correct MIME types, and then pulls the network out.
  *
  * Usage (from repo root):
