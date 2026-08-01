@@ -92,6 +92,41 @@ the content still exists in the DOM while rendering nowhere. `e2e/driver.mjs` th
 *position* (`#blazor-root` sits between `#finish` and `tg-data-safety`), not presence, and
 `publish-smoke.sh` greps both halves of the name out of the published output.
 
+### The deferred boot must not use `requestIdleCallback` unguarded
+
+Step 3 above starts Blazor manually from an idle callback, so the shell paints first. That was
+written as:
+
+```js
+requestIdleCallback?.(startBlazor, { timeout: 1000 }) ?? setTimeout(startBlazor, 0);
+```
+
+which is wrong in a way that reads as careful. **Optional call guards a null or undefined
+VALUE. It does not guard an UNDECLARED IDENTIFIER** — that is a `ReferenceError`, thrown while
+evaluating the expression, which kills the module before `Blazor.start()` is reached.
+
+**Safari has never shipped `requestIdleCallback.`** Not "recently", not "on old versions" — it
+is still behind a preference in Technology Preview. So the derived tier had *never once booted
+on an iPhone or iPad*. The shell is a separate script and kept working perfectly, so the app
+looked healthy: it just silently had no coach and no history on every WebKit device.
+
+Use `typeof requestIdleCallback === 'function'`, and fall back to a short `setTimeout`.
+
+Two things made this survive as long as it did, and both are now closed:
+
+- **Every automated check runs headless Chromium, where the global exists.** `driver.mjs` now
+  runs a second pass in a context with `requestIdleCallback` deleted, which reproduces the trap
+  exactly. Verified in both directions — it fails with `requestIdleCallback is not defined` when
+  the old line is restored.
+- **A boot failure had no way to report itself.** A phone has no console, and the shell keeps
+  working, so nothing anywhere said the runtime had died. `index.html` now catches both the
+  synchronous throw and the `Blazor.start()` rejection, and writes the message into
+  `#blazor-root` — which, being slotted, puts it exactly where the coach should have been.
+
+The general lesson is narrower than "test on real devices" and more useful: **a platform check
+that cannot fail on your test platform is not a check.** The suite was thorough and completely
+blind here, because the only browser it ever ran was the one where the bug does not exist.
+
 ## Consequences
 
 Two pieces of logic that "should" be in .NET are in TypeScript instead, because the load-time

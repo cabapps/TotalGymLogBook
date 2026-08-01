@@ -342,6 +342,52 @@ async function main() {
   const emptyNow = await page.locator('#history-empty').count();
   check('empty state returns after deleting everything', emptyNow === 1);
 
+  // ---- Safari: no requestIdleCallback ----
+  //
+  // Safari has NEVER shipped requestIdleCallback (still behind a preference in Technology
+  // Preview), and index.html defers Blazor.start() through it. Written as
+  // `requestIdleCallback?.(...)` that is a ReferenceError -- optional call guards a null VALUE,
+  // not an undeclared IDENTIFIER -- so the boot module died on line one and the derived tier
+  // had never once appeared on an iPhone, while passing every check above.
+  //
+  // Deleting the global reproduces the condition exactly. This is not a substitute for testing
+  // on WebKit, but it is the specific trap, and it is free.
+  console.log('\nSafari (no requestIdleCallback):');
+  const safariCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  await safariCtx.addInitScript(() => {
+    delete window.requestIdleCallback;
+    delete window.cancelIdleCallback;
+  });
+
+  const safariPage = await safariCtx.newPage();
+  const safariErrors = [];
+  safariPage.on('pageerror', (e) => safariErrors.push(e.message));
+
+  await safariPage.goto(URL, { waitUntil: 'domcontentloaded' });
+  await safariPage.waitForSelector('#bw', { timeout: 30_000 });
+  check('the shell still paints', true);
+
+  // Onboarding must be cleared first. The derived slot only exists on the workout screen, so
+  // #empty-state renders nowhere until then -- attached to the DOM but not slotted, which is
+  // the intended behaviour and would otherwise read here as a boot failure.
+  await safariPage.selectOption('#notches', { label: '14 levels' });
+  await safariPage.click('#start');
+  await safariPage.waitForSelector('tg-set-logger #log', { timeout: 30_000 });
+
+  let safariBlazor = true;
+  try {
+    await safariPage.waitForSelector('#empty-state, #rec-load', { timeout: 60_000 });
+  } catch {
+    safariBlazor = false;
+  }
+  check('Blazor boots with no idle callback', safariBlazor,
+    safariBlazor ? '' : safariErrors.slice(0, 1).join(''));
+  check('no page errors without requestIdleCallback', safariErrors.length === 0,
+    safariErrors.slice(0, 2).join(' | '));
+
+  await safariPage.screenshot({ path: join(SHOTS, '08-no-idle-callback.png'), fullPage: true });
+  await safariCtx.close();
+
   console.log('\nConsole:');
   check('no console errors', errors.length === 0, errors.slice(0, 2).join(' | '));
 
