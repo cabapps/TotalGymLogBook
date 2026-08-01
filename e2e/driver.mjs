@@ -609,7 +609,7 @@ async function main() {
 
   // ---- Equipment ----
   //
-  // Eighty-odd exercises is a long list to scroll past things you cannot do. The filter is a
+  // A hundred exercises is a long list to scroll past things you cannot do. The filter is a
   // stored setting, so it survives the session, and it must reshape the picker immediately
   // rather than at next launch.
   console.log('\nEquipment filter:');
@@ -622,7 +622,11 @@ async function main() {
   await phone.locator('tg-equipment summary').click();
   const boxes = phone.locator('tg-equipment input[type=checkbox]');
   const boxCount = await boxes.count();
-  check('lists every accessory the catalog needs', boxCount >= 3, `${boxCount} accessories`);
+  check('lists every accessory the catalog needs', boxCount >= 11, `${boxCount} accessories`);
+
+  const headings = await phone.locator('tg-equipment h4').allTextContents();
+  check('separates what ships with the machine from what does not', headings.length === 2,
+    headings.join(' / '));
 
   for (let i = 0; i < boxCount; i++) await boxes.nth(i).uncheck();
 
@@ -634,12 +638,52 @@ async function main() {
     timeout: 15_000,
   });
 
-  const filtered = await phone.locator('tg-set-logger #exercise option').count();
-  check('unowned accessories drop out of the picker', filtered < allOptions,
+  // Every tick is its own async write, so with eleven boxes there are eleven saves in flight.
+  // Reading the picker before the last one lands makes this check flaky rather than wrong --
+  // so wait for the panel's own count, which it only updates once a save has resolved, to
+  // agree with the picker twice running.
+  const settled = async () => {
+    let agreed = 0;
+    for (let i = 0; i < 60; i++) {
+      const label = await phone.locator('tg-equipment #count').innerText().catch(() => '');
+      const claimed = Number(/(\d+) of/.exec(label)?.[1] ?? -1);
+      const shown = await phone.locator('tg-set-logger #exercise option').count();
+      if (claimed === shown && ++agreed === 2) return shown;
+      if (claimed !== shown) agreed = 0;
+      await phone.waitForTimeout(150);
+    }
+    return -1;
+  };
+
+  const filtered = await settled();
+  check('unowned accessories drop out of the picker', filtered > 0 && filtered < allOptions,
     `${allOptions} -> ${filtered} exercises`);
 
   const stillListed = await phone.locator('tg-set-logger #exercise option[value="squat"]').count();
   check('a squat-stand movement is gone', stillListed === 0);
+
+  // An exercise names a CAPABILITY, not a product. The wing shipped as one piece and as two,
+  // and either one has to unlock pull-ups -- which is only observable end to end, because the
+  // capability lookup sits between the stored accessory id and the option list.
+  const wingGone = await phone.locator('tg-set-logger #exercise option[value="pull-up"]').count();
+  check('a wing movement is gone with no wing owned', wingGone === 0);
+
+  await phone.locator('tg-equipment #att-wing-two-piece').check();
+  // 'attached', not the default 'visible': an <option> inside a collapsed <select> never
+  // reports visible, so the default state would wait out the timeout on a passing app.
+  await phone.waitForSelector('tg-set-logger #exercise option[value="pull-up"]', {
+    state: 'attached',
+    timeout: 15_000,
+  });
+  check('the two-piece wing unlocks pull-ups', true);
+
+  // Back to a bare machine, so the reload check below is comparing like with like.
+  await phone.locator('tg-equipment #att-wing-two-piece').uncheck();
+  await phone.waitForSelector('tg-set-logger #exercise option[value="pull-up"]', {
+    state: 'detached',
+    timeout: 15_000,
+  });
+  await settled();
 
   // The selection must not silently fall through to whatever ends up first in the list.
   const selected = await phone.locator('tg-set-logger #exercise').inputValue();

@@ -135,7 +135,14 @@ export class AppShell extends HTMLElement {
     }
 
     this.#profile = this.#profiles!.get(machine.railProfileId);
-    this.#owned = (await db.getSettings()).ownedAttachments;
+
+    const settings = await db.getSettings();
+    // Accessories added since this answer was given are treated as unanswered, not as "no" --
+    // otherwise an app update quietly removes exercises from the picker (ExerciseCatalog.resolveOwned).
+    this.#owned = this.#catalog!.resolveOwned(
+      settings.ownedAttachments,
+      settings.equipmentVersion,
+    );
     await this.#refreshBodyweight();
 
     // docs/adr/0005: never auto-close an orphan (discards data) and never auto-resume

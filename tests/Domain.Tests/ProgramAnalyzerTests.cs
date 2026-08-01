@@ -201,6 +201,27 @@ public sealed class ProgramTemplateTests
         });
     }
 
+    [Fact]
+    public void Shipped_templates_run_on_a_stock_machine()
+    {
+        // A template is a promise that the trainee can follow it. Planning a leg pull accessory
+        // movement for someone who owns a bare machine breaks that promise one exercise at a
+        // time, and they only find out by scrolling a picker that does not contain it.
+        var stock = Catalog.Accessories.Where(a => a.Common).Select(a => a.Id).ToList();
+        var runnable = Catalog.Available(stock).Select(e => e.Id).ToHashSet();
+
+        foreach (var template in Templates)
+        {
+            foreach (var planned in template.Sessions.SelectMany(s => s.Exercises))
+            {
+                Assert.True(
+                    runnable.Contains(planned.ExerciseId),
+                    $"{template.Id} plans '{planned.ExerciseId}', which needs an accessory that "
+                    + "does not ship with most machines");
+            }
+        }
+    }
+
     [Theory]
     [InlineData("full-body")]
     [InlineData("upper-lower")]

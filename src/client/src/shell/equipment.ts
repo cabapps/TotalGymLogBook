@@ -12,7 +12,7 @@
  */
 
 import * as db from '../db/repository.js';
-import type { ExerciseCatalog } from '../exercises.js';
+import type { Accessory, ExerciseCatalog } from '../exercises.js';
 
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
@@ -29,13 +29,18 @@ styles.replaceSync(`
   label { display: flex; align-items: center; gap: .5rem; font-size: .8125rem; cursor: pointer; }
   input[type=checkbox] { width: 1.05rem; height: 1.05rem; accent-color: var(--accent); }
   .count { color: var(--muted); font-size: .7rem; margin-left: .25rem; }
+  h4 { font-size: .7rem; font-weight: 600; color: var(--muted); text-transform: uppercase;
+       letter-spacing: .04em; margin: .8rem 0 .1rem; }
+  h4:first-of-type { margin-top: .2rem; }
+  .note { display: block; font-size: .7rem; color: var(--muted); line-height: 1.4;
+          margin: .05rem 0 0 1.55rem; }
 `);
 
 export class Equipment extends HTMLElement {
   #root: ShadowRoot;
   #catalog?: ExerciseCatalog;
   /** undefined until loaded; then undefined means unconfigured. See the class remarks. */
-  #owned: string[] | undefined;
+  #owned: readonly string[] | undefined;
   #loaded = false;
 
   constructor() {
@@ -50,7 +55,15 @@ export class Equipment extends HTMLElement {
   }
 
   async #load(): Promise<void> {
-    this.#owned = (await db.getSettings()).ownedAttachments;
+    const settings = await db.getSettings();
+
+    // Accessories added since the trainee last answered count as owned until they say
+    // otherwise -- see ExerciseCatalog.resolveOwned. Doing it here means the boxes they never
+    // saw arrive ticked, matching what the picker is already showing them.
+    this.#owned = this.#catalog?.resolveOwned(
+      settings.ownedAttachments,
+      settings.equipmentVersion,
+    );
     this.#loaded = true;
     this.#render();
   }
@@ -58,9 +71,15 @@ export class Equipment extends HTMLElement {
   #render(): void {
     if (!this.#catalog || !this.#loaded) return;
 
-    const attachments = this.#catalog.attachments;
-    const owned = new Set(this.#owned ?? attachments);
+    const accessories = this.#catalog.accessories;
+    const owned = new Set(this.#owned ?? accessories.map((a) => a.id));
     const available = this.#catalog.available(this.#owned).length;
+
+    const group = (heading: string, subset: readonly Accessory[]) =>
+      subset.length === 0
+        ? ''
+        : `<h4>${heading}</h4>
+           <ul>${subset.map((a) => this.#item(a, owned.has(a.id))).join('')}</ul>`;
 
     this.#root.innerHTML = `
       <details>
@@ -72,20 +91,8 @@ export class Equipment extends HTMLElement {
           Tick what you own. Anything you don't have drops out of the exercise list, here and
           in the coach's suggestions.
         </p>
-        <ul>
-          ${attachments
-            .map(
-              (attachment, index) => `
-                <li>
-                  <label>
-                    <input type="checkbox" id="att-${index}" data-attachment="${attachment}"
-                           ${owned.has(attachment) ? 'checked' : ''} />
-                    ${attachment}
-                  </label>
-                </li>`,
-            )
-            .join('')}
-        </ul>
+        ${group('Usually included', accessories.filter((a) => a.common))}
+        ${group('Sold separately', accessories.filter((a) => !a.common))}
       </details>
     `;
 
@@ -94,13 +101,31 @@ export class Equipment extends HTMLElement {
     }
   }
 
+  #item(accessory: Accessory, checked: boolean): string {
+    return `
+      <li>
+        <label>
+          <input type="checkbox" id="att-${accessory.id}" data-attachment="${accessory.id}"
+                 ${checked ? 'checked' : ''} />
+          ${accessory.name}
+        </label>
+        ${accessory.note ? `<span class="note">${accessory.note}</span>` : ''}
+      </li>`;
+  }
+
   async #save(): Promise<void> {
     const owned = [...this.#root.querySelectorAll<HTMLInputElement>('input[type=checkbox]')]
       .filter((input) => input.checked)
       .map((input) => input.dataset['attachment']!);
 
     this.#owned = owned;
-    await db.saveSettings({ ownedAttachments: owned });
+
+    // Stamped with the version of the list they were actually shown, so the next release can
+    // tell a real "no" from a question that had not been asked yet.
+    await db.saveSettings({
+      ownedAttachments: owned,
+      equipmentVersion: this.#catalog!.accessoryVersion,
+    });
 
     // Only the count needs refreshing; re-rendering would collapse the panel the trainee is
     // still ticking through.

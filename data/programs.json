@@ -20,6 +20,11 @@
     "Every exerciseId must exist in exercises.json; a test enforces it. Sessions deliberately lead",
     "with the biggest compound movements, because those are the ones worth doing while fresh.",
     "",
+    "RUNNABLE ON A STOCK MACHINE. Templates only plan movements that need no accessory or need one",
+    "marked `common` in exercises.json -- the squat stand and the wing. A shipped template that",
+    "assumes a leg pull accessory is a plan the trainee cannot follow on the machine they own, and",
+    "they find out one exercise at a time. A test enforces this too.",
+    "",
     "These are starting points, not prescriptions. The trainee can edit any of them."
   ],
   "version": 1,
@@ -63,7 +68,7 @@
             { "exerciseId": "close-grip-chest-press", "sets": 3 },
             { "exerciseId": "reverse-fly", "sets": 2 },
             { "exerciseId": "hammer-curl", "sets": 2 },
-            { "exerciseId": "leg-pull", "sets": 2 }
+            { "exerciseId": "knee-tuck", "sets": 2 }
           ]
         }
       ]
@@ -92,7 +97,7 @@
           "exercises": [
             { "exerciseId": "squat", "sets": 4 },
             { "exerciseId": "hip-bridge", "sets": 3 },
-            { "exerciseId": "hamstring-curl", "sets": 3 },
+            { "exerciseId": "wing-hamstring-curl", "sets": 3 },
             { "exerciseId": "calf-raise", "sets": 4 },
             { "exerciseId": "crunch", "sets": 3 }
           ]
@@ -114,10 +119,10 @@
           "name": "Lower B",
           "exercises": [
             { "exerciseId": "split-squat", "sets": 4 },
-            { "exerciseId": "glute-kickback", "sets": 3 },
-            { "exerciseId": "leg-extension", "sets": 3 },
+            { "exerciseId": "side-lying-leg-lift", "sets": 3 },
+            { "exerciseId": "narrow-stance-squat", "sets": 3 },
             { "exerciseId": "single-leg-calf-raise", "sets": 3 },
-            { "exerciseId": "leg-pull", "sets": 3 }
+            { "exerciseId": "knee-tuck", "sets": 3 }
           ]
         }
       ]
@@ -158,7 +163,7 @@
           "exercises": [
             { "exerciseId": "squat", "sets": 4 },
             { "exerciseId": "split-squat", "sets": 3 },
-            { "exerciseId": "hamstring-curl", "sets": 3 },
+            { "exerciseId": "wing-hamstring-curl", "sets": 3 },
             { "exerciseId": "hip-bridge", "sets": 3 },
             { "exerciseId": "calf-raise", "sets": 4 },
             { "exerciseId": "crunch", "sets": 4 }

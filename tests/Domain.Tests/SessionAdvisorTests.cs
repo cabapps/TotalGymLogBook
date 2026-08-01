@@ -77,6 +77,65 @@ public sealed class ExerciseCatalogTests
     }
 
     [Fact]
+    public void Either_wing_attachment_unlocks_the_same_exercises()
+    {
+        // An exercise names a CAPABILITY, not a product, and this is why: Total Gym shipped the
+        // wing as one piece and as two, and both do every wing exercise.
+        var catalog = ExerciseCatalog.Parse(RepoData.Read("exercises.json"));
+
+        var onePiece = catalog.Available(["wing-one-piece"]).Select(e => e.Id).ToList();
+        var twoPiece = catalog.Available(["wing-two-piece"]).Select(e => e.Id).ToList();
+
+        Assert.Equal(onePiece, twoPiece);
+        Assert.Contains("pull-up", onePiece);
+    }
+
+    [Fact]
+    public void Still_understands_answers_stored_before_accessories_had_ids()
+    {
+        // The equipment panel used to store the requirement label itself, and those strings are
+        // still capability names. Anyone who configured their equipment before the accessory
+        // registry existed would otherwise open the app to an empty exercise list.
+        var catalog = ExerciseCatalog.Parse(RepoData.Read("exercises.json"));
+        var legacy = catalog.Available(["Squat stand"]).Select(e => e.Id).ToList();
+
+        Assert.Contains("squat", legacy);
+        Assert.DoesNotContain("pull-up", legacy);
+    }
+
+    [Fact]
+    public void Treats_an_accessory_added_since_the_trainee_answered_as_unanswered()
+    {
+        // SILENCE IS NOT A NO. Reading a year-old answer as "no wing attachment" would make an
+        // app update quietly delete pull-ups from someone who has been logging pull-ups.
+        var catalog = ExerciseCatalog.Parse(RepoData.Read("exercises.json"));
+
+        var stale = catalog.ResolveOwned(["squat-stand"], answeredVersion: 1)!;
+        var current = catalog.ResolveOwned(["squat-stand"], catalog.AccessoryVersion)!;
+
+        Assert.Contains(catalog.Available(stale), e => e.Id == "pull-up");
+        Assert.DoesNotContain(catalog.Available(current), e => e.Id == "pull-up");
+
+        // Never configured is a different state and stays one.
+        Assert.Null(catalog.ResolveOwned(null));
+    }
+
+    [Fact]
+    public void Keeps_the_exclusions_in_an_answer_that_predates_the_version_stamp()
+    {
+        // An answer with no version came from the panel that stored capability labels, and it
+        // offered exactly the version-1 accessories. "Squat stand and nothing else" was a real
+        // answer about the press-up bars, so re-ticking them would overrule the trainee -- the
+        // opposite error from the one ResolveOwned exists to prevent, and just as silent.
+        var catalog = ExerciseCatalog.Parse(RepoData.Read("exercises.json"));
+        var shown = catalog.Available(catalog.ResolveOwned(["Squat stand"])).Select(e => e.Id).ToList();
+
+        Assert.Contains("squat", shown);
+        Assert.Contains("pull-up", shown);          // added since; unanswered, so shown
+        Assert.DoesNotContain("decline-push-up", shown);  // press-up bars: a real "no"
+    }
+
+    [Fact]
     public void Reads_kind_and_category()
     {
         var catalog = ExerciseCatalog.Parse(RepoData.Read("exercises.json"));

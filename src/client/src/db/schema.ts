@@ -195,6 +195,14 @@ export interface SettingsRecord extends SyncFields {
    */
   ownedAttachments?: string[];
   /**
+   * Which version of the accessory list `ownedAttachments` was an answer to.
+   *
+   * The list grows. Without this, adding an accessory would silently reinterpret every stored
+   * answer as "no" to a question the trainee was never asked, and their picker would lose
+   * exercises after an update. See ExerciseCatalog.resolveOwned.
+   */
+  equipmentVersion?: number;
+  /**
    * Preferred rep-counting source, keyed by exercise id. Per-exercise and not global, because
    * motion counting works for chest press and not at all for standing cable work -- one global
    * setting would feel broken half the time (docs/adr/0006).

@@ -120,6 +120,107 @@ describe('exercise catalog', () => {
     expect(catalog.attachments.every((a) => a.length > 0)).toBe(true);
   });
 
+  describe('accessories', () => {
+    it('lets either wing attachment unlock the wing exercises', () => {
+      // The whole reason an exercise names a capability instead of a product. Total Gym shipped
+      // the wing in one-piece and two-piece versions that do exactly the same job; a model
+      // where the exercise named the product hides pull-ups from half the owners in the world.
+      const onePiece = catalog.available(['wing-one-piece']);
+      const twoPiece = catalog.available(['wing-two-piece']);
+
+      expect(onePiece.some((e) => e.id === 'pull-up')).toBe(true);
+      expect(twoPiece.some((e) => e.id === 'pull-up')).toBe(true);
+      expect(onePiece.map((e) => e.id)).toEqual(twoPiece.map((e) => e.id));
+    });
+
+    it('unlocks nothing extra for an accessory the trainee does not own', () => {
+      const owned = catalog.available(['triceps-rope']);
+
+      expect(owned.some((e) => e.id === 'rope-pushdown')).toBe(true);
+      expect(owned.some((e) => e.id === 'chest-dip')).toBe(false);
+      expect(owned.some((e) => e.id === 'squat')).toBe(false);
+    });
+
+    it('still understands answers stored before accessories had ids', () => {
+      // The panel used to store the requirement label itself. Those strings are still
+      // capability names, and they must keep working -- anyone who configured their equipment
+      // before this release would otherwise open the app to an empty picker.
+      const legacy = catalog.available(['Squat stand', 'Ankle straps']);
+
+      expect(legacy.some((e) => e.id === 'squat')).toBe(true);
+      expect(legacy.some((e) => e.id === 'hamstring-curl')).toBe(true);
+      expect(legacy.some((e) => e.id === 'pull-up')).toBe(false);
+    });
+
+    it('every capability an exercise asks for can actually be bought', () => {
+      // An exercise requiring something no accessory provides is unreachable for everyone, and
+      // invisible in a way no trainee can diagnose or fix.
+      const provided = new Set(catalog.accessories.flatMap((a) => a.provides));
+
+      for (const exercise of catalog.all) {
+        if (exercise.attachment !== null) expect(provided).toContain(exercise.attachment);
+      }
+    });
+
+    it('knows which accessories ship with most machines', () => {
+      const common = catalog.accessories.filter((a) => a.common).map((a) => a.id);
+
+      expect(common).toContain('squat-stand');
+      expect(common).toContain('wing-one-piece');
+      expect(common).toContain('wing-two-piece');
+      expect(common).not.toContain('pilates-kit');
+    });
+  });
+
+  describe('resolveOwned', () => {
+    it('treats accessories added since the trainee answered as unanswered, not as no', () => {
+      // SILENCE IS NOT A NO. Someone who ticked their equipment against version 1 was never
+      // shown the wing, so reading their answer as "no wing" would delete pull-ups from an app
+      // they have been logging pull-ups in.
+      const resolved = catalog.resolveOwned(['squat-stand'], 1)!;
+
+      expect(resolved).toContain('squat-stand');
+      expect(resolved).toContain('wing-two-piece');
+      expect(catalog.available(resolved).some((e) => e.id === 'pull-up')).toBe(true);
+    });
+
+    it('keeps the exclusions in an answer that predates the version stamp', () => {
+      // An answer with no version came from the panel that stored capability labels, and that
+      // panel offered exactly the version-1 accessories. So "Squat stand and nothing else" was
+      // a real answer about the press-up bars, and re-ticking them would overrule the trainee.
+      const resolved = catalog.resolveOwned(['Squat stand'])!;
+      const shown = catalog.available(resolved);
+
+      expect(shown.some((e) => e.id === 'squat')).toBe(true);
+      expect(shown.some((e) => e.id === 'pull-up')).toBe(true);
+      expect(shown.some((e) => e.id === 'decline-push-up')).toBe(false);
+      expect(shown.some((e) => e.id === 'hamstring-curl')).toBe(false);
+    });
+
+    it('leaves a current answer exactly as given', () => {
+      const resolved = catalog.resolveOwned(['squat-stand'], catalog.accessoryVersion);
+
+      expect(resolved).toEqual(['squat-stand']);
+      expect(catalog.available(resolved).some((e) => e.id === 'pull-up')).toBe(false);
+    });
+
+    it('keeps never-configured meaning show everything', () => {
+      // A different state from "answered an older question", and it has to stay one: it is the
+      // reason a trainee who has never opened the panel sees the whole catalog.
+      expect(catalog.resolveOwned(undefined, 0)).toBeUndefined();
+      expect(catalog.available(catalog.resolveOwned(undefined, 0))).toHaveLength(
+        catalog.all.length,
+      );
+    });
+
+    it('does not resurrect an accessory the trainee has explicitly declined', () => {
+      const resolved = catalog.resolveOwned([], catalog.accessoryVersion)!;
+
+      expect(resolved).toHaveLength(0);
+      expect(catalog.available(resolved).every((e) => e.attachment === null)).toBe(true);
+    });
+  });
+
   it('marks cable movements as using the pulley', () => {
     // These halve the load (docs/adr/0004), so getting the flag wrong doubles the recorded
     // resistance for that exercise.

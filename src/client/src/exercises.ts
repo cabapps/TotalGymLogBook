@@ -19,6 +19,26 @@ export interface MuscleInvolvement {
  */
 export type ExerciseKind = 'strength' | 'stretch';
 
+/**
+ * A thing the trainee can own, and what it lets them do.
+ *
+ * Deliberately not the same vocabulary as `Exercise.attachment`. An exercise names a CAPABILITY
+ * ("Wing attachment"); an accessory is a PRODUCT that provides one. The wing shipped in one-piece
+ * and two-piece versions that do exactly the same job, so an exercise naming the product would
+ * hide pull-ups from every owner of the other one.
+ */
+export interface Accessory {
+  readonly id: string;
+  readonly name: string;
+  /** Capabilities this unlocks — matched against `Exercise.attachment`. */
+  readonly provides: readonly string[];
+  /** Ships with most machines. Presentation only; it never filters. */
+  readonly common: boolean;
+  /** Registry version this first appeared in. See {@link ExerciseCatalog.resolveOwned}. */
+  readonly added: number;
+  readonly note?: string;
+}
+
 export interface Exercise {
   readonly id: string;
   readonly name: string;
@@ -34,18 +54,34 @@ export interface Exercise {
   readonly muscles: readonly MuscleInvolvement[];
 }
 
+/**
+ * What an answer with no recorded version answered.
+ *
+ * Version 1, not 0. Those answers came from the panel that stored capability labels, and that
+ * panel offered exactly the version-1 accessories -- so a trainee who left the press-up bars
+ * unticked meant it. Reading them as "answered nothing" would silently re-tick every box they
+ * had deliberately cleared.
+ */
+const LEGACY_ANSWER_VERSION = 1;
+
 export class ExerciseCatalog {
   readonly #byId: ReadonlyMap<string, Exercise>;
+  readonly #accessoryById: ReadonlyMap<string, Accessory>;
   readonly all: readonly Exercise[];
+  readonly accessories: readonly Accessory[];
 
-  private constructor(exercises: readonly Exercise[]) {
+  private constructor(exercises: readonly Exercise[], accessories: readonly Accessory[]) {
     this.all = exercises;
+    this.accessories = accessories;
     this.#byId = new Map(exercises.map((e) => [e.id, e]));
+    this.#accessoryById = new Map(accessories.map((a) => [a.id, a]));
   }
 
-  static parse(json: string | { exercises: Exercise[] }): ExerciseCatalog {
+  static parse(
+    json: string | { exercises: Exercise[]; accessories?: Accessory[] },
+  ): ExerciseCatalog {
     const doc = typeof json === 'string' ? JSON.parse(json) : json;
-    return new ExerciseCatalog(doc.exercises);
+    return new ExerciseCatalog(doc.exercises, doc.accessories ?? []);
   }
 
   /**
@@ -65,7 +101,7 @@ export class ExerciseCatalog {
     const kept = this.all.map((e) => overrides.get(e.id) ?? e);
     const added = custom.filter((e) => !this.#byId.has(e.id));
 
-    return new ExerciseCatalog([...kept, ...added]);
+    return new ExerciseCatalog([...kept, ...added], this.accessories);
   }
 
   static async load(url = 'data/exercises.json'): Promise<ExerciseCatalog> {
@@ -94,8 +130,63 @@ export class ExerciseCatalog {
   available(ownedAttachments?: readonly string[]): readonly Exercise[] {
     if (ownedAttachments === undefined) return this.all;
 
-    const owned = new Set(ownedAttachments);
-    return this.all.filter((e) => e.attachment === null || owned.has(e.attachment));
+    const can = this.capabilities(ownedAttachments);
+    return this.all.filter((e) => e.attachment === null || can.has(e.attachment));
+  }
+
+  /**
+   * What a stored answer lets the trainee do.
+   *
+   * Entries are accessory ids. An entry that matches no accessory is taken as a capability name
+   * verbatim, which is how answers stored before the accessory registry existed keep working:
+   * back then the panel wrote the requirement label itself ("Squat stand"), and those labels are
+   * still capability names today. Dropping that fallback would silently empty the picker for
+   * anyone who configured their equipment before this release.
+   */
+  capabilities(ownedAttachments: readonly string[]): ReadonlySet<string> {
+    const can = new Set<string>();
+
+    for (const entry of ownedAttachments) {
+      const accessory = this.#accessoryById.get(entry);
+      if (accessory) for (const capability of accessory.provides) can.add(capability);
+      else can.add(entry);
+    }
+
+    return can;
+  }
+
+  /** The newest accessory-registry version this catalog knows about. */
+  get accessoryVersion(): number {
+    return this.accessories.reduce((max, a) => Math.max(max, a.added), 0);
+  }
+
+  /**
+   * A stored answer, brought up to date with accessories added since it was given.
+   *
+   * SILENCE IS NOT A NO. A trainee who ticked their equipment last year answered a shorter
+   * question than the one being asked now; treating the accessories added since as "not owned"
+   * would make an app update quietly delete exercises from their picker -- including movements
+   * they have logged for months, and including ones their own program plans. So anything newer
+   * than the version they answered counts as owned until they say otherwise, and the next save
+   * records their real answer.
+   *
+   * Undefined in, undefined out: never configured still means "show everything", which is a
+   * different state from this one and stays that way (see {@link available}).
+   */
+  resolveOwned(
+    ownedAttachments: readonly string[] | undefined,
+    answeredVersion?: number,
+  ): readonly string[] | undefined {
+    if (ownedAttachments === undefined) return undefined;
+
+    const answered = answeredVersion ?? LEGACY_ANSWER_VERSION;
+    const unanswered = this.accessories
+      .filter((a) => a.added > answered)
+      .map((a) => a.id);
+
+    return unanswered.length === 0
+      ? ownedAttachments
+      : [...new Set([...ownedAttachments, ...unanswered])];
   }
 
   /** Available movements grouped for the picker, in catalog order. */
@@ -111,7 +202,7 @@ export class ExerciseCatalog {
     return groups;
   }
 
-  /** Distinct attachments referenced by the catalog, for the equipment picker. */
+  /** Distinct capabilities the catalog's exercises ask for. */
   get attachments(): readonly string[] {
     return [...new Set(this.all.map((e) => e.attachment).filter((a): a is string => a !== null))]
       .sort();

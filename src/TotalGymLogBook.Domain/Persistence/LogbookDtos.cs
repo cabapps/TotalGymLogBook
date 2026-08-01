@@ -99,6 +99,12 @@ public sealed record SettingsDto
 
     /// <summary>Null means never configured, which filters nothing. See ExerciseCatalog.Available.</summary>
     [JsonPropertyName("ownedAttachments")] public string[]? OwnedAttachments { get; init; }
+
+    /// <summary>
+    /// Which version of the accessory list <see cref="OwnedAttachments"/> answered. Absent means
+    /// it predates the registry, so every accessory is unanswered. See ExerciseCatalog.ResolveOwned.
+    /// </summary>
+    [JsonPropertyName("equipmentVersion")] public int? EquipmentVersion { get; init; }
 }
 
 public sealed record PlannedExerciseDto

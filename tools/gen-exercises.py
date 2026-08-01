@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Regenerates data/exercises.json. Run from the repo root: python3 tools/gen-exercises.py
 
-The generator is the source of truth for the catalog -- editing 84 entries of hand-indented
+The generator is the source of truth for the catalog -- editing a hundred entries of hand-indented
 JSON by hand is how a stray pulley flag gets in, and a wrong pulley flag halves or doubles the
 recorded load for every set of that movement.
 
@@ -15,10 +15,51 @@ import json, collections
 E = collections.namedtuple("E", "id name category kind pulley bf att cue muscles")
 D, I = 1.0, 0.5  # direct / indirect involvement
 
+# What an exercise REQUIRES. A capability, not a product: two different accessories can satisfy
+# the same requirement, which is the whole reason this is a separate vocabulary from the
+# accessory list below. See ACCESSORIES.
 STAND = "Squat stand"
+WING = "Wing attachment"
 BARS = "Press-up bars"
+DIP = "Dip bars"
 LEGPULL = "Leg pull accessory"
 ANKLE = "Ankle straps"
+ABCRUNCH = "AbCrunch"
+PILATES = "Pilates kit"
+ROPE = "Triceps rope"
+SHAPER = "Shaper bars"
+
+# id, name, provides, ships-with-most-machines, added-in-registry-version, note
+A = collections.namedtuple("A", "id name provides common added note")
+
+# The accessories a trainee can own, and what each one lets them do.
+#
+# TWO LAYERS ON PURPOSE. An exercise names a CAPABILITY ("Wing attachment"); the trainee ticks a
+# PRODUCT ("Wing attachment (two-piece)"). Total Gym shipped the wing in a one-piece and a
+# two-piece version and they do the same job, so a model where the exercise names the product
+# would hide pull-ups from half the owners in the world.
+#
+# `added` is the registry version an accessory first appeared in, and it exists because this
+# list will keep growing. A trainee who ticked their equipment last year answered a shorter
+# question than the one being asked now, and their stored answer cannot mean "no" to something
+# they were never shown -- accessories newer than the version they answered are treated as
+# unanswered, which shows the exercises rather than hiding them. See ExerciseCatalog.resolveOwned.
+ACCESSORIES = [
+    A("squat-stand", "Squat stand", [STAND], True, 1,
+      "Ships with most machines."),
+    A("wing-two-piece", "Wing attachment (two-piece)", [WING], True, 2,
+      "Ships with most machines -- the two bars that bolt on either side at the top."),
+    A("wing-one-piece", "Wing attachment (one-piece)", [WING], True, 2,
+      "The single-bar version of the same thing. Either one does every wing exercise."),
+    A("press-up-bars", "Press-up bars", [BARS], False, 1, None),
+    A("dip-bars", "Dip bars", [DIP], False, 2, None),
+    A("leg-pull-accessory", "Leg pull accessory", [LEGPULL], False, 1, None),
+    A("ankle-straps", "Ankle straps", [ANKLE], False, 1, None),
+    A("ab-crunch", "AbCrunch", [ABCRUNCH], False, 2, None),
+    A("pilates-kit", "Pilates kit", [PILATES], False, 2, None),
+    A("triceps-rope", "Triceps rope", [ROPE], False, 2, None),
+    A("shaper-bars", "Tri-grip shaper bars", [SHAPER], False, 2, None),
+]
 
 EX = [
     # ---------------------------------------------------------------- chest
@@ -46,6 +87,12 @@ EX = [
     E("decline-push-up", "Decline Push-Up", "Chest", "strength", False, 1.0, BARS,
       "Face down with your head lower than your feet, hands on the bars, press the board away.",
       [("Chest", D), ("Triceps", I), ("Core", I)]),
+    E("shaper-bar-press", "Shaper Bar Chest Press", "Chest", "strength", True, 1.0, SHAPER,
+      "Press with the shaper bars in a neutral grip. Easier on the shoulders than a flat grip.",
+      [("Chest", D), ("Triceps", I), ("Shoulders", I)]),
+    E("chest-dip", "Chest Dip", "Chest", "strength", False, 1.0, DIP,
+      "On the dip bars with your chest leaning forward, lower until you feel a stretch and press back up.",
+      [("Chest", D), ("Triceps", D), ("Shoulders", I)]),
 
     # ---------------------------------------------------------------- back
     E("lat-pulldown", "Lat Pulldown", "Back", "strength", True, 1.0, None,
@@ -78,12 +125,21 @@ EX = [
     E("reverse-fly", "Reverse Fly", "Back", "strength", True, 0.85, None,
       "Arms out in front, sweep them wide and back. Small movement, rear shoulders and upper back.",
       [("Shoulders", D), ("Back", D)]),
-    E("pull-up", "Pull-Up", "Back", "strength", False, 1.0, BARS,
-      "Grip the bars overhead and pull your chest towards them. The incline sets how hard it is.",
+    E("pull-up", "Pull-Up", "Back", "strength", False, 1.0, WING,
+      "Grip the wing bars overhead and pull your chest towards them. The incline sets how hard it is.",
       [("Back", D), ("Biceps", I)]),
-    E("chin-up", "Chin-Up", "Back", "strength", False, 1.0, BARS,
+    E("chin-up", "Chin-Up", "Back", "strength", False, 1.0, WING,
       "Pull-up with your palms facing you, which brings the biceps in properly.",
       [("Back", D), ("Biceps", D)]),
+    E("wide-grip-pull-up", "Wide-Grip Pull-Up", "Back", "strength", False, 1.0, WING,
+      "Hands at the far ends of the wing, pull up leading with your elbows out to the sides.",
+      [("Back", D), ("Shoulders", I), ("Biceps", I)]),
+    E("shaper-bar-row", "Shaper Bar Row", "Back", "strength", True, 0.85, SHAPER,
+      "Row with the shaper bars in a neutral grip, palms facing each other, elbows past your ribs.",
+      [("Back", D), ("Biceps", I)]),
+    E("rope-face-pull", "Rope Face Pull", "Back", "strength", True, 0.85, ROPE,
+      "Pull the rope towards your forehead, splitting the ends apart as your elbows come back.",
+      [("Shoulders", D), ("Back", D)]),
 
     # ---------------------------------------------------------------- shoulders
     E("shoulder-press", "Shoulder Press", "Shoulders", "strength", True, 0.85, None,
@@ -130,6 +186,12 @@ EX = [
     E("single-arm-curl", "Single-Arm Curl", "Arms", "strength", True, 0.85, None,
       "Curl one handle at a time and keep your shoulders square as you do it.",
       [("Biceps", D), ("Core", I)]),
+    E("rope-hammer-curl", "Rope Hammer Curl", "Arms", "strength", True, 0.85, ROPE,
+      "Curl the rope with your palms facing each other and pull the ends apart at the top.",
+      [("Biceps", D)]),
+    E("shaper-bar-curl", "Shaper Bar Curl", "Arms", "strength", True, 0.85, SHAPER,
+      "Curl the shaper bars with your elbows pinned. The grip angle takes the strain off your wrists.",
+      [("Biceps", D)]),
 
     # ---------------------------------------------------------------- triceps
     E("triceps-extension", "Triceps Extension", "Arms", "strength", True, 0.85, None,
@@ -147,6 +209,15 @@ EX = [
     E("triceps-dip", "Triceps Dip", "Arms", "strength", False, 1.0, BARS,
       "Hands on the bars behind you, lower until your elbows are bent, then press back up.",
       [("Triceps", D), ("Chest", I), ("Shoulders", I)]),
+    E("upright-dip", "Upright Dip", "Arms", "strength", False, 1.0, DIP,
+      "On the dip bars with your torso upright and elbows tracking straight back. Triceps take it.",
+      [("Triceps", D), ("Chest", I), ("Shoulders", I)]),
+    E("rope-pushdown", "Rope Pushdown", "Arms", "strength", True, 0.85, ROPE,
+      "Elbows at your sides, push the rope down and spread the ends apart as your arms lock out.",
+      [("Triceps", D)]),
+    E("rope-overhead-extension", "Overhead Rope Extension", "Arms", "strength", True, 1.0, ROPE,
+      "Rope behind your head, elbows high and still, straighten your arms and split the ends.",
+      [("Triceps", D)]),
 
     # ---------------------------------------------------------------- legs
     E("squat", "Squat", "Legs", "strength", False, 1.0, STAND,
@@ -191,6 +262,12 @@ EX = [
     E("hamstring-curl", "Hamstring Curl", "Legs", "strength", True, 1.0, ANKLE,
       "Face down with the straps on your ankles, bend your knees to draw your heels towards you.",
       [("Hamstrings", D), ("Glutes", I)]),
+    # The wing version is a different exercise, not a re-labeling of the cable one: no pulley, so
+    # the load is roughly double. Kept separate because changing the cable version's physics
+    # would put a step change in the middle of anyone's logged history for it.
+    E("wing-hamstring-curl", "Wing Hamstring Curl", "Legs", "strength", False, 1.0, WING,
+      "Face down with your heels hooked on the wing, bend your knees to pull the board up the rail.",
+      [("Hamstrings", D), ("Glutes", I)]),
     E("leg-extension", "Leg Extension", "Legs", "strength", True, 0.85, ANKLE,
       "Seated with the straps on your ankles, straighten your knees against the cable.",
       [("Quadriceps", D)]),
@@ -226,8 +303,14 @@ EX = [
     E("side-plank", "Side Plank", "Core", "strength", False, 1.0, None,
       "One forearm down, hips stacked and lifted. Hold, then swap sides.",
       [("Core", D)]),
-    E("hanging-knee-raise", "Hanging Knee Raise", "Core", "strength", False, 1.0, BARS,
-      "Hold the bars overhead and draw your knees up towards your chest.",
+    E("hanging-knee-raise", "Hanging Knee Raise", "Core", "strength", False, 1.0, WING,
+      "Hold the wing overhead and draw your knees up towards your chest.",
+      [("Core", D)]),
+    E("abcrunch-curl-up", "AbCrunch Curl-Up", "Core", "strength", False, 1.0, ABCRUNCH,
+      "Head towards the top, arms hooked over the pads, curl your ribs down and let the board follow.",
+      [("Core", D)]),
+    E("abcrunch-oblique-twist", "AbCrunch Oblique Twist", "Core", "strength", False, 1.0, ABCRUNCH,
+      "Same curl-up, but drive one shoulder across towards the opposite hip. Alternate sides.",
       [("Core", D)]),
     E("leg-pull", "Leg Pull", "Core", "strength", True, 0.9, LEGPULL,
       "Feet in the accessory, pull your legs down and in against the cable.",
@@ -258,6 +341,20 @@ EX = [
     E("sprinter-start", "Sprinter Start", "Total body", "strength", False, 1.0, STAND,
       "One foot loaded on the stand, drive it out explosively and return under control.",
       [("Quadriceps", D), ("Glutes", D), ("Calves", I)]),
+
+    # ---------------------------------------------------------------- pilates
+    E("pilates-footwork", "Pilates Footwork", "Pilates", "strength", False, 1.0, PILATES,
+      "Toes on the bar, heels lifted, press the board away and return slowly under control.",
+      [("Quadriceps", D), ("Calves", D), ("Glutes", I)]),
+    E("pilates-frog", "Pilates Frog", "Pilates", "strength", False, 1.0, PILATES,
+      "Heels together and knees open, press out until your legs are straight, then fold back in.",
+      [("Quadriceps", D), ("Glutes", D), ("Adductors", I)]),
+    E("pilates-leg-circle", "Pilates Leg Circle", "Pilates", "strength", False, 1.0, PILATES,
+      "Legs straight against the bar, trace a slow circle without letting your hips rock.",
+      [("Glutes", D), ("Adductors", D), ("Core", I)]),
+    E("pilates-scooter", "Pilates Scooter", "Pilates", "strength", False, 1.0, PILATES,
+      "One foot on the bar and one leg free, push the board away with the working leg only.",
+      [("Glutes", D), ("Quadriceps", I), ("Core", I)]),
 
     # ---------------------------------------------------------------- stretch
     E("hamstring-stretch", "Hamstring Stretch", "Stretch", "stretch", True, 1.0, None,
@@ -308,6 +405,16 @@ COMMENT = [
     "chest press is a chest press -- but the selection here is ours and the card numbering is",
     "not reproduced.",
     "",
+    "ACCESSORIES ARE A SEPARATE VOCABULARY from what an exercise requires. An exercise names a",
+    "capability ('Wing attachment'); the trainee owns a product ('Wing attachment (two-piece)').",
+    "Total Gym shipped the wing as one piece and as two, and both do every wing exercise, so an",
+    "exercise that named the product would hide pull-ups from half the owners in the world.",
+    "",
+    "accessories[].added is the registry version the accessory first appeared in. A trainee who",
+    "ticked their equipment before it existed answered a shorter question than the one being",
+    "asked now, and silence is not a 'no' -- anything newer than the version they answered shows",
+    "its exercises until they say otherwise. See ExerciseCatalog.resolveOwned.",
+    "",
     "category    : grouping for the exercise picker. Presentation only.",
     "kind        : 'strength' counts toward weekly training volume; 'stretch' does not. Without",
     "              this, adding stretches would silently inflate every muscle's set count and",
@@ -331,9 +438,32 @@ def main():
         assert e.cue and e.cue[0].isupper() and e.cue.endswith("."), e.id
         assert e.muscles, e.id
 
+    # Every capability an exercise asks for must be something a trainee can actually tick, or
+    # the exercise is unreachable for everyone -- invisible in the picker with no way to fix it.
+    provided = {c for a in ACCESSORIES for c in a.provides}
+    required = {e.att for e in EX if e.att is not None}
+    assert required <= provided, f"no accessory provides {sorted(required - provided)}"
+    assert provided <= required, f"accessory provides nothing usable: {sorted(provided - required)}"
+
+    ids = set()
+    for a in ACCESSORIES:
+        assert a.id not in ids, f"duplicate accessory id {a.id}"
+        ids.add(a.id)
+
     doc = {
         "$comment": COMMENT,
-        "version": 2,
+        "version": 3,
+        "accessories": [
+            {
+                "id": a.id,
+                "name": a.name,
+                "provides": a.provides,
+                "common": a.common,
+                "added": a.added,
+                **({"note": a.note} if a.note else {}),
+            }
+            for a in ACCESSORIES
+        ],
         "exercises": [
             {
                 "id": e.id,
@@ -355,9 +485,13 @@ def main():
         fh.write("\n")
 
     by_cat = collections.Counter(e.category for e in EX)
-    print(f"{len(EX)} exercises")
+    print(f"{len(EX)} exercises, {len(ACCESSORIES)} accessories")
     for cat, n in by_cat.items():
         print(f"  {cat:12} {n}")
+
+    by_att = collections.Counter(e.att or "(none needed)" for e in EX)
+    for att, n in sorted(by_att.items()):
+        print(f"  {att:24} {n}")
 
 if __name__ == "__main__":
     main()

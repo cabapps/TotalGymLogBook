@@ -15,6 +15,16 @@
     "chest press is a chest press -- but the selection here is ours and the card numbering is",
     "not reproduced.",
     "",
+    "ACCESSORIES ARE A SEPARATE VOCABULARY from what an exercise requires. An exercise names a",
+    "capability ('Wing attachment'); the trainee owns a product ('Wing attachment (two-piece)').",
+    "Total Gym shipped the wing as one piece and as two, and both do every wing exercise, so an",
+    "exercise that named the product would hide pull-ups from half the owners in the world.",
+    "",
+    "accessories[].added is the registry version the accessory first appeared in. A trainee who",
+    "ticked their equipment before it existed answered a shorter question than the one being",
+    "asked now, and silence is not a 'no' -- anything newer than the version they answered shows",
+    "its exercises until they say otherwise. See ExerciseCatalog.resolveOwned.",
+    "",
     "category    : grouping for the exercise picker. Presentation only.",
     "kind        : 'strength' counts toward weekly training volume; 'stretch' does not. Without",
     "              this, adding stretches would silently inflate every muscle's set count and",
@@ -29,7 +39,111 @@
     "              Fractional accounting matters because Total Gym work is almost all compound;",
     "              see docs/adr/0010."
   ],
-  "version": 2,
+  "version": 3,
+  "accessories": [
+    {
+      "id": "squat-stand",
+      "name": "Squat stand",
+      "provides": [
+        "Squat stand"
+      ],
+      "common": true,
+      "added": 1,
+      "note": "Ships with most machines."
+    },
+    {
+      "id": "wing-two-piece",
+      "name": "Wing attachment (two-piece)",
+      "provides": [
+        "Wing attachment"
+      ],
+      "common": true,
+      "added": 2,
+      "note": "Ships with most machines -- the two bars that bolt on either side at the top."
+    },
+    {
+      "id": "wing-one-piece",
+      "name": "Wing attachment (one-piece)",
+      "provides": [
+        "Wing attachment"
+      ],
+      "common": true,
+      "added": 2,
+      "note": "The single-bar version of the same thing. Either one does every wing exercise."
+    },
+    {
+      "id": "press-up-bars",
+      "name": "Press-up bars",
+      "provides": [
+        "Press-up bars"
+      ],
+      "common": false,
+      "added": 1
+    },
+    {
+      "id": "dip-bars",
+      "name": "Dip bars",
+      "provides": [
+        "Dip bars"
+      ],
+      "common": false,
+      "added": 2
+    },
+    {
+      "id": "leg-pull-accessory",
+      "name": "Leg pull accessory",
+      "provides": [
+        "Leg pull accessory"
+      ],
+      "common": false,
+      "added": 1
+    },
+    {
+      "id": "ankle-straps",
+      "name": "Ankle straps",
+      "provides": [
+        "Ankle straps"
+      ],
+      "common": false,
+      "added": 1
+    },
+    {
+      "id": "ab-crunch",
+      "name": "AbCrunch",
+      "provides": [
+        "AbCrunch"
+      ],
+      "common": false,
+      "added": 2
+    },
+    {
+      "id": "pilates-kit",
+      "name": "Pilates kit",
+      "provides": [
+        "Pilates kit"
+      ],
+      "common": false,
+      "added": 2
+    },
+    {
+      "id": "triceps-rope",
+      "name": "Triceps rope",
+      "provides": [
+        "Triceps rope"
+      ],
+      "common": false,
+      "added": 2
+    },
+    {
+      "id": "shaper-bars",
+      "name": "Tri-grip shaper bars",
+      "provides": [
+        "Shaper bars"
+      ],
+      "common": false,
+      "added": 2
+    }
+  ],
   "exercises": [
     {
       "id": "chest-press",
@@ -207,6 +321,54 @@
         },
         {
           "muscle": "Core",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "shaper-bar-press",
+      "name": "Shaper Bar Chest Press",
+      "category": "Chest",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": "Shaper bars",
+      "cue": "Press with the shaper bars in a neutral grip. Easier on the shoulders than a flat grip.",
+      "muscles": [
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Triceps",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "chest-dip",
+      "name": "Chest Dip",
+      "category": "Chest",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Dip bars",
+      "cue": "On the dip bars with your chest leaning forward, lower until you feel a stretch and press back up.",
+      "muscles": [
+        {
+          "muscle": "Chest",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Triceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
           "fraction": 0.5
         }
       ]
@@ -430,8 +592,8 @@
       "kind": "strength",
       "usesPulley": false,
       "bodyFraction": 1.0,
-      "attachment": "Press-up bars",
-      "cue": "Grip the bars overhead and pull your chest towards them. The incline sets how hard it is.",
+      "attachment": "Wing attachment",
+      "cue": "Grip the wing bars overhead and pull your chest towards them. The incline sets how hard it is.",
       "muscles": [
         {
           "muscle": "Back",
@@ -450,7 +612,7 @@
       "kind": "strength",
       "usesPulley": false,
       "bodyFraction": 1.0,
-      "attachment": "Press-up bars",
+      "attachment": "Wing attachment",
       "cue": "Pull-up with your palms facing you, which brings the biceps in properly.",
       "muscles": [
         {
@@ -459,6 +621,70 @@
         },
         {
           "muscle": "Biceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "wide-grip-pull-up",
+      "name": "Wide-Grip Pull-Up",
+      "category": "Back",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Wing attachment",
+      "cue": "Hands at the far ends of the wing, pull up leading with your elbows out to the sides.",
+      "muscles": [
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "shaper-bar-row",
+      "name": "Shaper Bar Row",
+      "category": "Back",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": "Shaper bars",
+      "cue": "Row with the shaper bars in a neutral grip, palms facing each other, elbows past your ribs.",
+      "muscles": [
+        {
+          "muscle": "Back",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Biceps",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "rope-face-pull",
+      "name": "Rope Face Pull",
+      "category": "Back",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": "Triceps rope",
+      "cue": "Pull the rope towards your forehead, splitting the ends apart as your elbows come back.",
+      "muscles": [
+        {
+          "muscle": "Shoulders",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Back",
           "fraction": 1.0
         }
       ]
@@ -708,6 +934,38 @@
       ]
     },
     {
+      "id": "rope-hammer-curl",
+      "name": "Rope Hammer Curl",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": "Triceps rope",
+      "cue": "Curl the rope with your palms facing each other and pull the ends apart at the top.",
+      "muscles": [
+        {
+          "muscle": "Biceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "shaper-bar-curl",
+      "name": "Shaper Bar Curl",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": "Shaper bars",
+      "cue": "Curl the shaper bars with your elbows pinned. The grip angle takes the strain off your wrists.",
+      "muscles": [
+        {
+          "muscle": "Biceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
       "id": "triceps-extension",
       "name": "Triceps Extension",
       "category": "Arms",
@@ -792,6 +1050,62 @@
         {
           "muscle": "Shoulders",
           "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "upright-dip",
+      "name": "Upright Dip",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Dip bars",
+      "cue": "On the dip bars with your torso upright and elbows tracking straight back. Triceps take it.",
+      "muscles": [
+        {
+          "muscle": "Triceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Chest",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Shoulders",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "rope-pushdown",
+      "name": "Rope Pushdown",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 0.85,
+      "attachment": "Triceps rope",
+      "cue": "Elbows at your sides, push the rope down and spread the ends apart as your arms lock out.",
+      "muscles": [
+        {
+          "muscle": "Triceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "rope-overhead-extension",
+      "name": "Overhead Rope Extension",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "bodyFraction": 1.0,
+      "attachment": "Triceps rope",
+      "cue": "Rope behind your head, elbows high and still, straighten your arms and split the ends.",
+      "muscles": [
+        {
+          "muscle": "Triceps",
+          "fraction": 1.0
         }
       ]
     },
@@ -1076,6 +1390,26 @@
       ]
     },
     {
+      "id": "wing-hamstring-curl",
+      "name": "Wing Hamstring Curl",
+      "category": "Legs",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Wing attachment",
+      "cue": "Face down with your heels hooked on the wing, bend your knees to pull the board up the rail.",
+      "muscles": [
+        {
+          "muscle": "Hamstrings",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
       "id": "leg-extension",
       "name": "Leg Extension",
       "category": "Legs",
@@ -1274,8 +1608,40 @@
       "kind": "strength",
       "usesPulley": false,
       "bodyFraction": 1.0,
-      "attachment": "Press-up bars",
-      "cue": "Hold the bars overhead and draw your knees up towards your chest.",
+      "attachment": "Wing attachment",
+      "cue": "Hold the wing overhead and draw your knees up towards your chest.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "abcrunch-curl-up",
+      "name": "AbCrunch Curl-Up",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "AbCrunch",
+      "cue": "Head towards the top, arms hooked over the pads, curl your ribs down and let the board follow.",
+      "muscles": [
+        {
+          "muscle": "Core",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "abcrunch-oblique-twist",
+      "name": "AbCrunch Oblique Twist",
+      "category": "Core",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "AbCrunch",
+      "cue": "Same curl-up, but drive one shoulder across towards the opposite hip. Alternate sides.",
       "muscles": [
         {
           "muscle": "Core",
@@ -1475,6 +1841,102 @@
         },
         {
           "muscle": "Calves",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "pilates-footwork",
+      "name": "Pilates Footwork",
+      "category": "Pilates",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Pilates kit",
+      "cue": "Toes on the bar, heels lifted, press the board away and return slowly under control.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Calves",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "pilates-frog",
+      "name": "Pilates Frog",
+      "category": "Pilates",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Pilates kit",
+      "cue": "Heels together and knees open, press out until your legs are straight, then fold back in.",
+      "muscles": [
+        {
+          "muscle": "Quadriceps",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Adductors",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "pilates-leg-circle",
+      "name": "Pilates Leg Circle",
+      "category": "Pilates",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Pilates kit",
+      "cue": "Legs straight against the bar, trace a slow circle without letting your hips rock.",
+      "muscles": [
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Adductors",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Core",
+          "fraction": 0.5
+        }
+      ]
+    },
+    {
+      "id": "pilates-scooter",
+      "name": "Pilates Scooter",
+      "category": "Pilates",
+      "kind": "strength",
+      "usesPulley": false,
+      "bodyFraction": 1.0,
+      "attachment": "Pilates kit",
+      "cue": "One foot on the bar and one leg free, push the board away with the working leg only.",
+      "muscles": [
+        {
+          "muscle": "Glutes",
+          "fraction": 1.0
+        },
+        {
+          "muscle": "Quadriceps",
+          "fraction": 0.5
+        },
+        {
+          "muscle": "Core",
           "fraction": 0.5
         }
       ]
