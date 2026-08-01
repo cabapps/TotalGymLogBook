@@ -97,13 +97,47 @@
     <script type="module">
         // Yield to the shell's first paint, then boot the runtime. Everything Blazor renders
         // is progressive enhancement over an already-usable app.
-        const startBlazor = () => Blazor.start().catch(e => console.error('Blazor failed to start', e));
+        const root = document.getElementById('blazor-root');
+
+        // A boot failure here is invisible: the shell keeps working, so the app looks fine and
+        // the coach simply never appears. There is no console on a phone, so say it on the page.
+        const reportBootFailure = (detail) => {
+            if (root.childElementCount > 0) return;
+            root.innerHTML =
+                '<p style="color:var(--muted);font-size:.75rem;margin:1.5rem 0 0;' +
+                'border-top:1px solid var(--border);padding-top:1rem">' +
+                'The coach could not load on this browser. Logging still works and your data is safe.' +
+                '<br><span style="font-size:.7rem;opacity:.8"></span></p>';
+            root.querySelector('span').textContent = String(detail).slice(0, 300);
+        };
+
+        const startBlazor = () => {
+            try {
+                Blazor.start().catch(reportBootFailure);
+            } catch (error) {
+                reportBootFailure(error);
+            }
+        };
+
+        // MUST be `typeof`, not `requestIdleCallback?.(...)`. Optional call guards a null or
+        // undefined VALUE; it does not guard an UNDECLARED IDENTIFIER, which throws a
+        // ReferenceError and kills this module before Blazor.start() is ever reached.
+        //
+        // Safari has never shipped requestIdleCallback -- it is still behind a preference in
+        // Technology Preview -- so the previous version of this line meant the derived tier had
+        // NEVER booted on any iPhone or iPad, while working perfectly in every desktop browser
+        // and in the headless Chromium the e2e suite drives. See docs/adr/0003.
+        const schedule = () =>
+            typeof requestIdleCallback === 'function'
+                ? requestIdleCallback(startBlazor, { timeout: 1000 })
+                // Safari has no idle callback, so yield explicitly instead. Long enough for the
+                // shell to paint first, which is the only reason this is deferred at all.
+                : setTimeout(startBlazor, 200);
 
         if (document.readyState === 'complete') {
-            requestIdleCallback?.(startBlazor, { timeout: 1000 }) ?? setTimeout(startBlazor, 0);
+            schedule();
         } else {
-            window.addEventListener('load', () =>
-                requestIdleCallback?.(startBlazor, { timeout: 1000 }) ?? setTimeout(startBlazor, 0));
+            window.addEventListener('load', schedule);
         }
     </script>
 
