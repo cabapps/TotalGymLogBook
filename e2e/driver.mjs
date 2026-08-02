@@ -347,7 +347,7 @@ async function main() {
 
   // The recommendation must be built against the SAME exercise that was logged. Chest press is
   // a cable movement, so its ladder is halved; a coach that ignores the pulley factor compares
-  // 28.4 lb against a 61.4 lb direct-press rung and tells the trainee to double their load.
+  // a cable load against a direct-press rung and tells the trainee to double their load.
   const loggedLb = Number(await page.locator('tg-set-logger #load').innerText());
   const recommendedLb = Number(recLoad.replace(/[^\d.]/g, ''));
   const step = recommendedLb / loggedLb;

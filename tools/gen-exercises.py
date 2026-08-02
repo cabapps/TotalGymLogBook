@@ -48,7 +48,7 @@ LENGTHENED = {
 SHORTENED = {
     "lateral-raise", "front-raise", "scaption-raise", "shoulder-shrug", "upright-row",
     "reverse-fly", "concentration-curl", "triceps-kickback", "triceps-pushdown",
-    "rope-pushdown", "leg-extension", "hamstring-curl", "wing-hamstring-curl",
+    "rope-pushdown", "prone-triceps-pushdown", "leg-extension", "hamstring-curl", "wing-hamstring-curl",
     "glute-kickback", "side-lying-leg-lift", "hip-adduction",
     "crunch", "cable-crunch", "oblique-crunch", "reverse-crunch", "bicycle-crunch",
     "knee-tuck", "pike", "abcrunch-curl-up", "abcrunch-oblique-twist",
@@ -126,7 +126,10 @@ ACCESSORIES = [
 # facing  : 'tower' (the pulley end, up the incline) or 'floor' (the low end). Lying, that is
 #           which way the head points; sitting, it is which way the trainee faces -- and it
 #           mostly follows the cable, because you sit facing the tower for what you PULL and away
-#           from it for what you PUSH.
+#           from it for what you PUSH. A RULE OF THUMB, not a law: it holds because the cable
+#           comes off the top of the tower, so anything that changes where the cable meets the
+#           trainee breaks it. Lying face down and pushing the cables toward your feet is the
+#           clear case -- the prone pushdown faces the tower and is still a push.
 # also    : a SECOND facing the movement works at, where one exists. A curl is the clear case:
 #           it is fine either way round. This is not a footnote -- it is what lets a curl sit in
 #           the middle of a block of pressing without anybody turning around, so it changes the
@@ -158,21 +161,25 @@ SETUP = {
     "lat-stretch": ("face-up", "tower", "handles"),
     "chest-stretch": ("face-up", "tower", "handles"),
 
-    # ---- lying face up, head toward the floor: feet up on the squat stand
-    "squat": ("face-up", "floor", "nothing"),
-    "wide-stance-squat": ("face-up", "floor", "nothing"),
-    "narrow-stance-squat": ("face-up", "floor", "nothing"),
-    "single-leg-squat": ("face-up", "floor", "nothing"),
-    "split-squat": ("face-up", "floor", "nothing"),
-    "jump-squat": ("face-up", "floor", "nothing"),
-    "hip-bridge": ("face-up", "floor", "nothing"),
-    "calf-raise": ("face-up", "floor", "nothing"),
-    "single-leg-calf-raise": ("face-up", "floor", "nothing"),
-    "toe-press": ("face-up", "floor", "nothing"),
-    "sprinter-start": ("face-up", "floor", "nothing"),
-    "board-burpee": ("face-up", "floor", "nothing"),
-    "adductor-stretch": ("face-up", "floor", "nothing"),
-    "calf-stretch": ("face-up", "floor", "nothing"),
+    # ---- lying face up, head toward the tower: feet down on the squat stand
+    #
+    # The stand bolts on at the BOTTOM of the rail, so feet on the stand puts the head at the
+    # tower end -- the same way round as the cable work, not the opposite way. An assertion
+    # below holds every squat-stand movement to it.
+    "squat": ("face-up", "tower", "nothing"),
+    "wide-stance-squat": ("face-up", "tower", "nothing"),
+    "narrow-stance-squat": ("face-up", "tower", "nothing"),
+    "single-leg-squat": ("face-up", "tower", "nothing"),
+    "split-squat": ("face-up", "tower", "nothing"),
+    "jump-squat": ("face-up", "tower", "nothing"),
+    "hip-bridge": ("face-up", "tower", "nothing"),
+    "calf-raise": ("face-up", "tower", "nothing"),
+    "single-leg-calf-raise": ("face-up", "tower", "nothing"),
+    "toe-press": ("face-up", "tower", "nothing"),
+    "sprinter-start": ("face-up", "tower", "nothing"),
+    "board-burpee": ("face-up", "tower", "nothing"),
+    "adductor-stretch": ("face-up", "tower", "nothing"),
+    "calf-stretch": ("face-up", "tower", "nothing"),
     "crunch": ("face-up", "floor", "nothing"),
     "oblique-crunch": ("face-up", "floor", "nothing"),
     "reverse-crunch": ("face-up", "floor", "nothing"),
@@ -211,6 +218,9 @@ SETUP = {
     "rope-hammer-curl": ("seated", "tower", "rope", "floor"),
     "triceps-pushdown": ("seated", "tower", "handles"),
     "rope-pushdown": ("seated", "tower", "rope"),
+    # Pushing, but face down with the cables in front -- the push/pull rule below is about where
+    # the cable is, and lying down moves it. See the note on `facing`.
+    "prone-triceps-pushdown": ("face-down", "tower", "handles"),
     # Dips press down on the bars at the tower end; the board still carries you.
     "chest-dip": ("seated", "tower", "dip bars"),
     "upright-dip": ("seated", "tower", "dip bars"),
@@ -250,29 +260,29 @@ SETUP = {
 
     # ---- on your side
     "side-lying-leg-lift": ("side-lying", "floor", "nothing"),
-    "hip-abduction": ("side-lying", "floor", "nothing"),
-    "hip-adduction": ("side-lying", "floor", "nothing"),
+    "hip-abduction": ("side-lying", "tower", "nothing"),
+    "hip-adduction": ("side-lying", "tower", "nothing"),
     "side-plank": ("side-lying", "floor", "nothing"),
 }
 
 EX = [
     # ---------------------------------------------------------------- chest
-    E("chest-press", "Chest Press", "Chest", "strength", True, 1.0, None,
+    E("chest-press", "Chest Press", "Chest", "strength", True, 0.85, None,
       "Handles level with your chest, elbows tucked, press until your arms are straight.",
       [("Chest", D), ("Triceps", I), ("Shoulders", I)]),
-    E("chest-fly", "Chest Fly", "Chest", "strength", True, 1.0, None,
+    E("chest-fly", "Chest Fly", "Chest", "strength", True, 0.85, None,
       "Arms wide with elbows softly bent, sweep the handles together in front of your chest.",
       [("Chest", D), ("Shoulders", I)]),
-    E("incline-chest-fly", "Incline Chest Fly", "Chest", "strength", True, 1.0, None,
+    E("incline-chest-fly", "Incline Chest Fly", "Chest", "strength", True, 0.85, None,
       "Same sweep as a chest fly, set a notch or two higher so the top of the chest takes more of it.",
       [("Chest", D), ("Shoulders", I)]),
-    E("single-arm-chest-press", "Single-Arm Chest Press", "Chest", "strength", True, 1.0, None,
+    E("single-arm-chest-press", "Single-Arm Chest Press", "Chest", "strength", True, 0.85, None,
       "Press one handle at a time. Keep both hips flat on the board so you don't twist into it.",
       [("Chest", D), ("Triceps", I), ("Core", I)]),
-    E("close-grip-chest-press", "Close-Grip Chest Press", "Chest", "strength", True, 1.0, None,
+    E("close-grip-chest-press", "Close-Grip Chest Press", "Chest", "strength", True, 0.85, None,
       "Press with your elbows tucked close to your ribs. Most of the work moves to the triceps.",
       [("Triceps", D), ("Chest", D), ("Shoulders", I)]),
-    E("chest-crossover", "Chest Crossover", "Chest", "strength", True, 1.0, None,
+    E("chest-crossover", "Chest Crossover", "Chest", "strength", True, 0.85, None,
       "Fly the handles together and let your hands cross past each other at the top.",
       [("Chest", D), ("Shoulders", I)]),
     E("pullover", "Pullover", "Chest", "strength", True, 1.0, None,
@@ -281,7 +291,7 @@ EX = [
     E("decline-push-up", "Decline Push-Up", "Chest", "strength", False, 1.0, BARS,
       "Face down with your head lower than your feet, hands on the bars, press the board away.",
       [("Chest", D), ("Triceps", I), ("Core", I)]),
-    E("shaper-bar-press", "Shaper Bar Chest Press", "Chest", "strength", True, 1.0, SHAPER,
+    E("shaper-bar-press", "Shaper Bar Chest Press", "Chest", "strength", True, 0.85, SHAPER,
       "Press with the shaper bars in a neutral grip. Easier on the shoulders than a flat grip.",
       [("Chest", D), ("Triceps", I), ("Shoulders", I)]),
     E("chest-dip", "Chest Dip", "Chest", "strength", False, 1.0, DIP,
@@ -396,6 +406,9 @@ EX = [
       [("Triceps", D)]),
     E("triceps-pushdown", "Triceps Pushdown", "Arms", "strength", True, 0.85, None,
       "Elbows pinned to your sides, push the handles down until your arms lock out.",
+      [("Triceps", D)]),
+    E("prone-triceps-pushdown", "Prone Triceps Pushdown", "Arms", "strength", True, 1.0, None,
+      "Face down with the cables in front of you, elbows still, push down until your arms straighten.",
       [("Triceps", D)]),
     E("overhead-triceps-extension", "Overhead Triceps Extension", "Arms", "strength", True, 1.0, None,
       "Lie back with the handles behind your head, straighten your arms without moving your elbows.",
@@ -526,7 +539,7 @@ EX = [
     E("row-to-curl", "Row to Curl", "Total body", "strength", True, 0.85, None,
       "Row to your waist, then curl the handles up to your shoulders before lowering.",
       [("Back", D), ("Biceps", D)]),
-    E("press-to-fly", "Press to Fly", "Total body", "strength", True, 1.0, None,
+    E("press-to-fly", "Press to Fly", "Total body", "strength", True, 0.85, None,
       "Press up, then open your arms wide and sweep them back together.",
       [("Chest", D), ("Shoulders", I), ("Triceps", I)]),
     E("mountain-climber", "Mountain Climber", "Total body", "strength", False, 1.0, None,
@@ -578,7 +591,7 @@ EX = [
     E("lat-stretch", "Lat Stretch", "Stretch", "stretch", True, 1.0, None,
       "Reach overhead, hold the handles and let your ribs lengthen away from your hips.",
       [("Back", D)]),
-    E("shoulder-stretch", "Shoulder Stretch", "Stretch", "stretch", True, 1.0, None,
+    E("shoulder-stretch", "Shoulder Stretch", "Stretch", "stretch", True, 0.85, None,
       "One arm across your body, use the other to draw it in until the back of the shoulder opens.",
       [("Shoulders", D)]),
     E("spinal-twist", "Spinal Twist", "Stretch", "stretch", False, 1.0, None,
@@ -682,6 +695,12 @@ def main():
     # A tension label on an id that no longer exists is a silent no-op, and the exercise it was
     # meant for quietly reverts to 'even' -- so the program builder stops recommending it and
     # nothing anywhere says why.
+    # The squat stand bolts on at the bottom of the rail. Feet on the stand therefore means head
+    # at the tower end, always -- a physical fact about the machine rather than a judgment, so it
+    # is asserted rather than left to whoever edits the table next.
+    wrong_way = [e.id for e in EX if e.att == STAND and setup_of(e)["facing"] != "tower"]
+    assert not wrong_way, f"squat-stand movements must face the tower: {sorted(wrong_way)}"
+
     stray_setup = set(SETUP) - seen
     assert not stray_setup, f"setup for unknown exercises: {sorted(stray_setup)}"
 
