@@ -79,8 +79,8 @@
           "exercises": [
             { "exerciseId": "split-squat", "sets": 3 },
             { "exerciseId": "chin-up", "sets": 3 },
-            { "exerciseId": "incline-chest-fly", "sets": 3 },
             { "exerciseId": "overhead-triceps-extension", "sets": 2 },
+            { "exerciseId": "incline-chest-fly", "sets": 3 },
             { "exerciseId": "lateral-raise", "sets": 2 }
           ]
         },
@@ -91,8 +91,8 @@
             { "exerciseId": "hip-bridge", "sets": 3 },
             { "exerciseId": "calf-raise", "sets": 4 },
             { "exerciseId": "pullover", "sets": 2 },
-            { "exerciseId": "close-grip-chest-press", "sets": 3 },
-            { "exerciseId": "seated-row", "sets": 3 }
+            { "exerciseId": "seated-row", "sets": 3 },
+            { "exerciseId": "close-grip-chest-press", "sets": 3 }
           ]
         }
       ]
@@ -109,9 +109,9 @@
           "name": "Upper A",
           "exercises": [
             { "exerciseId": "lat-pulldown", "sets": 4 },
-            { "exerciseId": "chest-press", "sets": 4 },
             { "exerciseId": "overhead-triceps-extension", "sets": 3 },
             { "exerciseId": "overhead-cable-curl", "sets": 3 },
+            { "exerciseId": "chest-press", "sets": 4 },
             { "exerciseId": "shoulder-press", "sets": 3 }
           ]
         },
@@ -131,10 +131,10 @@
           "name": "Upper B",
           "exercises": [
             { "exerciseId": "chin-up", "sets": 4 },
-            { "exerciseId": "incline-chest-fly", "sets": 3 },
             { "exerciseId": "seated-row", "sets": 3 },
+            { "exerciseId": "hammer-curl", "sets": 3 },
             { "exerciseId": "reverse-fly", "sets": 3 },
-            { "exerciseId": "hammer-curl", "sets": 3 }
+            { "exerciseId": "incline-chest-fly", "sets": 3 }
           ]
         },
         {
@@ -162,10 +162,10 @@
           "name": "Push",
           "exercises": [
             { "exerciseId": "chest-press", "sets": 4 },
-            { "exerciseId": "overhead-triceps-extension", "sets": 3 },
-            { "exerciseId": "incline-chest-fly", "sets": 3 },
             { "exerciseId": "shoulder-press", "sets": 3 },
-            { "exerciseId": "lateral-raise", "sets": 3 }
+            { "exerciseId": "incline-chest-fly", "sets": 3 },
+            { "exerciseId": "lateral-raise", "sets": 3 },
+            { "exerciseId": "overhead-triceps-extension", "sets": 3 }
           ]
         },
         {
@@ -206,7 +206,7 @@
             { "exerciseId": "squat", "sets": 3 },
             { "exerciseId": "hip-bridge", "sets": 2 },
             { "exerciseId": "crunch", "sets": 4 },
-            { "exerciseId": "lat-pulldown", "sets": 3 },
+            { "exerciseId": "lat-pulldown", "sets": 2 },
             { "exerciseId": "chest-press", "sets": 3 }
           ]
         },
@@ -217,8 +217,8 @@
             { "exerciseId": "split-squat", "sets": 3 },
             { "exerciseId": "calf-raise", "sets": 4 },
             { "exerciseId": "incline-chest-fly", "sets": 3 },
-            { "exerciseId": "overhead-triceps-extension", "sets": 3 },
-            { "exerciseId": "seated-row", "sets": 3 }
+            { "exerciseId": "seated-row", "sets": 3 },
+            { "exerciseId": "overhead-triceps-extension", "sets": 3 }
           ]
         },
         {
@@ -246,8 +246,8 @@
           "name": "Upper A",
           "exercises": [
             { "exerciseId": "chin-up", "sets": 3 },
-            { "exerciseId": "chest-press", "sets": 3 },
-            { "exerciseId": "seated-row", "sets": 3 }
+            { "exerciseId": "seated-row", "sets": 3 },
+            { "exerciseId": "chest-press", "sets": 3 }
           ]
         },
         {
@@ -263,8 +263,8 @@
           "name": "Upper B",
           "exercises": [
             { "exerciseId": "pull-up", "sets": 3 },
-            { "exerciseId": "close-grip-chest-press", "sets": 3 },
-            { "exerciseId": "upright-row", "sets": 3 }
+            { "exerciseId": "upright-row", "sets": 3 },
+            { "exerciseId": "close-grip-chest-press", "sets": 3 }
           ]
         },
         {
@@ -292,9 +292,9 @@
             { "exerciseId": "squat", "sets": 3 },
             { "exerciseId": "calf-raise", "sets": 3 },
             { "exerciseId": "mountain-climber", "sets": 3 },
+            { "exerciseId": "chest-press", "sets": 3 },
             { "exerciseId": "shoulder-press", "sets": 3 },
-            { "exerciseId": "seated-row", "sets": 3 },
-            { "exerciseId": "chest-press", "sets": 3 }
+            { "exerciseId": "seated-row", "sets": 3 }
           ]
         },
         {
@@ -305,8 +305,8 @@
             { "exerciseId": "hip-bridge", "sets": 3 },
             { "exerciseId": "board-burpee", "sets": 3 },
             { "exerciseId": "knee-tuck", "sets": 3 },
-            { "exerciseId": "lat-pulldown", "sets": 3 },
-            { "exerciseId": "chest-fly", "sets": 3 }
+            { "exerciseId": "chest-fly", "sets": 3 },
+            { "exerciseId": "lat-pulldown", "sets": 3 }
           ]
         }
       ]

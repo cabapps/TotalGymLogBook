@@ -75,24 +75,24 @@ styles.replaceSync(`
  * attachment, pick up the handles.
  */
 function describeSetup(exercise: Exercise): string {
-  const position: Record<string, string> = {
-    supine: 'Lie face up on the board',
-    prone: 'Lie face down on the board',
-    seated: 'Sit up on the board',
-    kneeling: 'Kneel on the board',
-    'side-lying': 'Lie on your side',
-    plank: 'Face down with your hands on the board',
-    standing: 'Stand off the board',
+  const lying: Record<string, string> = {
+    'face-up': 'Lie face up on the board',
+    'face-down': 'Lie face down on the board',
+    'side-lying': 'Lie on your side on the board',
   };
 
-  const parts = [position[exercise.setup.position] ?? 'Get on the board'];
+  const toTower = exercise.setup.facing === 'tower';
+  const parts: string[] = [];
 
-  if (exercise.setup.position !== 'standing') {
-    parts.push(
-      exercise.setup.facing === 'tower'
-        ? 'head toward the top of the rail'
-        : 'head toward the bottom of the rail',
-    );
+  // Sitting, the trainee faces a direction; lying, the head points at one. Same axis, and the
+  // two readings of it are the only ones the machine has -- nothing is done off the board.
+  if (exercise.setup.position === 'seated') {
+    parts.push(toTower ? 'Sit on the board facing the tower' : 'Sit on the board facing away from the tower');
+  } else if (exercise.setup.position === 'kneeling') {
+    parts.push(toTower ? 'Kneel on the board facing the tower' : 'Kneel on the board facing away');
+  } else {
+    parts.push(lying[exercise.setup.position] ?? 'Get on the board');
+    parts.push(toTower ? 'head toward the tower' : 'head toward the floor');
   }
 
   if (exercise.attachment) parts.push(`fit the ${exercise.attachment.toLowerCase()}`);

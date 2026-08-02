@@ -180,13 +180,13 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "tower",
+        "position": "seated",
+        "facing": "floor",
         "grip": "handles"
       },
       "bodyFraction": 1.0,
       "attachment": null,
-      "cue": "Lie face up, handles level with your chest, press until your arms are straight.",
+      "cue": "Handles level with your chest, elbows tucked, press until your arms are straight.",
       "muscles": [
         {
           "muscle": "Chest",
@@ -210,13 +210,13 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "tower",
+        "position": "seated",
+        "facing": "floor",
         "grip": "handles"
       },
       "bodyFraction": 1.0,
       "attachment": null,
-      "cue": "Lie face up with arms wide and elbows softly bent, sweep the handles together over your chest.",
+      "cue": "Arms wide with elbows softly bent, sweep the handles together in front of your chest.",
       "muscles": [
         {
           "muscle": "Chest",
@@ -236,8 +236,8 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "tower",
+        "position": "seated",
+        "facing": "floor",
         "grip": "handles"
       },
       "bodyFraction": 1.0,
@@ -262,8 +262,8 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "tower",
+        "position": "seated",
+        "facing": "floor",
         "grip": "single handle"
       },
       "bodyFraction": 1.0,
@@ -292,8 +292,8 @@
       "usesPulley": true,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "tower",
+        "position": "seated",
+        "facing": "floor",
         "grip": "handles, close"
       },
       "bodyFraction": 1.0,
@@ -322,8 +322,8 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "tower",
+        "position": "seated",
+        "facing": "floor",
         "grip": "handles"
       },
       "bodyFraction": 1.0,
@@ -348,7 +348,7 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles"
       },
@@ -378,8 +378,8 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "plank",
-        "facing": "away",
+        "position": "face-down",
+        "facing": "floor",
         "grip": "press-up bars"
       },
       "bodyFraction": 1.0,
@@ -408,8 +408,8 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "tower",
+        "position": "seated",
+        "facing": "floor",
         "grip": "shaper bars"
       },
       "bodyFraction": 1.0,
@@ -438,8 +438,8 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "standing",
-        "facing": "away",
+        "position": "seated",
+        "facing": "tower",
         "grip": "dip bars"
       },
       "bodyFraction": 1.0,
@@ -468,7 +468,7 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles"
       },
@@ -494,7 +494,7 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles, wide"
       },
@@ -524,7 +524,7 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles, palms up"
       },
@@ -550,7 +550,7 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles"
       },
@@ -740,7 +740,7 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "wing bars"
       },
@@ -766,7 +766,7 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "wing bars, palms toward you"
       },
@@ -792,7 +792,7 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "wing bars, wide"
       },
@@ -875,7 +875,7 @@
       "peakTension": "even",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "floor",
         "grip": "handles"
       },
       "bodyFraction": 0.85,
@@ -901,7 +901,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "floor",
         "grip": "handles"
       },
       "bodyFraction": 0.85,
@@ -923,7 +923,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "floor",
         "grip": "handles"
       },
       "bodyFraction": 0.85,
@@ -945,7 +945,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "floor",
         "grip": "handles"
       },
       "bodyFraction": 0.85,
@@ -1067,7 +1067,7 @@
       "peakTension": "even",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "tower",
         "grip": "handles"
       },
       "bodyFraction": 0.85,
@@ -1089,7 +1089,7 @@
       "peakTension": "even",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "tower",
         "grip": "handles, palms in"
       },
       "bodyFraction": 0.85,
@@ -1111,7 +1111,7 @@
       "peakTension": "even",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "tower",
         "grip": "handles, palms down"
       },
       "bodyFraction": 0.85,
@@ -1133,7 +1133,7 @@
       "peakTension": "even",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "tower",
         "grip": "handles, wide"
       },
       "bodyFraction": 0.85,
@@ -1155,7 +1155,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "tower",
         "grip": "single handle"
       },
       "bodyFraction": 0.85,
@@ -1177,7 +1177,7 @@
       "peakTension": "even",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "tower",
         "grip": "single handle"
       },
       "bodyFraction": 0.85,
@@ -1202,7 +1202,7 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles"
       },
@@ -1225,7 +1225,7 @@
       "peakTension": "even",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "tower",
         "grip": "rope"
       },
       "bodyFraction": 0.85,
@@ -1247,7 +1247,7 @@
       "peakTension": "even",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "tower",
         "grip": "shaper bars"
       },
       "bodyFraction": 0.85,
@@ -1269,7 +1269,7 @@
       "peakTension": "even",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "floor",
         "grip": "handles"
       },
       "bodyFraction": 0.85,
@@ -1291,7 +1291,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "tower",
         "grip": "handles"
       },
       "bodyFraction": 0.85,
@@ -1312,7 +1312,7 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles"
       },
@@ -1335,7 +1335,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "kneeling",
-        "facing": "away",
+        "facing": "floor",
         "grip": "single handle"
       },
       "bodyFraction": 0.85,
@@ -1356,8 +1356,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "standing",
-        "facing": "away",
+        "position": "seated",
+        "facing": "floor",
         "grip": "press-up bars"
       },
       "bodyFraction": 1.0,
@@ -1386,8 +1386,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "standing",
-        "facing": "away",
+        "position": "seated",
+        "facing": "tower",
         "grip": "dip bars"
       },
       "bodyFraction": 1.0,
@@ -1417,7 +1417,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "tower",
         "grip": "rope"
       },
       "bodyFraction": 0.85,
@@ -1438,7 +1438,7 @@
       "usesPulley": true,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "rope"
       },
@@ -1460,8 +1460,8 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1490,8 +1490,8 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1520,8 +1520,8 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1546,8 +1546,8 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1576,8 +1576,8 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1602,8 +1602,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1632,8 +1632,8 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1658,8 +1658,8 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1680,8 +1680,8 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1702,8 +1702,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1725,7 +1725,7 @@
       "peakTension": "even",
       "setup": {
         "position": "side-lying",
-        "facing": "away",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1751,7 +1751,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "side-lying",
-        "facing": "away",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1777,7 +1777,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "side-lying",
-        "facing": "away",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1798,8 +1798,8 @@
       "usesPulley": true,
       "peakTension": "shortened",
       "setup": {
-        "position": "prone",
-        "facing": "away",
+        "position": "face-down",
+        "facing": "floor",
         "grip": "ankle straps"
       },
       "bodyFraction": 1.0,
@@ -1824,7 +1824,7 @@
       "usesPulley": false,
       "peakTension": "shortened",
       "setup": {
-        "position": "prone",
+        "position": "face-down",
         "facing": "tower",
         "grip": "nothing"
       },
@@ -1851,7 +1851,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "seated",
-        "facing": "away",
+        "facing": "floor",
         "grip": "ankle straps"
       },
       "bodyFraction": 0.85,
@@ -1873,7 +1873,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "kneeling",
-        "facing": "away",
+        "facing": "floor",
         "grip": "ankle strap"
       },
       "bodyFraction": 1.0,
@@ -1898,8 +1898,8 @@
       "usesPulley": false,
       "peakTension": "shortened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 0.75,
@@ -1920,7 +1920,7 @@
       "usesPulley": true,
       "peakTension": "shortened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles by your head"
       },
@@ -1942,8 +1942,8 @@
       "usesPulley": false,
       "peakTension": "shortened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 0.75,
@@ -1964,8 +1964,8 @@
       "usesPulley": false,
       "peakTension": "shortened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 0.9,
@@ -1986,8 +1986,8 @@
       "usesPulley": false,
       "peakTension": "shortened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 0.75,
@@ -2008,8 +2008,8 @@
       "usesPulley": false,
       "peakTension": "shortened",
       "setup": {
-        "position": "plank",
-        "facing": "away",
+        "position": "face-down",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2034,8 +2034,8 @@
       "usesPulley": false,
       "peakTension": "shortened",
       "setup": {
-        "position": "plank",
-        "facing": "away",
+        "position": "face-down",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2060,8 +2060,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "plank",
-        "facing": "away",
+        "position": "face-down",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2087,7 +2087,7 @@
       "peakTension": "even",
       "setup": {
         "position": "side-lying",
-        "facing": "away",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2108,7 +2108,7 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "wing bars"
       },
@@ -2130,7 +2130,7 @@
       "usesPulley": false,
       "peakTension": "shortened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "AbCrunch pads"
       },
@@ -2152,7 +2152,7 @@
       "usesPulley": false,
       "peakTension": "shortened",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "AbCrunch pads"
       },
@@ -2174,7 +2174,7 @@
       "usesPulley": true,
       "peakTension": "even",
       "setup": {
-        "position": "prone",
+        "position": "face-down",
         "facing": "tower",
         "grip": "leg pull bar"
       },
@@ -2248,7 +2248,7 @@
       "usesPulley": true,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles"
       },
@@ -2304,8 +2304,8 @@
       "usesPulley": true,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "tower",
+        "position": "seated",
+        "facing": "floor",
         "grip": "handles"
       },
       "bodyFraction": 1.0,
@@ -2334,8 +2334,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "plank",
-        "facing": "away",
+        "position": "face-down",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2364,8 +2364,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2394,8 +2394,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2424,8 +2424,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2454,8 +2454,8 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2484,8 +2484,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2514,8 +2514,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2544,7 +2544,7 @@
       "usesPulley": true,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles"
       },
@@ -2567,7 +2567,7 @@
       "peakTension": "even",
       "setup": {
         "position": "kneeling",
-        "facing": "away",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2589,7 +2589,7 @@
       "peakTension": "even",
       "setup": {
         "position": "kneeling",
-        "facing": "away",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2610,8 +2610,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2632,8 +2632,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2654,8 +2654,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "away",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2676,7 +2676,7 @@
       "usesPulley": true,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles"
       },
@@ -2698,7 +2698,7 @@
       "usesPulley": true,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
+        "position": "face-up",
         "facing": "tower",
         "grip": "handles"
       },
@@ -2742,8 +2742,8 @@
       "usesPulley": false,
       "peakTension": "even",
       "setup": {
-        "position": "supine",
-        "facing": "tower",
+        "position": "face-up",
+        "facing": "floor",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,

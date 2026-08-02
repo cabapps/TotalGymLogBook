@@ -119,72 +119,68 @@ ACCESSORIES = [
 # while the instructions told the trainee to turn around between them, one of them would be lying,
 # and there would be no way to tell which.
 #
-# position: how the body is arranged on the glideboard
-# facing  : which end of the rail the head points at -- 'tower' is the pulley end, up the incline
+# NOTHING HAPPENS OFF THE BOARD. Even the dips use it -- there is no standing position, and a
+# model with one in it would order sessions around a changeover that does not exist.
+#
+# position: face-up, face-down, seated, kneeling, side-lying
+# facing  : 'tower' (the pulley end, up the incline) or 'floor' (the low end). Lying, that is
+#           which way the head points; sitting, it is which way the trainee faces -- and it
+#           follows the cable, because you sit facing the tower for everything you PULL and away
+#           from it for everything you PUSH.
 # grip    : what is in the hands (or on the ankles)
 #
-# Defaults come from the attachment and the pulley; only the exceptions are listed. These are
-# judgments about how the movements are normally performed, in the same class as bodyFraction --
-# reviewable, and wrong only in the direction of a clumsier exercise order.
+# Every movement is listed. These are judgments about how each is normally performed, in the same
+# class as bodyFraction -- reviewable, and wrong only in the direction of a clumsier exercise
+# order or an instruction that reads oddly.
 SETUP = {
-    # ---- lying face up, head at the tower end: the machine's default posture
-    "chest-press": ("supine", "tower", "handles"),
-    "chest-fly": ("supine", "tower", "handles"),
-    "incline-chest-fly": ("supine", "tower", "handles"),
-    "single-arm-chest-press": ("supine", "tower", "single handle"),
-    "close-grip-chest-press": ("supine", "tower", "handles, close"),
-    "chest-crossover": ("supine", "tower", "handles"),
-    "shaper-bar-press": ("supine", "tower", "shaper bars"),
-    "pullover": ("supine", "tower", "handles"),
-    "lat-pulldown": ("supine", "tower", "handles"),
-    "wide-grip-pulldown": ("supine", "tower", "handles, wide"),
-    "reverse-grip-pulldown": ("supine", "tower", "handles, palms up"),
-    "straight-arm-pulldown": ("supine", "tower", "handles"),
-    "pullover-to-press": ("supine", "tower", "handles"),
-    "press-to-fly": ("supine", "tower", "handles"),
-    "overhead-triceps-extension": ("supine", "tower", "handles"),
-    "rope-overhead-extension": ("supine", "tower", "rope"),
-    "overhead-cable-curl": ("supine", "tower", "handles"),
-    "cable-crunch": ("supine", "tower", "handles by your head"),
-    "pull-up": ("supine", "tower", "wing bars"),
-    "chin-up": ("supine", "tower", "wing bars, palms toward you"),
-    "wide-grip-pull-up": ("supine", "tower", "wing bars, wide"),
-    "hanging-knee-raise": ("supine", "tower", "wing bars"),
-    "abcrunch-curl-up": ("supine", "tower", "AbCrunch pads"),
-    "abcrunch-oblique-twist": ("supine", "tower", "AbCrunch pads"),
-    "hamstring-stretch": ("supine", "tower", "handles"),
-    "lat-stretch": ("supine", "tower", "handles"),
-    "chest-stretch": ("supine", "tower", "handles"),
-    "spinal-twist": ("supine", "tower", "nothing"),
+    # ---- lying face up, head toward the tower: arms overhead, cable coming from above
+    "pullover": ("face-up", "tower", "handles"),
+    "lat-pulldown": ("face-up", "tower", "handles"),
+    "wide-grip-pulldown": ("face-up", "tower", "handles, wide"),
+    "reverse-grip-pulldown": ("face-up", "tower", "handles, palms up"),
+    "straight-arm-pulldown": ("face-up", "tower", "handles"),
+    "pullover-to-press": ("face-up", "tower", "handles"),
+    "overhead-triceps-extension": ("face-up", "tower", "handles"),
+    "rope-overhead-extension": ("face-up", "tower", "rope"),
+    "overhead-cable-curl": ("face-up", "tower", "handles"),
+    "cable-crunch": ("face-up", "tower", "handles by your head"),
+    "pull-up": ("face-up", "tower", "wing bars"),
+    "chin-up": ("face-up", "tower", "wing bars, palms toward you"),
+    "wide-grip-pull-up": ("face-up", "tower", "wing bars, wide"),
+    "hanging-knee-raise": ("face-up", "tower", "wing bars"),
+    "abcrunch-curl-up": ("face-up", "tower", "AbCrunch pads"),
+    "abcrunch-oblique-twist": ("face-up", "tower", "AbCrunch pads"),
+    "hamstring-stretch": ("face-up", "tower", "handles"),
+    "lat-stretch": ("face-up", "tower", "handles"),
+    "chest-stretch": ("face-up", "tower", "handles"),
 
-    # ---- lying face up, feet on the squat stand: everything you push with your legs
-    "squat": ("supine", "away", "nothing"),
-    "wide-stance-squat": ("supine", "away", "nothing"),
-    "narrow-stance-squat": ("supine", "away", "nothing"),
-    "single-leg-squat": ("supine", "away", "nothing"),
-    "split-squat": ("supine", "away", "nothing"),
-    "jump-squat": ("supine", "away", "nothing"),
-    "hip-bridge": ("supine", "away", "nothing"),
-    "calf-raise": ("supine", "away", "nothing"),
-    "single-leg-calf-raise": ("supine", "away", "nothing"),
-    "toe-press": ("supine", "away", "nothing"),
-    "sprinter-start": ("supine", "away", "nothing"),
-    "board-burpee": ("supine", "away", "nothing"),
-    "adductor-stretch": ("supine", "away", "nothing"),
-    "calf-stretch": ("supine", "away", "nothing"),
-    "crunch": ("supine", "away", "nothing"),
-    "oblique-crunch": ("supine", "away", "nothing"),
-    "reverse-crunch": ("supine", "away", "nothing"),
-    "bicycle-crunch": ("supine", "away", "nothing"),
-    "glute-stretch": ("supine", "away", "nothing"),
-    "quad-stretch": ("kneeling", "away", "nothing"),
-    "hip-flexor-stretch": ("kneeling", "away", "nothing"),
-    "pilates-footwork": ("supine", "away", "nothing"),
-    "pilates-frog": ("supine", "away", "nothing"),
-    "pilates-leg-circle": ("supine", "away", "nothing"),
-    "pilates-scooter": ("supine", "away", "nothing"),
+    # ---- lying face up, head toward the floor: feet up on the squat stand
+    "squat": ("face-up", "floor", "nothing"),
+    "wide-stance-squat": ("face-up", "floor", "nothing"),
+    "narrow-stance-squat": ("face-up", "floor", "nothing"),
+    "single-leg-squat": ("face-up", "floor", "nothing"),
+    "split-squat": ("face-up", "floor", "nothing"),
+    "jump-squat": ("face-up", "floor", "nothing"),
+    "hip-bridge": ("face-up", "floor", "nothing"),
+    "calf-raise": ("face-up", "floor", "nothing"),
+    "single-leg-calf-raise": ("face-up", "floor", "nothing"),
+    "toe-press": ("face-up", "floor", "nothing"),
+    "sprinter-start": ("face-up", "floor", "nothing"),
+    "board-burpee": ("face-up", "floor", "nothing"),
+    "adductor-stretch": ("face-up", "floor", "nothing"),
+    "calf-stretch": ("face-up", "floor", "nothing"),
+    "crunch": ("face-up", "floor", "nothing"),
+    "oblique-crunch": ("face-up", "floor", "nothing"),
+    "reverse-crunch": ("face-up", "floor", "nothing"),
+    "bicycle-crunch": ("face-up", "floor", "nothing"),
+    "glute-stretch": ("face-up", "floor", "nothing"),
+    "spinal-twist": ("face-up", "floor", "nothing"),
+    "pilates-footwork": ("face-up", "floor", "nothing"),
+    "pilates-frog": ("face-up", "floor", "nothing"),
+    "pilates-leg-circle": ("face-up", "floor", "nothing"),
+    "pilates-scooter": ("face-up", "floor", "nothing"),
 
-    # ---- sitting up, facing the tower: rows and everything pulled to the waist
+    # ---- sitting, facing the tower: the cable pulls you toward it, so everything you PULL
     "seated-row": ("seated", "tower", "handles"),
     "wide-grip-row": ("seated", "tower", "handles, wide"),
     "high-row": ("seated", "tower", "handles"),
@@ -201,56 +197,67 @@ SETUP = {
     "external-rotation": ("seated", "tower", "single handle"),
     "internal-rotation": ("seated", "tower", "single handle"),
     "shoulder-stretch": ("seated", "tower", "handles"),
+    "biceps-curl": ("seated", "tower", "handles"),
+    "hammer-curl": ("seated", "tower", "handles, palms in"),
+    "reverse-curl": ("seated", "tower", "handles, palms down"),
+    "wide-grip-curl": ("seated", "tower", "handles, wide"),
+    "concentration-curl": ("seated", "tower", "single handle"),
+    "single-arm-curl": ("seated", "tower", "single handle"),
+    "shaper-bar-curl": ("seated", "tower", "shaper bars"),
+    "rope-hammer-curl": ("seated", "tower", "rope"),
+    "triceps-pushdown": ("seated", "tower", "handles"),
+    "rope-pushdown": ("seated", "tower", "rope"),
+    # Dips press down on the bars at the tower end; the board still carries you.
+    "chest-dip": ("seated", "tower", "dip bars"),
+    "upright-dip": ("seated", "tower", "dip bars"),
 
-    # ---- sitting up, facing away from the tower: pressing and curling
-    "shoulder-press": ("seated", "away", "handles"),
-    "front-raise": ("seated", "away", "handles"),
-    "lateral-raise": ("seated", "away", "handles"),
-    "scaption-raise": ("seated", "away", "handles"),
-    "biceps-curl": ("seated", "away", "handles"),
-    "hammer-curl": ("seated", "away", "handles, palms in"),
-    "reverse-curl": ("seated", "away", "handles, palms down"),
-    "wide-grip-curl": ("seated", "away", "handles, wide"),
-    "concentration-curl": ("seated", "away", "single handle"),
-    "single-arm-curl": ("seated", "away", "single handle"),
-    "shaper-bar-curl": ("seated", "away", "shaper bars"),
-    "rope-hammer-curl": ("seated", "away", "rope"),
-    "triceps-extension": ("seated", "away", "handles"),
-    "triceps-pushdown": ("seated", "away", "handles"),
-    "rope-pushdown": ("seated", "away", "rope"),
-    "triceps-kickback": ("kneeling", "away", "single handle"),
-    "leg-extension": ("seated", "away", "ankle straps"),
+    # ---- sitting, facing away from the tower: the cable comes from behind, so everything you PUSH
+    "chest-press": ("seated", "floor", "handles"),
+    "chest-fly": ("seated", "floor", "handles"),
+    "incline-chest-fly": ("seated", "floor", "handles"),
+    "single-arm-chest-press": ("seated", "floor", "single handle"),
+    "close-grip-chest-press": ("seated", "floor", "handles, close"),
+    "chest-crossover": ("seated", "floor", "handles"),
+    "shaper-bar-press": ("seated", "floor", "shaper bars"),
+    "press-to-fly": ("seated", "floor", "handles"),
+    "shoulder-press": ("seated", "floor", "handles"),
+    "front-raise": ("seated", "floor", "handles"),
+    "lateral-raise": ("seated", "floor", "handles"),
+    "scaption-raise": ("seated", "floor", "handles"),
+    "triceps-extension": ("seated", "floor", "handles"),
+    "leg-extension": ("seated", "floor", "ankle straps"),
+    "triceps-dip": ("seated", "floor", "press-up bars"),
 
-    # ---- face down
-    "hamstring-curl": ("prone", "away", "ankle straps"),
-    "wing-hamstring-curl": ("prone", "tower", "nothing"),
-    "glute-kickback": ("kneeling", "away", "ankle strap"),
-    "leg-pull": ("prone", "tower", "leg pull bar"),
-    "knee-tuck": ("plank", "away", "nothing"),
-    "pike": ("plank", "away", "nothing"),
-    "mountain-climber": ("plank", "away", "nothing"),
-    "plank-hold": ("plank", "away", "nothing"),
-    "decline-push-up": ("plank", "away", "press-up bars"),
+    # ---- kneeling
+    "quad-stretch": ("kneeling", "floor", "nothing"),
+    "hip-flexor-stretch": ("kneeling", "floor", "nothing"),
+    "triceps-kickback": ("kneeling", "floor", "single handle"),
+    "glute-kickback": ("kneeling", "floor", "ankle strap"),
+
+    # ---- face down on the board
+    "hamstring-curl": ("face-down", "floor", "ankle straps"),
+    "wing-hamstring-curl": ("face-down", "tower", "nothing"),
+    "leg-pull": ("face-down", "tower", "leg pull bar"),
+    "decline-push-up": ("face-down", "floor", "press-up bars"),
+    "knee-tuck": ("face-down", "floor", "nothing"),
+    "pike": ("face-down", "floor", "nothing"),
+    "mountain-climber": ("face-down", "floor", "nothing"),
+    "plank-hold": ("face-down", "floor", "nothing"),
 
     # ---- on your side
-    "side-lying-leg-lift": ("side-lying", "away", "nothing"),
-    "hip-abduction": ("side-lying", "away", "nothing"),
-    "hip-adduction": ("side-lying", "away", "nothing"),
-    "side-plank": ("side-lying", "away", "nothing"),
-
-    # ---- off the board
-    "triceps-dip": ("standing", "away", "press-up bars"),
-    "chest-dip": ("standing", "away", "dip bars"),
-    "upright-dip": ("standing", "away", "dip bars"),
+    "side-lying-leg-lift": ("side-lying", "floor", "nothing"),
+    "hip-abduction": ("side-lying", "floor", "nothing"),
+    "hip-adduction": ("side-lying", "floor", "nothing"),
+    "side-plank": ("side-lying", "floor", "nothing"),
 }
 
 EX = [
     # ---------------------------------------------------------------- chest
     E("chest-press", "Chest Press", "Chest", "strength", True, 1.0, None,
-      "Lie face up, handles level with your chest, press until your arms are straight.",
+      "Handles level with your chest, elbows tucked, press until your arms are straight.",
       [("Chest", D), ("Triceps", I), ("Shoulders", I)]),
     E("chest-fly", "Chest Fly", "Chest", "strength", True, 1.0, None,
-      "Lie face up with arms wide and elbows softly bent, sweep the handles together over your chest.",
+      "Arms wide with elbows softly bent, sweep the handles together in front of your chest.",
       [("Chest", D), ("Shoulders", I)]),
     E("incline-chest-fly", "Incline Chest Fly", "Chest", "strength", True, 1.0, None,
       "Same sweep as a chest fly, set a notch or two higher so the top of the chest takes more of it.",
@@ -628,12 +635,8 @@ COMMENT = [
 ]
 
 def setup_of(e):
-    """Position, facing and grip. Explicit where listed; otherwise inferred from the equipment."""
-    if e.id in SETUP:
-        position, facing, grip = SETUP[e.id]
-    else:
-        position, facing = ("supine", "tower")
-        grip = "handles" if e.pulley else "nothing"
+    """Position, facing and grip. Every movement is listed explicitly."""
+    position, facing, grip = SETUP[e.id]
     return {"position": position, "facing": facing, "grip": grip}
 
 

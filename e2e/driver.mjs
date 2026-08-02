@@ -428,7 +428,7 @@ async function main() {
   // replaces it.
   await page.locator('tg-program-panel #pick-1').click();
   const picked = await page.locator('tg-set-logger #exercise').inputValue();
-  check('tapping the plan selects that exercise', picked === 'overhead-triceps-extension', picked);
+  check('tapping the plan selects that exercise', picked === 'shoulder-press', picked);
 
   await page.locator('tg-set-logger #log').click();
 

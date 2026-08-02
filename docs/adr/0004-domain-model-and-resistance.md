@@ -150,6 +150,13 @@ Accessory   { id, name, provides[], common, added, note? }
 Equipment   { id, kind: 'vest'|'bar'|'plate', lb, ridesIncline, ownedQty }
 ```
 
+**Nothing happens off the board.** There is no standing position — even the dips use the
+glideboard — and a model with one in it would have the session ordering budget for a changeover
+that never happens. Positions are face-up, face-down, seated, kneeling and side-lying; `facing`
+is the tower end or the floor end, which reads as where the head points when lying and which way
+the trainee turns when seated. Sitting, it follows the cable: you face the tower for everything
+you **pull** and away from it for everything you **push**.
+
 `setup` does two jobs from one field: it is what the app tells the trainee about arranging
 themselves on the machine, and it is what decides which movements can be done back to back without
 rebuilding it (docs/adr/0007). Keeping them off one field is the point — if the ordering believed
