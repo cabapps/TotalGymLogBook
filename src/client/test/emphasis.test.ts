@@ -111,10 +111,10 @@ describe('planned volume', () => {
     const volume = plannedWeeklySets(library.get('push-pull-legs').sessions, catalog);
 
     expect(volume.get('Chest')).toBe(7);
-    expect(volume.get('Back')).toBe(14);
-    expect(volume.get('Quadriceps')).toBe(7);
-    expect(volume.get('Biceps')).toBe(10);
-    expect(volume.get('Glutes')).toBe(11.5);
+    expect(volume.get('Back')).toBe(12);
+    expect(volume.get('Quadriceps')).toBe(6);
+    expect(volume.get('Biceps')).toBe(9);
+    expect(volume.get('Glutes')).toBe(10);
     expect([...volume.values()].every((sets) => sets >= MINIMUM_EFFECTIVE_DOSE)).toBe(true);
   });
 });

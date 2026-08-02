@@ -80,15 +80,13 @@ export class SessionList extends HTMLElement {
       return;
     }
 
-    const volume = sets.reduce((sum, s) => sum + s.computedLb * s.reps, 0);
-
     this.#root.innerHTML = `
       <h3>This session</h3>
       <ol>
         ${sets.map((s) => this.#row(s, catalog)).join('')}
       </ol>
       <p class="total">${sets.length} set${sets.length === 1 ? '' : 's'} &middot;
-        ${Math.round(volume).toLocaleString()} lb total volume</p>
+        <span id="session-muscles">${this.#muscleSummary(sets, catalog)}</span></p>
     `;
 
     for (const set of sets) {
@@ -99,6 +97,45 @@ export class SessionList extends HTMLElement {
         .getElementById(`del-${set.id}`)
         ?.addEventListener('click', () => void this.#delete(set));
     }
+  }
+
+  /**
+   * What the session actually trained, per muscle.
+   *
+   * This replaced "12,480 lb total volume", which was a number nobody can act on. Tonnage across
+   * different exercises is not comparable in any useful way -- a heavy calf raise outweighs
+   * every set of curls you will ever do -- so the total moved with exercise selection more than
+   * with effort, and a session could look bigger for being easier.
+   *
+   * Sets per muscle is the unit the rest of the app already programs and coaches in
+   * (docs/adr/0010), which also means the number here and the number the coach quotes are the
+   * same number.
+   */
+  #muscleSummary(sets: readonly SetLogRecord[], catalog: ExerciseCatalog): string {
+    const perMuscle = new Map<string, number>();
+
+    for (const set of sets) {
+      const exercise = catalog.tryGet(set.exerciseId);
+      if (!exercise || exercise.kind !== 'strength') continue;
+
+      for (const involvement of exercise.muscles) {
+        perMuscle.set(
+          involvement.muscle,
+          (perMuscle.get(involvement.muscle) ?? 0) + involvement.fraction,
+        );
+      }
+    }
+
+    if (perMuscle.size === 0) return 'no working sets yet';
+
+    // Biggest first, and only the ones that got real work. A tail of half-sets is noise on a
+    // line that has to be readable at a glance between sets.
+    return [...perMuscle]
+      .filter(([, count]) => count >= 1)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 4)
+      .map(([muscle, count]) => `${muscle.toLowerCase()} ${count % 1 === 0 ? count : count.toFixed(1)}`)
+      .join(', ');
   }
 
   #row(set: SetLogRecord, catalog: ExerciseCatalog): string {

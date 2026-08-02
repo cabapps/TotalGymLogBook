@@ -29,8 +29,8 @@ describe('RepCounter — increments', () => {
   it('counts one rep per event', () => {
     const counter = new RepCounter();
     counter.accept(increment(0));
-    counter.accept(increment(1000));
     counter.accept(increment(2000));
+    counter.accept(increment(4000));
     expect(counter.count).toBe(3);
   });
 
@@ -217,6 +217,24 @@ describe('RepDetector', () => {
     // detector without the re-arm gate reports double.
     const reps = sweep(new RepDetector(), { cycles: 8, periodMs: 2000, amplitude: 3 });
     expect(reps).toBeLessThanOrEqual(8);
+  });
+
+  it('does not count walking', () => {
+    // The bug this exists for: a trainee logs a set, walks to the kitchen with the phone in a
+    // pocket, and comes back to a counter that counted the walk. Footfalls land every 500-600 ms
+    // and are not gentle -- amplitude is comparable to a real rep, so only the cadence separates
+    // them.
+    const reps = sweep(new RepDetector(), { cycles: 30, periodMs: 550, amplitude: 3, noise: 0.5 });
+
+    expect(reps).toBeLessThanOrEqual(1);
+  });
+
+  it('still counts a deliberately slow set', () => {
+    // The other side of the same gate: raising the refractory period must not start rejecting
+    // real reps. Four seconds a rep is a slow tempo, not an implausible one.
+    const reps = sweep(new RepDetector(), { cycles: 8, periodMs: 4000, amplitude: 2 });
+
+    expect(reps).toBeGreaterThanOrEqual(7);
   });
 
   it('stays silent on a phone that is just sitting there', () => {

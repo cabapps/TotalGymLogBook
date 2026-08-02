@@ -30,6 +30,10 @@
     "              this, adding stretches would silently inflate every muscle's set count and",
     "              make the coach's volume advice wrong (docs/adr/0010).",
     "usesPulley  : true when the movement routes through the cable, which halves the load.",
+    "setup       : how the trainee is arranged on the machine -- position, which end of the rail",
+    "              they face ('tower' is the pulley end), and what is in their hands. Drives both",
+    "              the setup instructions and the session ordering, because two movements that",
+    "              share a setup can be done back to back without rebuilding the machine.",
     "peakTension : where in the range the muscle is most loaded -- 'lengthened', 'even', or",
     "              'shortened'. Loaded work at long muscle lengths grows a muscle more than the",
     "              same sets through a shortened range, and a cable machine holds tension at the",
@@ -149,6 +153,22 @@
       ],
       "common": false,
       "added": 2
+    },
+    {
+      "id": "weight-vest",
+      "name": "Weighted vest",
+      "provides": [],
+      "common": false,
+      "added": 3,
+      "note": "Adds load to any exercise. Discounted by the incline -- 10 lb at level 8 is about 3 lb."
+    },
+    {
+      "id": "weight-bar",
+      "name": "Weight bar",
+      "provides": [],
+      "common": false,
+      "added": 3,
+      "note": "Bolts to the glideboard, so its weight is not discounted the way a vest is."
     }
   ],
   "exercises": [
@@ -159,6 +179,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Lie face up, handles level with your chest, press until your arms are straight.",
@@ -184,6 +209,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Lie face up with arms wide and elbows softly bent, sweep the handles together over your chest.",
@@ -205,6 +235,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Same sweep as a chest fly, set a notch or two higher so the top of the chest takes more of it.",
@@ -226,6 +261,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "single handle"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Press one handle at a time. Keep both hips flat on the board so you don't twist into it.",
@@ -251,6 +291,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles, close"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Press with your elbows tucked close to your ribs. Most of the work moves to the triceps.",
@@ -276,6 +321,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Fly the handles together and let your hands cross past each other at the top.",
@@ -297,6 +347,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Arms straight overhead, pull the handles down over your chest in a wide arc.",
@@ -322,6 +377,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "plank",
+        "facing": "away",
+        "grip": "press-up bars"
+      },
       "bodyFraction": 1.0,
       "attachment": "Press-up bars",
       "cue": "Face down with your head lower than your feet, hands on the bars, press the board away.",
@@ -347,6 +407,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "shaper bars"
+      },
       "bodyFraction": 1.0,
       "attachment": "Shaper bars",
       "cue": "Press with the shaper bars in a neutral grip. Easier on the shoulders than a flat grip.",
@@ -372,6 +437,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "standing",
+        "facing": "away",
+        "grip": "dip bars"
+      },
       "bodyFraction": 1.0,
       "attachment": "Dip bars",
       "cue": "On the dip bars with your chest leaning forward, lower until you feel a stretch and press back up.",
@@ -397,6 +467,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Reach overhead and pull the handles down past your shoulders, leading with your elbows.",
@@ -418,6 +493,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles, wide"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "A pulldown with your hands set wide. Pull your elbows down and out to the sides.",
@@ -443,6 +523,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles, palms up"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Pull down with your palms facing you. The biceps get a full share of this one.",
@@ -464,6 +549,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Keep your arms straight and sweep the handles from overhead down to your hips.",
@@ -485,6 +575,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Sit upright, pull the handles to your waist and squeeze your shoulder blades together.",
@@ -510,6 +605,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "handles, wide"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Row with your hands wide and your elbows flared out, finishing at the ribs.",
@@ -531,6 +631,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Row towards your collarbones with your elbows high. Upper back and rear shoulders.",
@@ -552,6 +657,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Row low and tight to your body, finishing at the hips with elbows brushing your sides.",
@@ -573,6 +683,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "single handle"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Row one handle at a time. Resist the pull to rotate; that is the core's job here.",
@@ -598,6 +713,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms out in front, sweep them wide and back. Small movement, rear shoulders and upper back.",
@@ -619,6 +739,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "wing bars"
+      },
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
       "cue": "Grip the wing bars overhead and pull your chest towards them. The incline sets how hard it is.",
@@ -640,6 +765,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "wing bars, palms toward you"
+      },
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
       "cue": "Pull-up with your palms facing you, which brings the biceps in properly.",
@@ -661,6 +791,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "wing bars, wide"
+      },
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
       "cue": "Hands at the far ends of the wing, pull up leading with your elbows out to the sides.",
@@ -686,6 +821,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "shaper bars"
+      },
       "bodyFraction": 0.85,
       "attachment": "Shaper bars",
       "cue": "Row with the shaper bars in a neutral grip, palms facing each other, elbows past your ribs.",
@@ -707,6 +847,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "rope"
+      },
       "bodyFraction": 0.85,
       "attachment": "Triceps rope",
       "cue": "Pull the rope towards your forehead, splitting the ends apart as your elbows come back.",
@@ -728,6 +873,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Sit upright, handles at shoulder height, press straight overhead.",
@@ -749,6 +899,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms straight, raise the handles in front of you to about eye level.",
@@ -766,6 +921,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms straight, raise the handles out to the sides until they're level with your shoulders.",
@@ -783,6 +943,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Raise the handles halfway between straight ahead and straight out. Kinder on the shoulder joint.",
@@ -800,6 +965,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Pull the handles up along your body to chest height, elbows leading and above your wrists.",
@@ -825,6 +995,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms straight, lift your shoulders towards your ears without bending your elbows.",
@@ -846,6 +1021,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "single handle"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Elbow tucked at your side and bent, rotate your forearm outwards. Light loads, this is rotator cuff work.",
@@ -863,6 +1043,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "single handle"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Elbow tucked and bent, rotate your forearm across your body. Light loads.",
@@ -880,6 +1065,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Sit upright, elbows fixed at your sides, curl the handles up to your shoulders.",
@@ -897,6 +1087,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "handles, palms in"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Curl with your palms facing each other the whole way, like holding a hammer.",
@@ -914,6 +1109,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "handles, palms down"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Curl with your palms facing down. Harder than it looks, and it hits the forearms.",
@@ -931,6 +1131,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "handles, wide"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Curl with your hands set wide and elbows out slightly.",
@@ -948,6 +1153,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "single handle"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "One arm, elbow braced against your inner thigh, curl slowly and don't swing.",
@@ -965,6 +1175,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "single handle"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Curl one handle at a time and keep your shoulders square as you do it.",
@@ -986,6 +1201,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Lie back with the cables coming from above your head and curl towards your forehead, elbows still.",
@@ -1003,6 +1223,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "rope"
+      },
       "bodyFraction": 0.85,
       "attachment": "Triceps rope",
       "cue": "Curl the rope with your palms facing each other and pull the ends apart at the top.",
@@ -1020,6 +1245,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "shaper bars"
+      },
       "bodyFraction": 0.85,
       "attachment": "Shaper bars",
       "cue": "Curl the shaper bars with your elbows pinned. The grip angle takes the strain off your wrists.",
@@ -1037,6 +1267,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Elbows high and still, straighten your arms against the cable.",
@@ -1054,6 +1289,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Elbows pinned to your sides, push the handles down until your arms lock out.",
@@ -1071,6 +1311,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Lie back with the handles behind your head, straighten your arms without moving your elbows.",
@@ -1088,6 +1333,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "kneeling",
+        "facing": "away",
+        "grip": "single handle"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Upper arm still and parallel to the board, straighten your elbow behind you.",
@@ -1105,6 +1355,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "standing",
+        "facing": "away",
+        "grip": "press-up bars"
+      },
       "bodyFraction": 1.0,
       "attachment": "Press-up bars",
       "cue": "Hands on the bars behind you, lower until your elbows are bent, then press back up.",
@@ -1130,6 +1385,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "standing",
+        "facing": "away",
+        "grip": "dip bars"
+      },
       "bodyFraction": 1.0,
       "attachment": "Dip bars",
       "cue": "On the dip bars with your torso upright and elbows tracking straight back. Triceps take it.",
@@ -1155,6 +1415,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "rope"
+      },
       "bodyFraction": 0.85,
       "attachment": "Triceps rope",
       "cue": "Elbows at your sides, push the rope down and spread the ends apart as your arms lock out.",
@@ -1172,6 +1437,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "rope"
+      },
       "bodyFraction": 1.0,
       "attachment": "Triceps rope",
       "cue": "Rope behind your head, elbows high and still, straighten your arms and split the ends.",
@@ -1189,6 +1459,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Feet flat on the squat stand, lower until your knees are bent, then drive the board back up.",
@@ -1214,6 +1489,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Squat with your feet wide and toes turned out. More glute and inner thigh.",
@@ -1239,6 +1519,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Squat with your feet close together. The quads take most of it.",
@@ -1260,6 +1545,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "One foot on the stand, the other tucked away. Keep your knee tracking over your toes.",
@@ -1285,6 +1575,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "One foot high on the stand and one low, lower and drive back up without shifting your weight.",
@@ -1306,6 +1601,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Squat down and push off hard enough that your feet leave the stand. Land soft.",
@@ -1331,6 +1631,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Feet on the stand, drive your hips up until your body is a straight line, then lower.",
@@ -1352,6 +1657,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Balls of your feet on the edge of the stand, press up onto your toes and lower slowly.",
@@ -1369,6 +1679,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "One foot on the edge of the stand, press up onto your toes and lower under control.",
@@ -1386,6 +1701,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Legs almost straight, push the board using only your ankles.",
@@ -1403,6 +1723,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "side-lying",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Lie on your side and press the board away with the top leg, opening the hip.",
@@ -1424,6 +1749,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "shortened",
+      "setup": {
+        "position": "side-lying",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Lie on your side and press with the bottom leg, drawing it in towards the midline.",
@@ -1445,6 +1775,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "shortened",
+      "setup": {
+        "position": "side-lying",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "On your side, lift the top leg against the incline. Small, controlled, no swinging.",
@@ -1462,6 +1797,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "prone",
+        "facing": "away",
+        "grip": "ankle straps"
+      },
       "bodyFraction": 1.0,
       "attachment": "Ankle straps",
       "cue": "Face down with the straps on your ankles, bend your knees to draw your heels towards you.",
@@ -1483,6 +1823,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "shortened",
+      "setup": {
+        "position": "prone",
+        "facing": "tower",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
       "cue": "Face down with your heels hooked on the wing, bend your knees to pull the board up the rail.",
@@ -1504,6 +1849,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "seated",
+        "facing": "away",
+        "grip": "ankle straps"
+      },
       "bodyFraction": 0.85,
       "attachment": "Ankle straps",
       "cue": "Seated with the straps on your ankles, straighten your knees against the cable.",
@@ -1521,6 +1871,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "kneeling",
+        "facing": "away",
+        "grip": "ankle strap"
+      },
       "bodyFraction": 1.0,
       "attachment": "Ankle straps",
       "cue": "Strap on one ankle, push that leg back and up without arching your lower back.",
@@ -1542,6 +1897,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "shortened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 0.75,
       "attachment": null,
       "cue": "Lie back on the board and curl your ribs towards your hips. Short range, no pulling on your neck.",
@@ -1559,6 +1919,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "shortened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles by your head"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Hold the handles by your head and crunch down against the cable.",
@@ -1576,6 +1941,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "shortened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 0.75,
       "attachment": null,
       "cue": "Crunch up and across, taking one shoulder towards the opposite hip.",
@@ -1593,6 +1963,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "shortened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 0.9,
       "attachment": null,
       "cue": "Knees bent, curl your hips up off the board. The legs stay passive.",
@@ -1610,6 +1985,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "shortened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 0.75,
       "attachment": null,
       "cue": "Alternate elbow to opposite knee, extending the other leg as you go.",
@@ -1627,6 +2007,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "shortened",
+      "setup": {
+        "position": "plank",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Face down in a plank on the board, draw both knees up towards your chest.",
@@ -1648,6 +2033,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "shortened",
+      "setup": {
+        "position": "plank",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "From the same plank, keep your legs straight and lift your hips towards the ceiling.",
@@ -1669,6 +2059,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "plank",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Forearms on the board, body in a straight line, and hold. Count time, not reps.",
@@ -1690,6 +2085,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "side-lying",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "One forearm down, hips stacked and lifted. Hold, then swap sides.",
@@ -1707,6 +2107,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "wing bars"
+      },
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
       "cue": "Hold the wing overhead and draw your knees up towards your chest.",
@@ -1724,6 +2129,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "shortened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "AbCrunch pads"
+      },
       "bodyFraction": 1.0,
       "attachment": "AbCrunch",
       "cue": "Head towards the top, arms hooked over the pads, curl your ribs down and let the board follow.",
@@ -1741,6 +2151,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "shortened",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "AbCrunch pads"
+      },
       "bodyFraction": 1.0,
       "attachment": "AbCrunch",
       "cue": "Same curl-up, but drive one shoulder across towards the opposite hip. Alternate sides.",
@@ -1758,6 +2173,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "prone",
+        "facing": "tower",
+        "grip": "leg pull bar"
+      },
       "bodyFraction": 0.9,
       "attachment": "Leg pull accessory",
       "cue": "Feet in the accessory, pull your legs down and in against the cable.",
@@ -1779,6 +2199,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms out in front, rotate your ribcage away from the cable and return slowly.",
@@ -1796,6 +2221,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "single handle"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Pull the handle diagonally across your body, high to low, turning through the trunk.",
@@ -1817,6 +2247,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Pull over from overhead, then press straight up from your chest. One rep is both halves.",
@@ -1842,6 +2277,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Row to your waist, then curl the handles up to your shoulders before lowering.",
@@ -1863,6 +2303,11 @@
       "kind": "strength",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Press up, then open your arms wide and sweep them back together.",
@@ -1888,6 +2333,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "plank",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Plank on the board, drive one knee up at a time at a steady pace.",
@@ -1913,6 +2363,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Tuck your knees in, press the board out to a plank, then pull back and drive out through your feet.",
@@ -1938,6 +2393,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "One foot loaded on the stand, drive it out explosively and return under control.",
@@ -1963,6 +2423,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
       "cue": "Toes on the bar, heels lifted, press the board away and return slowly under control.",
@@ -1988,6 +2453,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "lengthened",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
       "cue": "Heels together and knees open, press out until your legs are straight, then fold back in.",
@@ -2013,6 +2483,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
       "cue": "Legs straight against the bar, trace a slow circle without letting your hips rock.",
@@ -2038,6 +2513,11 @@
       "kind": "strength",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
       "cue": "One foot on the bar and one leg free, push the board away with the working leg only.",
@@ -2063,6 +2543,11 @@
       "kind": "stretch",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Lie back, straighten one leg towards the ceiling and draw it gently in. Hold and breathe.",
@@ -2080,6 +2565,11 @@
       "kind": "stretch",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "kneeling",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Kneel on the board and ease your hips forward until you feel the front of the thigh open.",
@@ -2097,6 +2587,11 @@
       "kind": "stretch",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "kneeling",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Half-kneeling, let the incline carry your hips forward. Front of the hip, not the lower back.",
@@ -2114,6 +2609,11 @@
       "kind": "stretch",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Ankle crossed over the opposite knee, draw both legs in towards your chest.",
@@ -2131,6 +2631,11 @@
       "kind": "stretch",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Feet wide on the stand, let your knees ease apart and hold where it's comfortable.",
@@ -2148,6 +2653,11 @@
       "kind": "stretch",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "away",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Ball of one foot on the edge of the stand, let the heel drop and hold.",
@@ -2165,6 +2675,11 @@
       "kind": "stretch",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Arms wide with the handles, let them draw your chest open. Stop well short of pain.",
@@ -2182,6 +2697,11 @@
       "kind": "stretch",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Reach overhead, hold the handles and let your ribs lengthen away from your hips.",
@@ -2199,6 +2719,11 @@
       "kind": "stretch",
       "usesPulley": true,
       "peakTension": "even",
+      "setup": {
+        "position": "seated",
+        "facing": "tower",
+        "grip": "handles"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "One arm across your body, use the other to draw it in until the back of the shoulder opens.",
@@ -2216,6 +2741,11 @@
       "kind": "stretch",
       "usesPulley": false,
       "peakTension": "even",
+      "setup": {
+        "position": "supine",
+        "facing": "tower",
+        "grip": "nothing"
+      },
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Lie back, drop both knees to one side and keep both shoulders on the board.",

@@ -123,6 +123,18 @@ async function main() {
     return text;
   };
 
+  /** waitForText against a page other than the desktop one. */
+  const waitForTextOn = async (target, locator, pattern, timeout = 10_000) => {
+    const deadline = Date.now() + timeout;
+    let text = '';
+    while (Date.now() < deadline) {
+      text = await locator.innerText().catch(() => '');
+      if (pattern.test(text)) return text;
+      await target.waitForTimeout(150);
+    }
+    return text;
+  };
+
   const results = [];
   const check = (label, ok, detail = '') => {
     results.push({ label, ok, detail });
@@ -160,10 +172,20 @@ async function main() {
   const note = await page.locator('tg-set-logger #loadNote').innerText();
   check('flags cable exercises', /half the incline load/.test(note), note.trim());
 
+  // Reps start at zero, not at a guess. A prefilled count is one the trainee has to notice and
+  // correct, and a set logged at a number they did not do reads as real data forever.
+  const startingReps = await page.locator('tg-set-logger #reps').inputValue();
+  check('reps start at zero', startingReps === '0', `${startingReps} reps`);
+
   await page.locator('tg-set-logger #plus').click();
   await page.locator('tg-set-logger #plus').click();
   const reps = await page.locator('tg-set-logger #reps').inputValue();
-  check('rep stepper works', reps === '12', `${reps} reps`);
+  check('rep stepper works', reps === '2', `${reps} reps`);
+
+  // Twelve: the top of the hypertrophy rep range, so the coach downstream has a reason to
+  // recommend more load rather than more reps. Reps now start at zero, so this has to be set
+  // rather than nudged.
+  await page.fill('tg-set-logger #reps', '12');
 
   await page.screenshot({ path: join(SHOTS, '02-logger.png'), fullPage: true });
 
@@ -406,15 +428,42 @@ async function main() {
   // replaces it.
   await page.locator('tg-program-panel #pick-1').click();
   const picked = await page.locator('tg-set-logger #exercise').inputValue();
-  check('tapping the plan selects that exercise', picked === 'incline-chest-fly', picked);
+  check('tapping the plan selects that exercise', picked === 'overhead-triceps-extension', picked);
 
   await page.locator('tg-set-logger #log').click();
 
   const afterLog = await waitForText(
     page.locator('tg-program-panel #plan li').nth(1),
-    /1\/3/,
+    /1\/\d/,
   );
-  check('logging ticks the plan along', /1\/3/.test(afterLog), afterLog.replace(/\s+/g, ' '));
+  check('logging ticks the plan along', /1\/\d/.test(afterLog), afterLog.replace(/\s+/g, ' '));
+
+  // Browsing the rotation. A program with three sessions that only ever shows one of them is a
+  // program the trainee cannot see the shape of.
+  const before = await page.locator('tg-program-panel #session-name').innerText();
+  await page.locator('tg-program-panel #next').click();
+  const browsed = await waitForText(
+    page.locator('tg-program-panel #session-name'),
+    new RegExp(`^(?!${before.trim()}$).+`),
+  );
+  check('you can step through the rotation', browsed.trim() !== before.trim(),
+    `${before.trim()} -> ${browsed.trim()}`);
+
+  const browsingNote = await page.locator('tg-program-panel #browsing').count();
+  check('and it says that is not the one you were due', browsingNote === 1);
+
+  await page.locator('tg-program-panel #prev').click();
+  const backAgain = await waitForText(
+    page.locator('tg-program-panel #session-name'),
+    new RegExp(`^${before.trim()}$`),
+  );
+  check('and step back', backAgain.trim() === before.trim(), backAgain.trim());
+
+  const pairNote = await page.locator('tg-program-panel .pairnote').count();
+  check('marks movements that can be alternated', pairNote > 0, `${pairNote} pairs`);
+
+  const sessionMinutes = await page.locator('tg-program-panel #session-minutes').innerText();
+  check('says how long the session takes', /~\d+ min/.test(sessionMinutes), sessionMinutes.trim());
 
   await page.screenshot({ path: join(SHOTS, '13-program.png'), fullPage: true });
 
@@ -677,14 +726,20 @@ async function main() {
   const loggedReps = await phone.locator('tg-session-list .reps').first().innerText();
   check('the counted set logs with the counted reps', loggedReps === String(corrected), loggedReps);
 
-  // Motion is deliberately NOT stopped by logging a set -- the sensor costs nothing idle and
-  // re-arming it every set is friction. Voice is, and that is covered separately below.
-  await phone.waitForSelector('tg-rep-assist #stop', { timeout: 10_000 });
-  check('motion keeps counting after a set is logged', true);
+  // Motion stops when the set is logged, exactly like voice. It used to keep running on the
+  // theory that an idle accelerometer costs nothing -- but it does: a phone that keeps counting
+  // while the trainee walks away adds reps to the next set before it starts, and they cannot see
+  // it happening because they are not looking at the phone.
+  const motionStatus = await waitForTextOn(
+    phone,
+    phone.locator('tg-rep-assist #status'),
+    /Stopped counting/,
+  );
+  check('motion stops when the set is logged', /Stopped counting/.test(motionStatus),
+    motionStatus.trim());
 
-  await phone.locator('tg-rep-assist #stop').click();
   const stopped = await phone.locator('tg-rep-assist #stop').count();
-  check('an explicit Stop switches the source off', stopped === 0);
+  check('and the Stop button goes with it', stopped === 0);
 
   check('no page errors during rep assist', phoneErrors.length === 0, phoneErrors.slice(0, 2).join(' | '));
 
@@ -742,6 +797,19 @@ async function main() {
 
   const stillListed = await phone.locator('tg-set-logger #exercise option[value="squat"]').count();
   check('a squat-stand movement is gone', stillListed === 0);
+
+  // Vest and bar are accessories too, and they gate FIELDS rather than exercises. Two number
+  // inputs that are always zero are two things to scroll past on the one screen that has to stay
+  // fast, for someone who owns neither.
+  const vestField = await phone.locator('tg-set-logger #vest').count();
+  const barField = await phone.locator('tg-set-logger #bar').count();
+  check('added-load fields disappear for someone who owns neither', vestField + barField === 0);
+
+  await phone.locator('tg-equipment #att-weight-vest').check();
+  await phone.waitForSelector('tg-set-logger #vest', { state: 'attached', timeout: 15_000 });
+  check('and come back when they say they own one', true);
+  await phone.locator('tg-equipment #att-weight-vest').uncheck();
+  await phone.waitForSelector('tg-set-logger #vest', { state: 'detached', timeout: 15_000 });
 
   // An exercise names a CAPABILITY, not a product. The wing shipped as one piece and as two,
   // and either one has to unlock pull-ups -- which is only observable end to end, because the

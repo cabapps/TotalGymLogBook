@@ -21,7 +21,14 @@ import * as db from '../db/repository.js';
 import type { ExerciseCatalog, Exercise } from '../exercises.js';
 import type { PlannedExercise, ProgramRecord, ProgramSession } from '../db/schema.js';
 import { MINIMUM_EFFECTIVE_DOSE, MUSCLES, plannedWeeklySets } from '../programs.js';
-import { explain, score, type ProgramEmphasis } from '../emphasis.js';
+import { explain, score, type ProgramEmphasis, type TrainingAim } from '../emphasis.js';
+import {
+  SESSION_BUDGET_MINUTES,
+  estimateMinutes,
+  orderSession,
+  restSecondsFor,
+  supersetPairs,
+} from '../session-plan.js';
 
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
@@ -74,6 +81,9 @@ styles.replaceSync(`
   ul.volume li.none .bar span { background: transparent; }
   ul.volume .sets { flex: 0 0 2.2rem; text-align: right; color: var(--muted);
                     font-variant-numeric: tabular-nums; }
+  .time { font-size: .7rem; color: var(--muted); margin: .2rem 0 .1rem; }
+  .time.over { color: #d97706; }
+  .pair { color: var(--accent); }
   .verdict { font-size: .75rem; line-height: 1.5; margin: .5rem 0 0;
              padding: .5rem .6rem; border-radius: .5rem;
              background: var(--bg); border: 1px solid var(--border); color: var(--muted); }
@@ -88,6 +98,7 @@ export class ProgramEditor extends HTMLElement {
   #root: ShadowRoot;
   #catalog?: ExerciseCatalog;
   #emphasis: ProgramEmphasis = 'lengthened';
+  #aim: TrainingAim = 'build-muscle';
   #owned: readonly string[] | undefined;
   #name = '';
   #sessions: ProgramSession[] = [];
@@ -104,10 +115,13 @@ export class ProgramEditor extends HTMLElement {
   configure(opts: {
     catalog: ExerciseCatalog;
     emphasis: ProgramEmphasis;
+    /** Sets the rest periods the session estimates are built from. */
+    aim?: TrainingAim;
     ownedAttachments?: readonly string[];
   }): void {
     this.#catalog = opts.catalog;
     this.#emphasis = opts.emphasis;
+    this.#aim = opts.aim ?? this.#aim;
     this.#owned = opts.ownedAttachments;
     if (this.#open) this.#render();
   }
@@ -185,6 +199,12 @@ export class ProgramEditor extends HTMLElement {
       .map((e) => `<option value="${e.id}">${e.name}${this.#badge(e)}</option>`)
       .join('');
 
+    const rest = restSecondsFor(this.#aim);
+    const minutes = estimateMinutes(session.exercises, this.#catalog!, rest);
+    const pairs = new Set(
+      supersetPairs(session.exercises, this.#catalog!, rest).map((p) => p.second),
+    );
+
     return `
       <div class="session" data-session="${index}">
         <div class="head">
@@ -194,9 +214,23 @@ export class ProgramEditor extends HTMLElement {
             : ''}
         </div>
 
+        <p class="time ${minutes > SESSION_BUDGET_MINUTES ? 'over' : ''}" id="time-${index}">
+          ${session.exercises.length === 0
+            ? 'Empty'
+            : `About ${minutes} minutes${minutes > SESSION_BUDGET_MINUTES
+                ? ' — longer than most people will keep up'
+                : ''}`}
+        </p>
+
         <ul id="exlist-${index}">
-          ${session.exercises.map((planned, row) => this.#renderExercise(planned, index, row)).join('')}
+          ${session.exercises
+            .map((planned, row) => this.#renderExercise(planned, index, row, pairs.has(row)))
+            .join('')}
         </ul>
+
+        ${session.exercises.length > 1
+          ? `<button class="action" id="tidy-${index}">Order for fewest changeovers</button>`
+          : ''}
 
         <label for="add-${index}">Add a movement</label>
         <select id="add-${index}">
@@ -207,12 +241,19 @@ export class ProgramEditor extends HTMLElement {
     `;
   }
 
-  #renderExercise(planned: PlannedExercise, session: number, row: number): string {
+  #renderExercise(
+    planned: PlannedExercise,
+    session: number,
+    row: number,
+    paired = false,
+  ): string {
     const exercise = this.#catalog!.tryGet(planned.exerciseId);
 
     return `
       <li class="ex">
-        <span class="name">${exercise?.name ?? planned.exerciseId}</span>
+        <span class="name">${paired ? '<span class="pair">&#8645;</span> ' : ''}${
+          exercise?.name ?? planned.exerciseId
+        }</span>
         ${exercise?.peakTension === 'lengthened' ? '<span class="tag">stretch</span>' : ''}
         <button class="step" id="minus-${session}-${row}">&minus;</button>
         <span class="count" id="sets-${session}-${row}">${planned.sets}</span>
@@ -306,6 +347,11 @@ export class ProgramEditor extends HTMLElement {
     for (const [index, session] of this.#sessions.entries()) {
       on(`sname-${index}`, 'input', () => {
         session.name = (this.#root.getElementById(`sname-${index}`) as HTMLInputElement).value;
+      });
+
+      on(`tidy-${index}`, 'click', () => {
+        session.exercises = orderSession(session.exercises, this.#catalog!);
+        this.#render();
       });
 
       on(`skill-${index}`, 'click', () => {

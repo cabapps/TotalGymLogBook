@@ -52,6 +52,23 @@ export interface Accessory {
  */
 export type PeakTension = 'lengthened' | 'even' | 'shortened';
 
+/**
+ * How the trainee is arranged on the machine.
+ *
+ * Two jobs, one field: it is what the app tells the trainee about setting the movement up, and it
+ * is what decides which movements can be done back to back without rebuilding the machine. Having
+ * the instructions and the ordering read the same data is the point -- if they disagreed, one of
+ * them would be lying to the trainee and there would be no way to tell which.
+ */
+export interface ExerciseSetup {
+  /** supine, prone, seated, kneeling, side-lying, plank, standing. */
+  readonly position: string;
+  /** Which end of the rail the head points at. 'tower' is the pulley end, up the incline. */
+  readonly facing: string;
+  /** What is in the hands, or on the ankles. */
+  readonly grip: string;
+}
+
 export interface Exercise {
   readonly id: string;
   readonly name: string;
@@ -61,6 +78,7 @@ export interface Exercise {
   /** Cable movements are halved by the pulley (docs/adr/0004). */
   readonly usesPulley: boolean;
   readonly peakTension: PeakTension;
+  readonly setup: ExerciseSetup;
   /** Share of bodyweight riding the glideboard. Estimated, not measured. */
   readonly bodyFraction: number;
   readonly attachment: string | null;

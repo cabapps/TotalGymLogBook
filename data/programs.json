@@ -12,13 +12,26 @@
     "survives a missed Monday; 'it's Wednesday, do legs' starts nagging the first time life",
     "happens.",
     "",
-    "Set counts are per session. The weekly total per muscle is what actually matters (docs/adr",
-    "/0010), and the app computes that from the rotation rather than asking anyone to do the",
-    "arithmetic -- which is also how you can see, before committing, that a program leaves your",
-    "biceps under the effective dose.",
+    "EXERCISE ORDER IS SETUP ORDER. A Total Gym is one station that becomes a different station in",
+    "seconds -- but only when the next movement is set up like the last one. So movements that",
+    "share a position and a grip sit together, the squat stand goes on once, and where two",
+    "neighbours work unrelated muscles the app marks them as a pair to alternate. Ordering the same",
+    "exercises badly is the difference between a 30-minute session and a 45-minute one, and these",
+    "were ordered by src/client/src/session-plan.ts rather than by hand.",
     "",
-    "Every exerciseId must exist in exercises.json; a test enforces it. Sessions deliberately lead",
-    "with the biggest compound movements, because those are the ones worth doing while fresh.",
+    "THIRTY MINUTES. Every session here is estimated to fit inside half an hour at its goal's rest",
+    "periods, with the set counts as written. A test enforces it. That is a real constraint on the",
+    "templates, and it is why the strength sessions have three movements rather than five: three",
+    "minutes of rest is the point of strength work, and pretending otherwise would produce a",
+    "program that lies about how long it takes.",
+    "",
+    "Set counts here are the CEILING, not the starting point. A trainee new to this starts at one",
+    "set per movement and the plan grows as they show they want more -- see programs.ts.",
+    "",
+    "The weekly total per muscle is what actually matters (docs/adr/0010), and the app computes it",
+    "from the rotation rather than asking anyone to do the arithmetic.",
+    "",
+    "Every exerciseId must exist in exercises.json; a test enforces it.",
     "",
     "RUNNABLE ON A STOCK MACHINE. Templates only plan movements that need no accessory or need one",
     "marked `common` in exercises.json -- the squat stand and the wing. A shipped template that",
@@ -54,11 +67,10 @@
           "name": "Full Body A",
           "exercises": [
             { "exerciseId": "squat", "sets": 3 },
-            { "exerciseId": "chest-press", "sets": 3 },
+            { "exerciseId": "crunch", "sets": 4 },
             { "exerciseId": "lat-pulldown", "sets": 3 },
-            { "exerciseId": "shoulder-press", "sets": 2 },
-            { "exerciseId": "overhead-cable-curl", "sets": 2 },
-            { "exerciseId": "crunch", "sets": 3 }
+            { "exerciseId": "chest-press", "sets": 3 },
+            { "exerciseId": "shoulder-press", "sets": 2 }
           ]
         },
         {
@@ -66,11 +78,10 @@
           "name": "Full Body B",
           "exercises": [
             { "exerciseId": "split-squat", "sets": 3 },
-            { "exerciseId": "incline-chest-fly", "sets": 3 },
             { "exerciseId": "chin-up", "sets": 3 },
-            { "exerciseId": "lateral-raise", "sets": 2 },
+            { "exerciseId": "incline-chest-fly", "sets": 3 },
             { "exerciseId": "overhead-triceps-extension", "sets": 2 },
-            { "exerciseId": "calf-raise", "sets": 4 }
+            { "exerciseId": "lateral-raise", "sets": 2 }
           ]
         },
         {
@@ -78,11 +89,10 @@
           "name": "Full Body C",
           "exercises": [
             { "exerciseId": "hip-bridge", "sets": 3 },
-            { "exerciseId": "pullover", "sets": 3 },
+            { "exerciseId": "calf-raise", "sets": 4 },
+            { "exerciseId": "pullover", "sets": 2 },
             { "exerciseId": "close-grip-chest-press", "sets": 3 },
-            { "exerciseId": "seated-row", "sets": 3 },
-            { "exerciseId": "hammer-curl", "sets": 2 },
-            { "exerciseId": "knee-tuck", "sets": 3 }
+            { "exerciseId": "seated-row", "sets": 3 }
           ]
         }
       ]
@@ -98,30 +108,30 @@
           "id": "upper-a",
           "name": "Upper A",
           "exercises": [
-            { "exerciseId": "chest-press", "sets": 4 },
             { "exerciseId": "lat-pulldown", "sets": 4 },
-            { "exerciseId": "shoulder-press", "sets": 3 },
+            { "exerciseId": "chest-press", "sets": 4 },
+            { "exerciseId": "overhead-triceps-extension", "sets": 3 },
             { "exerciseId": "overhead-cable-curl", "sets": 3 },
-            { "exerciseId": "overhead-triceps-extension", "sets": 3 }
+            { "exerciseId": "shoulder-press", "sets": 3 }
           ]
         },
         {
           "id": "lower-a",
           "name": "Lower A",
           "exercises": [
-            { "exerciseId": "squat", "sets": 4 },
+            { "exerciseId": "squat", "sets": 3 },
+            { "exerciseId": "calf-raise", "sets": 3 },
             { "exerciseId": "hip-bridge", "sets": 3 },
-            { "exerciseId": "wing-hamstring-curl", "sets": 3 },
-            { "exerciseId": "calf-raise", "sets": 4 },
-            { "exerciseId": "crunch", "sets": 3 }
+            { "exerciseId": "hanging-knee-raise", "sets": 3 },
+            { "exerciseId": "wing-hamstring-curl", "sets": 3 }
           ]
         },
         {
           "id": "upper-b",
           "name": "Upper B",
           "exercises": [
-            { "exerciseId": "incline-chest-fly", "sets": 4 },
             { "exerciseId": "chin-up", "sets": 4 },
+            { "exerciseId": "incline-chest-fly", "sets": 3 },
             { "exerciseId": "seated-row", "sets": 3 },
             { "exerciseId": "reverse-fly", "sets": 3 },
             { "exerciseId": "hammer-curl", "sets": 3 }
@@ -132,8 +142,8 @@
           "name": "Lower B",
           "exercises": [
             { "exerciseId": "split-squat", "sets": 4 },
-            { "exerciseId": "narrow-stance-squat", "sets": 3 },
             { "exerciseId": "single-leg-calf-raise", "sets": 3 },
+            { "exerciseId": "narrow-stance-squat", "sets": 3 },
             { "exerciseId": "side-lying-leg-lift", "sets": 3 },
             { "exerciseId": "knee-tuck", "sets": 3 }
           ]
@@ -152,9 +162,9 @@
           "name": "Push",
           "exercises": [
             { "exerciseId": "chest-press", "sets": 4 },
+            { "exerciseId": "overhead-triceps-extension", "sets": 3 },
             { "exerciseId": "incline-chest-fly", "sets": 3 },
             { "exerciseId": "shoulder-press", "sets": 3 },
-            { "exerciseId": "overhead-triceps-extension", "sets": 3 },
             { "exerciseId": "lateral-raise", "sets": 3 }
           ]
         },
@@ -162,23 +172,22 @@
           "id": "pull",
           "name": "Pull",
           "exercises": [
-            { "exerciseId": "lat-pulldown", "sets": 4 },
             { "exerciseId": "chin-up", "sets": 3 },
-            { "exerciseId": "seated-row", "sets": 4 },
-            { "exerciseId": "reverse-fly", "sets": 3 },
-            { "exerciseId": "overhead-cable-curl", "sets": 3 }
+            { "exerciseId": "lat-pulldown", "sets": 3 },
+            { "exerciseId": "overhead-cable-curl", "sets": 3 },
+            { "exerciseId": "seated-row", "sets": 3 },
+            { "exerciseId": "reverse-fly", "sets": 3 }
           ]
         },
         {
           "id": "legs",
           "name": "Legs",
           "exercises": [
-            { "exerciseId": "squat", "sets": 4 },
+            { "exerciseId": "squat", "sets": 3 },
+            { "exerciseId": "calf-raise", "sets": 4 },
             { "exerciseId": "split-squat", "sets": 3 },
             { "exerciseId": "hip-bridge", "sets": 3 },
-            { "exerciseId": "wing-hamstring-curl", "sets": 3 },
-            { "exerciseId": "calf-raise", "sets": 4 },
-            { "exerciseId": "crunch", "sets": 4 }
+            { "exerciseId": "wing-hamstring-curl", "sets": 2 }
           ]
         }
       ]
@@ -187,40 +196,40 @@
       "id": "big-muscle-full-body",
       "name": "Big Muscle Full Body",
       "emphasis": "largest-muscles",
-      "description": "Built around legs, back and chest, with arms and calves picking up what the big movements already give them. While you are losing weight, muscle is what you are protecting — and the most of it sits below your waist.",
+      "description": "Built around legs, back and chest, with arms and calves picking up what the big movements already give them. While you are losing weight, muscle is what you are protecting \u2014 and the most of it sits below your waist.",
       "bestFor": "Losing fat, or training two to three times a week with limited time.",
       "sessions": [
         {
           "id": "big-a",
           "name": "Big A",
           "exercises": [
-            { "exerciseId": "squat", "sets": 4 },
-            { "exerciseId": "lat-pulldown", "sets": 4 },
-            { "exerciseId": "chest-press", "sets": 4 },
-            { "exerciseId": "hip-bridge", "sets": 3 },
-            { "exerciseId": "crunch", "sets": 4 }
+            { "exerciseId": "squat", "sets": 3 },
+            { "exerciseId": "hip-bridge", "sets": 2 },
+            { "exerciseId": "crunch", "sets": 4 },
+            { "exerciseId": "lat-pulldown", "sets": 3 },
+            { "exerciseId": "chest-press", "sets": 3 }
           ]
         },
         {
           "id": "big-b",
           "name": "Big B",
           "exercises": [
-            { "exerciseId": "split-squat", "sets": 4 },
-            { "exerciseId": "seated-row", "sets": 4 },
-            { "exerciseId": "incline-chest-fly", "sets": 3 },
+            { "exerciseId": "split-squat", "sets": 3 },
             { "exerciseId": "calf-raise", "sets": 4 },
-            { "exerciseId": "overhead-triceps-extension", "sets": 3 }
+            { "exerciseId": "incline-chest-fly", "sets": 3 },
+            { "exerciseId": "overhead-triceps-extension", "sets": 3 },
+            { "exerciseId": "seated-row", "sets": 3 }
           ]
         },
         {
           "id": "big-c",
           "name": "Big C",
           "exercises": [
-            { "exerciseId": "single-leg-squat", "sets": 4 },
-            { "exerciseId": "chin-up", "sets": 4 },
+            { "exerciseId": "single-leg-squat", "sets": 3 },
+            { "exerciseId": "chin-up", "sets": 3 },
+            { "exerciseId": "wing-hamstring-curl", "sets": 3 },
             { "exerciseId": "pullover", "sets": 3 },
-            { "exerciseId": "shoulder-press", "sets": 3 },
-            { "exerciseId": "wing-hamstring-curl", "sets": 3 }
+            { "exerciseId": "shoulder-press", "sets": 3 }
           ]
         }
       ]
@@ -229,47 +238,42 @@
       "id": "strength-upper-lower",
       "name": "Strength Upper / Lower",
       "emphasis": "heavy-compounds",
-      "description": "Fewer movements, more sets on each, and the hard ones first while you are fresh. Rest longer than feels necessary — that is what makes the next set heavy rather than tiring.",
+      "description": "Fewer movements, more sets on each, and the hard ones first while you are fresh. Rest longer than feels necessary \u2014 that is what makes the next set heavy rather than tiring.",
       "bestFor": "Getting stronger, training three to four times a week.",
       "sessions": [
         {
           "id": "strength-upper-a",
           "name": "Upper A",
           "exercises": [
-            { "exerciseId": "chest-press", "sets": 5 },
-            { "exerciseId": "seated-row", "sets": 5 },
-            { "exerciseId": "shoulder-press", "sets": 4 },
-            { "exerciseId": "chin-up", "sets": 4 }
+            { "exerciseId": "chin-up", "sets": 3 },
+            { "exerciseId": "chest-press", "sets": 3 },
+            { "exerciseId": "seated-row", "sets": 3 }
           ]
         },
         {
           "id": "strength-lower-a",
           "name": "Lower A",
           "exercises": [
-            { "exerciseId": "squat", "sets": 5 },
-            { "exerciseId": "hip-bridge", "sets": 4 },
-            { "exerciseId": "calf-raise", "sets": 4 },
-            { "exerciseId": "knee-tuck", "sets": 3 }
+            { "exerciseId": "squat", "sets": 3 },
+            { "exerciseId": "hip-bridge", "sets": 3 }
           ]
         },
         {
           "id": "strength-upper-b",
           "name": "Upper B",
           "exercises": [
-            { "exerciseId": "pull-up", "sets": 5 },
-            { "exerciseId": "close-grip-chest-press", "sets": 5 },
-            { "exerciseId": "upright-row", "sets": 4 },
-            { "exerciseId": "biceps-curl", "sets": 3 }
+            { "exerciseId": "pull-up", "sets": 3 },
+            { "exerciseId": "close-grip-chest-press", "sets": 3 },
+            { "exerciseId": "upright-row", "sets": 3 }
           ]
         },
         {
           "id": "strength-lower-b",
           "name": "Lower B",
           "exercises": [
-            { "exerciseId": "split-squat", "sets": 5 },
-            { "exerciseId": "wing-hamstring-curl", "sets": 4 },
+            { "exerciseId": "split-squat", "sets": 3 },
             { "exerciseId": "single-leg-calf-raise", "sets": 4 },
-            { "exerciseId": "crunch", "sets": 3 }
+            { "exerciseId": "wing-hamstring-curl", "sets": 3 }
           ]
         }
       ]
@@ -278,7 +282,7 @@
       "id": "conditioning-circuit",
       "name": "Conditioning Circuit",
       "emphasis": "circuit",
-      "description": "Whole-body sessions with short rests, so your heart rate stays up between sets. The load stays moderate on purpose — the work here is the pace, not the weight.",
+      "description": "Whole-body sessions with short rests, so your heart rate stays up between sets. The load stays moderate on purpose \u2014 the work here is the pace, not the weight.",
       "bestFor": "Building endurance, training three to five times a week.",
       "sessions": [
         {
@@ -286,12 +290,11 @@
           "name": "Circuit A",
           "exercises": [
             { "exerciseId": "squat", "sets": 3 },
-            { "exerciseId": "chest-press", "sets": 3 },
-            { "exerciseId": "seated-row", "sets": 3 },
-            { "exerciseId": "shoulder-press", "sets": 3 },
-            { "exerciseId": "mountain-climber", "sets": 3 },
             { "exerciseId": "calf-raise", "sets": 3 },
-            { "exerciseId": "crunch", "sets": 3 }
+            { "exerciseId": "mountain-climber", "sets": 3 },
+            { "exerciseId": "shoulder-press", "sets": 3 },
+            { "exerciseId": "seated-row", "sets": 3 },
+            { "exerciseId": "chest-press", "sets": 3 }
           ]
         },
         {
@@ -299,12 +302,11 @@
           "name": "Circuit B",
           "exercises": [
             { "exerciseId": "split-squat", "sets": 3 },
-            { "exerciseId": "lat-pulldown", "sets": 3 },
-            { "exerciseId": "chest-fly", "sets": 3 },
             { "exerciseId": "hip-bridge", "sets": 3 },
             { "exerciseId": "board-burpee", "sets": 3 },
-            { "exerciseId": "single-leg-calf-raise", "sets": 3 },
-            { "exerciseId": "knee-tuck", "sets": 3 }
+            { "exerciseId": "knee-tuck", "sets": 3 },
+            { "exerciseId": "lat-pulldown", "sets": 3 },
+            { "exerciseId": "chest-fly", "sets": 3 }
           ]
         }
       ]
@@ -320,23 +322,22 @@
           "id": "gentle-a",
           "name": "Gentle A",
           "exercises": [
-            { "exerciseId": "seated-row", "sets": 3 },
-            { "exerciseId": "shoulder-press", "sets": 2 },
             { "exerciseId": "hip-abduction", "sets": 3 },
             { "exerciseId": "toe-press", "sets": 3 },
-            { "exerciseId": "plank-hold", "sets": 2 }
+            { "exerciseId": "plank-hold", "sets": 2 },
+            { "exerciseId": "shoulder-press", "sets": 2 },
+            { "exerciseId": "seated-row", "sets": 3 }
           ]
         },
         {
           "id": "gentle-b",
           "name": "Gentle B",
           "exercises": [
+            { "exerciseId": "wing-hamstring-curl", "sets": 3 },
             { "exerciseId": "low-row", "sets": 3 },
             { "exerciseId": "close-grip-chest-press", "sets": 3 },
-            { "exerciseId": "hip-adduction", "sets": 3 },
             { "exerciseId": "side-lying-leg-lift", "sets": 3 },
-            { "exerciseId": "wing-hamstring-curl", "sets": 3 },
-            { "exerciseId": "external-rotation", "sets": 2 }
+            { "exerciseId": "hip-adduction", "sets": 3 }
           ]
         }
       ]

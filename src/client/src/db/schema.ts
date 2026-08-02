@@ -174,6 +174,8 @@ export interface CustomExerciseRecord extends SyncFields {
   usesPulley: boolean;
   /** Where the load peaks. Absent means 'even' -- see PeakTension in exercises.ts. */
   peakTension?: 'lengthened' | 'even' | 'shortened';
+  /** How the trainee sets it up. Absent falls back to the machine's default posture. */
+  setup?: { position: string; facing: string; grip: string };
   bodyFraction: number;
   attachment: string | null;
   cue: string;

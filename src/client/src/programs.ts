@@ -80,6 +80,17 @@ export function nextSession(
 ): ProgramSession | undefined {
   if (program.sessions.length === 0) return undefined;
 
+  // A workout already under way IS the current session. Without this the rotation advances on
+  // the first logged set and the trainee watches the plan jump to tomorrow's session while they
+  // are still working through today's -- the tick list they are reading disappears mid-set.
+  const inProgress = sessions.find(
+    (s) => s.programId === program.id && s.programSessionId !== undefined && s.status === 'active',
+  );
+  if (inProgress) {
+    const current = program.sessions.find((s) => s.id === inProgress.programSessionId);
+    if (current) return current;
+  }
+
   const lastLogged = sessions.find(
     (s) => s.programId === program.id && s.programSessionId !== undefined,
   );
@@ -180,3 +191,56 @@ export const MUSCLES: readonly string[] = [
   'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps',
   'Quadriceps', 'Hamstrings', 'Glutes', 'Adductors', 'Calves', 'Core',
 ];
+
+/**
+ * The plan a trainee should actually see today, ramped from what they have been doing.
+ *
+ * Template set counts are a CEILING, not a starting point. Someone new to training does not want
+ * five sets of anything, and a plan that opens by asking for fifteen working sets is a plan they
+ * bounce off — the app's first impression should be a session they can obviously finish.
+ *
+ * So the plan starts at one set per movement and grows as the trainee shows they want more: the
+ * target is one more than the most they have done of that movement in a day, capped by the
+ * template. Doing extra sets on your own is a request for more work, and it is a better signal
+ * than anything the app could ask, because it is what they actually did rather than what they
+ * think they will do.
+ *
+ * Derived from history, never stored. Same reasoning as the rotation (docs/adr/0007): a stored
+ * ramp drifts silently the first time someone trains without the app, and it cannot be corrected
+ * because nobody can see it.
+ */
+export function rampedSets(
+  planned: readonly PlannedExercise[],
+  best: ReadonlyMap<string, number>,
+): PlannedExercise[] {
+  return planned.map((exercise) => ({
+    ...exercise,
+    sets: Math.max(1, Math.min(exercise.sets, (best.get(exercise.exerciseId) ?? 0) + 1)),
+  }));
+}
+
+/**
+ * The most sets of each movement the trainee has done in a single day.
+ *
+ * A day rather than a session, for the same reason the tick list counts a day: closing the app
+ * mid-workout starts a new session record but is obviously the same workout to the trainee, and
+ * a ramp that forgot half of it would stall.
+ */
+export function bestDailySets(
+  sets: ReadonlyArray<{ exerciseId: string; on: string }>,
+): Map<string, number> {
+  const perDay = new Map<string, number>();
+
+  for (const set of sets) {
+    const key = `${set.on}|${set.exerciseId}`;
+    perDay.set(key, (perDay.get(key) ?? 0) + 1);
+  }
+
+  const best = new Map<string, number>();
+  for (const [key, count] of perDay) {
+    const exerciseId = key.slice(key.indexOf('|') + 1);
+    best.set(exerciseId, Math.max(best.get(exerciseId) ?? 0, count));
+  }
+
+  return best;
+}

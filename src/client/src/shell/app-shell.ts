@@ -66,6 +66,13 @@ function toExercise(record: CustomExerciseRecord): Exercise {
     kind: record.kind,
     usesPulley: record.usesPulley,
     peakTension: record.peakTension ?? 'even',
+    // A movement added before the setup question existed falls back to the machine's default
+    // posture, which is also where the session ordering will assume the trainee is.
+    setup: record.setup ?? {
+      position: 'supine',
+      facing: 'tower',
+      grip: record.usesPulley ? 'handles' : 'nothing',
+    },
     bodyFraction: record.bodyFraction,
     attachment: record.attachment,
     cue: record.cue,
@@ -133,6 +140,7 @@ export class AppShell extends HTMLElement {
    * coach, and the shell does not quietly relabel their goal underneath them.
    */
   #emphasis: ProgramEmphasis = 'lengthened';
+  #aim: TrainingAim = 'build-muscle';
   /** Smoothed -- what the resistance calculation uses (docs/adr/0004). */
   #bodyweightLb = 0;
   /** Raw latest scale reading, snapshotted alongside for auditability. */
@@ -183,7 +191,8 @@ export class AppShell extends HTMLElement {
       settings.ownedAttachments,
       settings.equipmentVersion,
     );
-    this.#emphasis = emphasisFor(aimOf(settings));
+    this.#aim = aimOf(settings);
+    this.#emphasis = emphasisFor(this.#aim);
     await this.#refreshBodyweight();
 
     // docs/adr/0005: never auto-close an orphan (discards data) and never auto-resume
@@ -364,7 +373,12 @@ export class AppShell extends HTMLElement {
     });
 
     const program = this.#root.getElementById('program') as ProgramPanel;
-    program.configure({ catalog: this.#catalog!, library: this.#library!, emphasis: this.#emphasis });
+    program.configure({
+      catalog: this.#catalog!,
+      library: this.#library!,
+      emphasis: this.#emphasis,
+      aim: this.#aim,
+    });
 
     // Tapping a planned movement selects it. The plan drives the picker; it never replaces it.
     program.addEventListener('plan-exercise-picked', (event) => {
@@ -376,6 +390,7 @@ export class AppShell extends HTMLElement {
     builder.configure({
       catalog: this.#catalog!,
       emphasis: this.#emphasis,
+      aim: this.#aim,
       ...(this.#owned !== undefined && { ownedAttachments: this.#owned }),
     });
 
@@ -419,7 +434,12 @@ export class AppShell extends HTMLElement {
         ...(this.#owned !== undefined && { ownedAttachments: this.#owned }),
         sessionId: () => this.#ensureSession(),
       });
-      program.configure({ catalog: this.#catalog, library: this.#library! });
+      program.configure({
+        catalog: this.#catalog,
+        library: this.#library!,
+        emphasis: this.#emphasis,
+        aim: this.#aim,
+      });
       list.configure({ catalog: this.#catalog, ...(this.#session && { sessionId: this.#session.id }) });
     });
 

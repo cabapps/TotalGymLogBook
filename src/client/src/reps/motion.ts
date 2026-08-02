@@ -40,7 +40,7 @@ const SIGNAL_ALPHA = 0.35;
  * Tracking the peak instead means the threshold scales WITH the movement rather than against
  * it, so a gentle set and a violent one both count.
  */
-const PEAK_FRACTION = 0.45;
+const PEAK_FRACTION = 0.6;
 
 /** Peak memory halves in roughly four seconds at 60 Hz -- about two reps. */
 const PEAK_DECAY = 0.997;
@@ -53,10 +53,21 @@ const PEAK_DECAY = 0.997;
  * device's own resting magnitude makes the detector indifferent to the units it is handed, and
  * counting full cycles rather than directed peaks makes it indifferent to the sign convention.
  */
-const MIN_THRESHOLD_G = 0.055;
+const MIN_THRESHOLD_G = 0.11;
 
 /** Re-arming is easier than triggering, so a rep is one clean cycle, not two half ones. */
 const REARM_FRACTION = 0.4;
+
+/**
+ * ERRING TOWARD UNDERCOUNTING, DELIBERATELY.
+ *
+ * PEAK_FRACTION and MIN_THRESHOLD_G were both raised after the detector overcounted real sets
+ * and counted walking as reps. The two errors are not equally bad: a missed rep is visible in
+ * the field before the set is logged and takes one tap to fix, while an invented rep is only
+ * visible if the trainee was counting anyway -- and if they were, they did not need the feature.
+ * A counter that is trusted and slightly low beats one that is high and has to be checked,
+ * because a counter that has to be checked is a worse way of counting by hand.
+ */
 
 /**
  * Turns a stream of accelerometer samples into rep events.
@@ -71,7 +82,7 @@ export class RepDetector {
   #signal = 0;
   #peak = 0;
   #armed = true;
-  #lastRepAt = Number.NEGATIVE_INFINITY;
+  #lastCrossingAt = Number.NEGATIVE_INFINITY;
   #lastConfidence = 0;
 
   reset(): void {
@@ -79,7 +90,7 @@ export class RepDetector {
     this.#signal = 0;
     this.#peak = 0;
     this.#armed = true;
-    this.#lastRepAt = Number.NEGATIVE_INFINITY;
+    this.#lastCrossingAt = Number.NEGATIVE_INFINITY;
     this.#lastConfidence = 0;
   }
 
@@ -125,10 +136,17 @@ export class RepDetector {
     if (this.#signal < -threshold * REARM_FRACTION) this.#armed = true;
 
     if (!this.#armed || this.#signal < threshold) return false;
-    if (at - this.#lastRepAt < MIN_REP_MS) return false;
 
+    // The gate is on the interval between CROSSINGS, not between counted reps -- and that
+    // distinction is the whole defence against walking. Gating counted reps only throttles a
+    // fast oscillation: footfalls arrive every ~550 ms, so a 1200 ms gate on output still lets
+    // through every other step. Gating the input means a stream of fast crossings counts
+    // nothing at all, while a genuinely slow set is untouched.
+    const sinceLast = at - this.#lastCrossingAt;
     this.#armed = false;
-    this.#lastRepAt = at;
+    this.#lastCrossingAt = at;
+
+    if (sinceLast < MIN_REP_MS) return false;
     this.#lastConfidence = Math.min(1, this.#signal / (threshold * 2));
     return true;
   }

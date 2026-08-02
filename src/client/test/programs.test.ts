@@ -138,6 +138,21 @@ describe('nextSession', () => {
     expect(nextSession(program(['a', 'b']), [logged('gone', 100)])?.id).toBe('a');
   });
 
+  it('stays on the session being worked right now', () => {
+    // The rotation advances when a workout is DONE, not when it starts. Advancing on the first
+    // logged set made the tick list jump to tomorrow's session mid-workout.
+    const active: SessionRecord = {
+      id: 'now', updatedAt: 0, startedAt: 900, status: 'active',
+      machineId: 'm1', programId: 'p1', programSessionId: 'b',
+    };
+
+    expect(nextSession(program(['a', 'b', 'c']), [active, logged('a', 200)])?.id).toBe('b');
+  });
+
+  it('advances once that workout is finished', () => {
+    expect(nextSession(program(['a', 'b', 'c']), [logged('b', 900)])?.id).toBe('c');
+  });
+
   it('has nothing to suggest for an empty program', () => {
     expect(nextSession(program([]), [])).toBeUndefined();
   });
@@ -283,6 +298,7 @@ describe('custom exercises', () => {
     kind: 'strength' as const,
     usesPulley: true,
     peakTension: 'even' as const,
+    setup: { position: 'seated', facing: 'tower', grip: 'handles' },
     bodyFraction: 0.85,
     attachment: null,
     cue: 'Pull across your body.',

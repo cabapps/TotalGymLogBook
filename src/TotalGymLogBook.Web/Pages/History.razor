@@ -5,6 +5,7 @@
 @using TotalGymLogBook.Interop
 @implements IDisposable
 @inject Logbook Logbook
+@inject ExerciseCatalog Catalog
 
 @*
     History lives in Blazor because it is entirely derived: grouping, per-muscle rollups, trend
@@ -28,7 +29,8 @@ else
 {
     <p class="note" id="history-summary">
         @_sessions.Count session@(_sessions.Count == 1 ? "" : "s") &middot;
-        @_totalSets sets &middot; @($"{_totalVolume:N0}") lb of total volume
+        @_totalSets set@(_totalSets == 1 ? "" : "s") &middot;
+        @_setsPerMuscle.ToString("0.#") sets per muscle a week
     </p>
 
     @* The dual-axis chart from docs/adr/0004: absolute load and bodyweight together are the
@@ -64,7 +66,7 @@ else
                 <div class="row">
                     <div class="when">
                         <strong>@s.When.ToString("ddd d MMM")</strong>
-                        <span class="sub">@s.When.ToString("HH:mm") &middot; @s.Sets sets &middot; @($"{s.Volume:N0}") lb</span>
+                        <span class="sub">@s.When.ToString("HH:mm") &middot; @s.Sets sets &middot; @s.Trained</span>
                     </div>
                     <button class="del" id="del-@s.Id" @onclick="() => Delete(s)">Delete</button>
                 </div>
@@ -103,7 +105,7 @@ else
 </style>
 
 @code {
-    private sealed record Row(string Id, DateTime When, int Sets, double Volume, string Summary);
+    private sealed record Row(string Id, DateTime When, int Sets, string Trained, string Summary);
 
     private sealed record Chart(
         IReadOnlyList<(DateOnly On, double Load, double? Bw)> Points,
@@ -116,7 +118,17 @@ else
     private bool _loaded;
     private List<Row> _sessions = [];
     private int _totalSets;
-    private double _totalVolume;
+
+    /// <summary>
+    /// Average weekly sets per muscle group actually trained.
+    ///
+    /// This replaced total tonnage, which was a number nobody can act on: lifted pounds are not
+    /// comparable across exercises — one heavy calf raise outweighs every curl you will ever do —
+    /// so the total tracked exercise selection more than effort, and a session could look bigger
+    /// for being easier. Sets per muscle is the unit the coach programs in (docs/adr/0010), so
+    /// this figure and the one the coach quotes are now the same figure.
+    /// </summary>
+    private double _setsPerMuscle;
     private Chart _chart = Chart.Empty;
     private string _trendNote = "";
 
@@ -138,20 +150,75 @@ else
             .Select(h =>
             {
                 var when = DateTimeOffset.FromUnixTimeMilliseconds(h.Session.StartedAt).LocalDateTime;
-                var volume = h.Sets.Sum(s => s.ComputedLb * s.Reps);
                 var names = h.Sets.Select(s => s.ExerciseId).Distinct().ToList();
 
-                return new Row(h.Session.Id, when, h.Sets.Count, volume,
+                return new Row(h.Session.Id, when, h.Sets.Count, TrainedIn(h.Sets),
                     string.Join(", ", names.Select(Pretty)));
             })
             .OrderByDescending(r => r.When)
             .ToList();
 
         _totalSets = _sessions.Sum(r => r.Sets);
-        _totalVolume = _sessions.Sum(r => r.Volume);
+        _setsPerMuscle = WeeklySetsPerMuscle(history);
         _chart = BuildChart(history, trend);
         _trendNote = Describe(_chart);
         _loaded = true;
+    }
+
+    /// <summary>The muscles a session actually worked, biggest share first.</summary>
+    private string TrainedIn(IReadOnlyList<SetLogDto> sets)
+    {
+        var perMuscle = new Dictionary<MuscleGroup, double>();
+
+        foreach (var set in sets)
+        {
+            if (Catalog.TryGet(set.ExerciseId) is not { CountsAsVolume: true } exercise) continue;
+            foreach (var involvement in exercise.Muscles)
+            {
+                perMuscle[involvement.Muscle] =
+                    perMuscle.GetValueOrDefault(involvement.Muscle) + involvement.Fraction;
+            }
+        }
+
+        return perMuscle.Count == 0
+            ? "no working sets"
+            : string.Join(", ", perMuscle
+                .Where(kv => kv.Value >= 1)
+                .OrderByDescending(kv => kv.Value)
+                .Take(3)
+                .Select(kv => kv.Key.Label()));
+    }
+
+    /// <summary>
+    /// Average weekly sets per muscle across everything logged, counting only muscles that have
+    /// been trained at all. A muscle the trainee never works would otherwise drag the figure down
+    /// forever and make every week look like a bad one.
+    /// </summary>
+    private double WeeklySetsPerMuscle(IReadOnlyList<SessionWithSetsDto> history)
+    {
+        var sets = history.SelectMany(h => h.Sets).ToList();
+        if (sets.Count == 0) return 0;
+
+        var perMuscle = new Dictionary<MuscleGroup, double>();
+        foreach (var set in sets)
+        {
+            if (Catalog.TryGet(set.ExerciseId) is not { CountsAsVolume: true } exercise) continue;
+            foreach (var involvement in exercise.Muscles)
+            {
+                perMuscle[involvement.Muscle] =
+                    perMuscle.GetValueOrDefault(involvement.Muscle) + involvement.Fraction;
+            }
+        }
+
+        if (perMuscle.Count == 0) return 0;
+
+        var days = history
+            .Select(h => DateTimeOffset.FromUnixTimeMilliseconds(h.Session.StartedAt).Date)
+            .Distinct()
+            .Count();
+        var weeks = Math.Max(1.0, days / 7.0);
+
+        return perMuscle.Values.Average() / weeks;
     }
 
     /// <summary>

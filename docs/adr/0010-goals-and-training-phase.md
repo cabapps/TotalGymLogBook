@@ -293,6 +293,15 @@ calls are C#'s (below). So the shell's builder ranks by the *stated* aim only, a
 what notices they have been losing weight since. The shell never quietly relabels a goal
 underneath the person who set it.
 
+### Tonnage is not a metric
+
+The history screen used to total lifted pounds. It no longer does, anywhere. Tonnage is not
+comparable across exercises — one heavy calf raise outweighs every curl anyone will ever do — so
+the total tracked exercise selection more than effort, and a session could look bigger for being
+easier. It is replaced by **sets per muscle**, which is the unit this document already programs
+and coaches in, so the number the history shows and the number the coach quotes are the same
+number.
+
 ### The yardstick follows the goal
 
 The minimum effective dose is a hypertrophy number. `ProgramAnalyzer` applies it for the

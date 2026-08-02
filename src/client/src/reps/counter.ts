@@ -49,7 +49,16 @@ export interface RepSource {
  * window the ADR specifies at ~300 ms: two sources reporting the same rep are necessarily
  * inside 600 ms of each other, so a single refractory period does both jobs.
  */
-export const MIN_REP_MS = 600;
+/**
+ * Refractory period between counted reps.
+ *
+ * 1200 ms, not 600. Walking is the failure case that matters: a phone in a pocket sees a
+ * footfall every 500-600 ms, which sailed straight through the old floor, so a trainee who
+ * logged a set and walked to the kitchen came back to a counter that had counted the walk. No
+ * Total Gym rep is done in under a second and a bit, so the slower gate costs nothing real and
+ * rules out an entire class of nonsense.
+ */
+export const MIN_REP_MS = 1200;
 
 /**
  * How far a single spoken number may jump ahead of the running count.

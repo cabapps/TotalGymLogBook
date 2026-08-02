@@ -144,10 +144,18 @@ set — otherwise a mid-workout weigh-in makes sets within one session incompara
 ```
 RailProfile { id, levelCount, angleDeg[], boardWeightLb, angleSource, verified }
 Machine     { id, modelName, railProfileId, calibratedAngles? }
-Exercise    { id, name, usesPulley, bodyFraction, attachment?, muscles[] }
+Exercise    { id, name, usesPulley, peakTension, setup{position,facing,grip}, bodyFraction,
+              attachment?, muscles[] }
 Accessory   { id, name, provides[], common, added, note? }
 Equipment   { id, kind: 'vest'|'bar'|'plate', lb, ridesIncline, ownedQty }
 ```
+
+`setup` does two jobs from one field: it is what the app tells the trainee about arranging
+themselves on the machine, and it is what decides which movements can be done back to back without
+rebuilding it (docs/adr/0007). Keeping them off one field is the point — if the ordering believed
+two movements shared a setup while the instructions said to turn around between them, one would be
+lying and nothing would say which. Like `bodyFraction`, these are reviewable judgments rather than
+measurements.
 
 ### Accessories are a separate vocabulary from `attachment`
 
@@ -164,6 +172,11 @@ as a "no" to a question nobody was asked, and shipping a release quietly deletes
 people's pickers — including ones they have logged for months and ones their own program plans.
 This is the same reasoning that makes *unconfigured* mean "show everything" rather than
 "owns nothing", applied to each subsequent addition.
+
+An accessory may unlock **nothing** — the weighted vest and the weight bar add load to exercises
+that already exist. They are accessories anyway, because the set logger asks for vest and bar
+weight on every set, and asking someone who owns neither puts two permanently-zero fields on the
+one screen that has to stay fast.
 
 `Accessory.common` marks what ships with most machines. It never filters — it groups the picker,
 and it is what the shipped program templates are held to, so a template is runnable on a stock

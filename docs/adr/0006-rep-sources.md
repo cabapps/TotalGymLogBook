@@ -211,3 +211,28 @@ prescribing it, which is retained above.
 near-perfect one-dimensional reciprocating motion — but the phone has to sit on the board, which
 is exactly where the user can't see it. It needs audio feedback and after-the-fact review. Worth
 building as an assist mode, not as the primary story.
+
+
+## Amendment — what a phone in a pocket actually does
+
+Two field failures, both from the same misjudgment: treating a rep counter as a sensing problem
+when it is a trust problem.
+
+**Motion counted walking.** Footfalls arrive every 500-600 ms and are not gentle, so the old
+600 ms refractory let them straight through. The gate now applies to the interval between signal
+CROSSINGS rather than between counted reps — gating the output only throttles a fast oscillation
+into counting every other step, which is how a walk to the kitchen became eight reps. Thresholds
+went up too, and the direction of the remaining error is deliberate: a missed rep is visible in
+the field before the set is logged and takes one tap, while an invented rep is only visible to
+someone who was counting anyway — and they did not need the feature.
+
+**Motion no longer keeps running between sets.** The original asymmetry (voice stops on a logged
+set, motion does not) was argued from cost: an idle accelerometer is free where an open microphone
+is not. That was the wrong axis. An idle accelerometer is not free if it is *counting*, and the
+trainee cannot see it happening because they are not looking at the phone.
+
+**Voice died when the screen slept**, which is most of the time — you cannot watch a phone while
+training. The counter now holds a Screen Wake Lock while a source is running and reacquires it on
+`visibilitychange`, since the lock is dropped whenever the page is hidden. Best effort: where it is
+unsupported or refused, the counter works exactly as well as it did before, which is to say for as
+long as the screen happens to stay on.
