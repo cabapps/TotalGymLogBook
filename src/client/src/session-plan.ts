@@ -70,10 +70,25 @@ export function transitionCost(from: Exercise, to: Exercise): number {
   let cost = 0;
   if (from.attachment !== to.attachment) cost += 3;
   if (from.setup.position !== to.setup.position) cost += 1;
-  if (from.setup.facing !== to.setup.facing) cost += 1;
+  if (!facingAgrees(from, to)) cost += 1;
   if (from.usesPulley !== to.usesPulley) cost += 1;
 
   return cost;
+}
+
+/**
+ * Whether these two can be done without turning around.
+ *
+ * A movement with a second workable facing counts as agreeing with either -- which is the point
+ * of recording it. Curls are the case that matters: done facing away, a curl belongs in the
+ * middle of a block of pressing, and a model that only knew the one direction would send the
+ * trainee turning around and back for it.
+ */
+function facingAgrees(from: Exercise, to: Exercise): boolean {
+  const fromFacings = [from.setup.facing, from.setup.alsoFacing];
+  const toFacings = [to.setup.facing, to.setup.alsoFacing];
+
+  return fromFacings.some((f) => f !== undefined && toFacings.includes(f));
 }
 
 /** Muscles the movement drives directly. Shared prime movers are what rules a pair out. */
@@ -109,6 +124,11 @@ function heaviness(exercise: Exercise): number {
   return Math.min(1, mass) * (exercise.usesPulley ? 0.8 : 1);
 }
 
+/**
+ * Grouping key. Uses the PREFERRED facing even for a movement that works both ways: the cost
+ * function already charges nothing to put it beside a block facing the other way, so the greedy
+ * walk lands it there anyway -- without a key that would have to belong to two groups at once.
+ */
 function setupKey(exercise: Exercise): string {
   return [
     exercise.attachment ?? '-',

@@ -198,6 +198,12 @@ the rest between one movement's sets is spent doing the other's, which is where 
 remaining time goes. Pairing is *derived* from the ordered plan rather than stored, so it stays
 true when the trainee edits.
 
+Some movements work **either way round** — a curl is fine facing the tower or away from it — and
+`setup.alsoFacing` records that. It is not a footnote about wording: a movement that works both
+ways can sit in the middle of a block set up the other way, so it changes the order the session
+comes out in. A model that knew only one direction would send the trainee turning around and back
+for a single exercise.
+
 `Exercise.setup` serves this and the setup instructions in the logger from one field, deliberately.
 If the ordering believed two movements shared a setup while the instructions told the trainee to
 turn around between them, one of them would be lying and there would be no way to tell which.

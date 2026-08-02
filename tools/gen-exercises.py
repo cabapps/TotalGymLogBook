@@ -125,8 +125,12 @@ ACCESSORIES = [
 # position: face-up, face-down, seated, kneeling, side-lying
 # facing  : 'tower' (the pulley end, up the incline) or 'floor' (the low end). Lying, that is
 #           which way the head points; sitting, it is which way the trainee faces -- and it
-#           follows the cable, because you sit facing the tower for everything you PULL and away
-#           from it for everything you PUSH.
+#           mostly follows the cable, because you sit facing the tower for what you PULL and away
+#           from it for what you PUSH.
+# also    : a SECOND facing the movement works at, where one exists. A curl is the clear case:
+#           it is fine either way round. This is not a footnote -- it is what lets a curl sit in
+#           the middle of a block of pressing without anybody turning around, so it changes the
+#           order the session comes out in and not just the wording of the instruction.
 # grip    : what is in the hands (or on the ankles)
 #
 # Every movement is listed. These are judgments about how each is normally performed, in the same
@@ -189,7 +193,7 @@ SETUP = {
     "reverse-fly": ("seated", "tower", "handles"),
     "upright-row": ("seated", "tower", "handles"),
     "shoulder-shrug": ("seated", "tower", "handles"),
-    "row-to-curl": ("seated", "tower", "handles"),
+    "row-to-curl": ("seated", "tower", "handles", "floor"),
     "shaper-bar-row": ("seated", "tower", "shaper bars"),
     "rope-face-pull": ("seated", "tower", "rope"),
     "torso-rotation": ("seated", "tower", "handles"),
@@ -197,14 +201,14 @@ SETUP = {
     "external-rotation": ("seated", "tower", "single handle"),
     "internal-rotation": ("seated", "tower", "single handle"),
     "shoulder-stretch": ("seated", "tower", "handles"),
-    "biceps-curl": ("seated", "tower", "handles"),
-    "hammer-curl": ("seated", "tower", "handles, palms in"),
-    "reverse-curl": ("seated", "tower", "handles, palms down"),
-    "wide-grip-curl": ("seated", "tower", "handles, wide"),
+    "biceps-curl": ("seated", "tower", "handles", "floor"),
+    "hammer-curl": ("seated", "tower", "handles, palms in", "floor"),
+    "reverse-curl": ("seated", "tower", "handles, palms down", "floor"),
+    "wide-grip-curl": ("seated", "tower", "handles, wide", "floor"),
     "concentration-curl": ("seated", "tower", "single handle"),
-    "single-arm-curl": ("seated", "tower", "single handle"),
-    "shaper-bar-curl": ("seated", "tower", "shaper bars"),
-    "rope-hammer-curl": ("seated", "tower", "rope"),
+    "single-arm-curl": ("seated", "tower", "single handle", "floor"),
+    "shaper-bar-curl": ("seated", "tower", "shaper bars", "floor"),
+    "rope-hammer-curl": ("seated", "tower", "rope", "floor"),
     "triceps-pushdown": ("seated", "tower", "handles"),
     "rope-pushdown": ("seated", "tower", "rope"),
     # Dips press down on the bars at the tower end; the board still carries you.
@@ -617,6 +621,9 @@ COMMENT = [
     "              they face ('tower' is the pulley end), and what is in their hands. Drives both",
     "              the setup instructions and the session ordering, because two movements that",
     "              share a setup can be done back to back without rebuilding the machine.",
+    "              alsoFacing names a second direction the movement works at, where one exists --",
+    "              a curl is fine either way round. That is not a footnote: it lets a curl sit in",
+    "              a block of pressing without anybody turning around.",
     "peakTension : where in the range the muscle is most loaded -- 'lengthened', 'even', or",
     "              'shortened'. Loaded work at long muscle lengths grows a muscle more than the",
     "              same sets through a shortened range, and a cable machine holds tension at the",
@@ -636,8 +643,12 @@ COMMENT = [
 
 def setup_of(e):
     """Position, facing and grip. Every movement is listed explicitly."""
-    position, facing, grip = SETUP[e.id]
-    return {"position": position, "facing": facing, "grip": grip}
+    entry = SETUP[e.id]
+    position, facing, grip = entry[0], entry[1], entry[2]
+    setup = {"position": position, "facing": facing, "grip": grip}
+    if len(entry) > 3:
+        setup["alsoFacing"] = entry[3]
+    return setup
 
 
 def peak(exercise_id):

@@ -87,7 +87,12 @@ function describeSetup(exercise: Exercise): string {
   // Sitting, the trainee faces a direction; lying, the head points at one. Same axis, and the
   // two readings of it are the only ones the machine has -- nothing is done off the board.
   if (exercise.setup.position === 'seated') {
-    parts.push(toTower ? 'Sit on the board facing the tower' : 'Sit on the board facing away from the tower');
+    parts.push(
+      toTower ? 'Sit on the board facing the tower' : 'Sit on the board facing away from the tower',
+    );
+    // Worth saying out loud: a trainee who knows a movement works both ways can leave the
+    // machine as it is rather than turning around for one exercise.
+    if (exercise.setup.alsoFacing) parts.push('or the other way round, whichever suits');
   } else if (exercise.setup.position === 'kneeling') {
     parts.push(toTower ? 'Kneel on the board facing the tower' : 'Kneel on the board facing away');
   } else {

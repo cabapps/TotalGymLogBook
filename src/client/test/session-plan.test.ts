@@ -39,6 +39,19 @@ describe('transition cost', () => {
     expect(attachmentChange).toBeGreaterThan(sitUp);
   });
 
+  it('charges nothing to put a curl in a block of pressing', () => {
+    // A curl works sitting either way round, so it can sit in the middle of pressing work
+    // without anybody turning around. A model that only knew the one direction would send the
+    // trainee around and back for one exercise.
+    expect(transitionCost(catalog.get('chest-press'), catalog.get('biceps-curl'))).toBe(0);
+    // ...and it still belongs with the pulling work, which is the other half of the claim.
+    expect(transitionCost(catalog.get('seated-row'), catalog.get('biceps-curl'))).toBe(0);
+  });
+
+  it('still charges for a movement that only works one way round', () => {
+    expect(transitionCost(catalog.get('chest-press'), catalog.get('seated-row'))).toBeGreaterThan(0);
+  });
+
   it('is free between movements that share a setup', () => {
     // The user's own example: both are done lying on the board with feet on the squat stand, so
     // the machine does not change at all between them.

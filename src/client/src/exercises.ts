@@ -65,6 +65,14 @@ export interface ExerciseSetup {
   readonly position: string;
   /** Which end of the rail the head points at. 'tower' is the pulley end, up the incline. */
   readonly facing: string;
+  /**
+   * A second facing this movement also works at, where one exists.
+   *
+   * A curl is the clear case: fine either way round. It matters to the ordering rather than to
+   * the wording -- a movement that works both ways can sit in a block set up the other way
+   * without anybody turning around.
+   */
+  readonly alsoFacing?: string;
   /** What is in the hands, or on the ankles. */
   readonly grip: string;
 }
