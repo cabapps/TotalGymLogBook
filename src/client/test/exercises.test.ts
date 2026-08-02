@@ -109,6 +109,32 @@ describe('exercise catalog', () => {
       }
     });
 
+    it('gives seated work a smaller share of bodyweight than lying work', () => {
+      // bodyFraction is how much of the trainee is actually riding the board. Sitting up puts
+      // less of them on it than lying down does, and the pressing family was carrying a lying
+      // figure from when it was assumed supine -- which overstated every chest load by about
+      // an eighth.
+      const seated = catalog.all.filter((e) => e.setup.position === 'seated' && !e.attachment);
+      const lying = catalog.all.filter((e) => e.setup.position === 'face-up' && !e.attachment);
+
+      expect(Math.max(...seated.map((e) => e.bodyFraction))).toBeLessThan(
+        Math.max(...lying.map((e) => e.bodyFraction)),
+      );
+      expect(catalog.get('chest-press').bodyFraction).toBe(0.85);
+    });
+
+    it('has a movement that breaks the sit-facing-the-cable rule', () => {
+      // The rule is that you face the tower for what you pull and away for what you push, and it
+      // holds because the cable comes off the top of the tower. Lying down moves where the cable
+      // meets you, so the prone pushdown faces the tower and is still a push. Pinned because the
+      // rule is a rule of thumb, and a table that never breaks it would mean nobody had noticed.
+      const prone = catalog.get('prone-triceps-pushdown');
+
+      expect(prone.setup.position).toBe('face-down');
+      expect(prone.setup.facing).toBe('tower');
+      expect(prone.usesPulley).toBe(true);
+    });
+
     it('never puts the trainee off the board', () => {
       // There is no standing exercise on this machine -- even the dips use the board. A position
       // the machine does not have would have the session ordering budgeting for a changeover

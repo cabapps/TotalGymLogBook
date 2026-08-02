@@ -150,6 +150,12 @@ Accessory   { id, name, provides[], common, added, note? }
 Equipment   { id, kind: 'vest'|'bar'|'plate', lb, ridesIncline, ownedQty }
 ```
 
+Seated, the direction follows the cable: you face the tower for what you **pull** and away for
+what you **push**, because the cable comes off the top of the tower. That is a rule of thumb, not
+a law — anything that moves where the cable meets the trainee breaks it, and the prone pushdown
+does exactly that, facing the tower while still being a push. A test pins that exception, because
+a table that never broke the rule would mean nobody had looked.
+
 **The squat stand is at the bottom of the rail**, so feet on the stand puts the head at the tower
 end — the same way round as the cable work, not the opposite way. That is a fact about the
 machine rather than a judgment about a movement, so the generator asserts it: every squat-stand
@@ -195,7 +201,15 @@ one screen that has to stay fast.
 and it is what the shipped program templates are held to, so a template is runnable on a stock
 machine rather than being a plan the trainee discovers they cannot follow one exercise at a time.
 
-`bodyFraction` values are currently unmeasured and all default to 1.0.
+`bodyFraction` values are estimated, not measured. They follow the position: lying work puts
+essentially all of the trainee on the board, seated work about 85% of them. When a movement's
+position is corrected, its `bodyFraction` has to move with it — the pressing family carried a
+lying figure while it was assumed supine, which overstated every chest load by about an eighth.
+
+Correcting one is a deliberate act, not a side effect. Logged sets keep the snapshot they were
+computed with (above), so history is unaffected and correct; what changes is every load computed
+*from now on*, which reads as a step down that the trainee did not train for. Worth doing when the
+old figure was wrong, and worth doing knowingly.
 
 ## Consequences: what the unified `computedLb` unlocks
 

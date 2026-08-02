@@ -187,7 +187,7 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "bodyFraction": 1.0,
+      "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Handles level with your chest, elbows tucked, press until your arms are straight.",
       "muscles": [
@@ -217,7 +217,7 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "bodyFraction": 1.0,
+      "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms wide with elbows softly bent, sweep the handles together in front of your chest.",
       "muscles": [
@@ -243,7 +243,7 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "bodyFraction": 1.0,
+      "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Same sweep as a chest fly, set a notch or two higher so the top of the chest takes more of it.",
       "muscles": [
@@ -269,7 +269,7 @@
         "facing": "floor",
         "grip": "single handle"
       },
-      "bodyFraction": 1.0,
+      "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Press one handle at a time. Keep both hips flat on the board so you don't twist into it.",
       "muscles": [
@@ -299,7 +299,7 @@
         "facing": "floor",
         "grip": "handles, close"
       },
-      "bodyFraction": 1.0,
+      "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Press with your elbows tucked close to your ribs. Most of the work moves to the triceps.",
       "muscles": [
@@ -329,7 +329,7 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "bodyFraction": 1.0,
+      "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Fly the handles together and let your hands cross past each other at the top.",
       "muscles": [
@@ -415,7 +415,7 @@
         "facing": "floor",
         "grip": "shaper bars"
       },
-      "bodyFraction": 1.0,
+      "bodyFraction": 0.85,
       "attachment": "Shaper bars",
       "cue": "Press with the shaper bars in a neutral grip. Easier on the shoulders than a flat grip.",
       "muscles": [
@@ -1307,6 +1307,28 @@
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Elbows pinned to your sides, push the handles down until your arms lock out.",
+      "muscles": [
+        {
+          "muscle": "Triceps",
+          "fraction": 1.0
+        }
+      ]
+    },
+    {
+      "id": "prone-triceps-pushdown",
+      "name": "Prone Triceps Pushdown",
+      "category": "Arms",
+      "kind": "strength",
+      "usesPulley": true,
+      "peakTension": "shortened",
+      "setup": {
+        "position": "face-down",
+        "facing": "tower",
+        "grip": "handles"
+      },
+      "bodyFraction": 1.0,
+      "attachment": null,
+      "cue": "Face down with the cables in front of you, elbows still, push down until your arms straighten.",
       "muscles": [
         {
           "muscle": "Triceps",
@@ -2319,7 +2341,7 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "bodyFraction": 1.0,
+      "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Press up, then open your arms wide and sweep them back together.",
       "muscles": [
@@ -2735,7 +2757,7 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "bodyFraction": 1.0,
+      "bodyFraction": 0.85,
       "attachment": null,
       "cue": "One arm across your body, use the other to draw it in until the back of the shoulder opens.",
       "muscles": [
