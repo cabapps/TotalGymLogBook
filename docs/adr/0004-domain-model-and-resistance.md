@@ -150,6 +150,12 @@ Accessory   { id, name, provides[], common, added, note? }
 Equipment   { id, kind: 'vest'|'bar'|'plate', lb, ridesIncline, ownedQty }
 ```
 
+**The squat stand is at the bottom of the rail**, so feet on the stand puts the head at the tower
+end — the same way round as the cable work, not the opposite way. That is a fact about the
+machine rather than a judgment about a movement, so the generator asserts it: every squat-stand
+exercise faces the tower, and a hand edit that says otherwise fails the build rather than quietly
+adding a turnaround to every leg session.
+
 **Nothing happens off the board.** There is no standing position — even the dips use the
 glideboard — and a model with one in it would have the session ordering budget for a changeover
 that never happens. Positions are face-up, face-down, seated, kneeling and side-lying; `facing`

@@ -158,21 +158,25 @@ SETUP = {
     "lat-stretch": ("face-up", "tower", "handles"),
     "chest-stretch": ("face-up", "tower", "handles"),
 
-    # ---- lying face up, head toward the floor: feet up on the squat stand
-    "squat": ("face-up", "floor", "nothing"),
-    "wide-stance-squat": ("face-up", "floor", "nothing"),
-    "narrow-stance-squat": ("face-up", "floor", "nothing"),
-    "single-leg-squat": ("face-up", "floor", "nothing"),
-    "split-squat": ("face-up", "floor", "nothing"),
-    "jump-squat": ("face-up", "floor", "nothing"),
-    "hip-bridge": ("face-up", "floor", "nothing"),
-    "calf-raise": ("face-up", "floor", "nothing"),
-    "single-leg-calf-raise": ("face-up", "floor", "nothing"),
-    "toe-press": ("face-up", "floor", "nothing"),
-    "sprinter-start": ("face-up", "floor", "nothing"),
-    "board-burpee": ("face-up", "floor", "nothing"),
-    "adductor-stretch": ("face-up", "floor", "nothing"),
-    "calf-stretch": ("face-up", "floor", "nothing"),
+    # ---- lying face up, head toward the tower: feet down on the squat stand
+    #
+    # The stand bolts on at the BOTTOM of the rail, so feet on the stand puts the head at the
+    # tower end -- the same way round as the cable work, not the opposite way. An assertion
+    # below holds every squat-stand movement to it.
+    "squat": ("face-up", "tower", "nothing"),
+    "wide-stance-squat": ("face-up", "tower", "nothing"),
+    "narrow-stance-squat": ("face-up", "tower", "nothing"),
+    "single-leg-squat": ("face-up", "tower", "nothing"),
+    "split-squat": ("face-up", "tower", "nothing"),
+    "jump-squat": ("face-up", "tower", "nothing"),
+    "hip-bridge": ("face-up", "tower", "nothing"),
+    "calf-raise": ("face-up", "tower", "nothing"),
+    "single-leg-calf-raise": ("face-up", "tower", "nothing"),
+    "toe-press": ("face-up", "tower", "nothing"),
+    "sprinter-start": ("face-up", "tower", "nothing"),
+    "board-burpee": ("face-up", "tower", "nothing"),
+    "adductor-stretch": ("face-up", "tower", "nothing"),
+    "calf-stretch": ("face-up", "tower", "nothing"),
     "crunch": ("face-up", "floor", "nothing"),
     "oblique-crunch": ("face-up", "floor", "nothing"),
     "reverse-crunch": ("face-up", "floor", "nothing"),
@@ -250,8 +254,8 @@ SETUP = {
 
     # ---- on your side
     "side-lying-leg-lift": ("side-lying", "floor", "nothing"),
-    "hip-abduction": ("side-lying", "floor", "nothing"),
-    "hip-adduction": ("side-lying", "floor", "nothing"),
+    "hip-abduction": ("side-lying", "tower", "nothing"),
+    "hip-adduction": ("side-lying", "tower", "nothing"),
     "side-plank": ("side-lying", "floor", "nothing"),
 }
 
@@ -682,6 +686,12 @@ def main():
     # A tension label on an id that no longer exists is a silent no-op, and the exercise it was
     # meant for quietly reverts to 'even' -- so the program builder stops recommending it and
     # nothing anywhere says why.
+    # The squat stand bolts on at the bottom of the rail. Feet on the stand therefore means head
+    # at the tower end, always -- a physical fact about the machine rather than a judgment, so it
+    # is asserted rather than left to whoever edits the table next.
+    wrong_way = [e.id for e in EX if e.att == STAND and setup_of(e)["facing"] != "tower"]
+    assert not wrong_way, f"squat-stand movements must face the tower: {sorted(wrong_way)}"
+
     stray_setup = set(SETUP) - seen
     assert not stray_setup, f"setup for unknown exercises: {sorted(stray_setup)}"
 

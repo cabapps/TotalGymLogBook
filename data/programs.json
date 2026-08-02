@@ -67,10 +67,10 @@
           "name": "Full Body A",
           "exercises": [
             { "exerciseId": "squat", "sets": 3 },
-            { "exerciseId": "crunch", "sets": 4 },
             { "exerciseId": "lat-pulldown", "sets": 3 },
             { "exerciseId": "chest-press", "sets": 3 },
-            { "exerciseId": "shoulder-press", "sets": 2 }
+            { "exerciseId": "shoulder-press", "sets": 2 },
+            { "exerciseId": "crunch", "sets": 4 }
           ]
         },
         {
@@ -204,10 +204,9 @@
           "name": "Big A",
           "exercises": [
             { "exerciseId": "squat", "sets": 3 },
-            { "exerciseId": "hip-bridge", "sets": 2 },
-            { "exerciseId": "crunch", "sets": 4 },
-            { "exerciseId": "lat-pulldown", "sets": 2 },
-            { "exerciseId": "chest-press", "sets": 3 }
+            { "exerciseId": "lat-pulldown", "sets": 3 },
+            { "exerciseId": "chest-press", "sets": 3 },
+            { "exerciseId": "crunch", "sets": 4 }
           ]
         },
         {
@@ -216,9 +215,9 @@
           "exercises": [
             { "exerciseId": "split-squat", "sets": 3 },
             { "exerciseId": "calf-raise", "sets": 4 },
-            { "exerciseId": "incline-chest-fly", "sets": 3 },
+            { "exerciseId": "overhead-triceps-extension", "sets": 3 },
             { "exerciseId": "seated-row", "sets": 3 },
-            { "exerciseId": "overhead-triceps-extension", "sets": 3 }
+            { "exerciseId": "incline-chest-fly", "sets": 3 }
           ]
         },
         {
@@ -304,9 +303,9 @@
             { "exerciseId": "split-squat", "sets": 3 },
             { "exerciseId": "hip-bridge", "sets": 3 },
             { "exerciseId": "board-burpee", "sets": 3 },
-            { "exerciseId": "knee-tuck", "sets": 3 },
+            { "exerciseId": "lat-pulldown", "sets": 3 },
             { "exerciseId": "chest-fly", "sets": 3 },
-            { "exerciseId": "lat-pulldown", "sets": 3 }
+            { "exerciseId": "knee-tuck", "sets": 3 }
           ]
         }
       ]
@@ -324,9 +323,9 @@
           "exercises": [
             { "exerciseId": "hip-abduction", "sets": 3 },
             { "exerciseId": "toe-press", "sets": 3 },
-            { "exerciseId": "plank-hold", "sets": 2 },
+            { "exerciseId": "seated-row", "sets": 3 },
             { "exerciseId": "shoulder-press", "sets": 2 },
-            { "exerciseId": "seated-row", "sets": 3 }
+            { "exerciseId": "plank-hold", "sets": 2 }
           ]
         },
         {
@@ -334,10 +333,10 @@
           "name": "Gentle B",
           "exercises": [
             { "exerciseId": "wing-hamstring-curl", "sets": 3 },
-            { "exerciseId": "low-row", "sets": 3 },
-            { "exerciseId": "close-grip-chest-press", "sets": 3 },
+            { "exerciseId": "hip-adduction", "sets": 3 },
             { "exerciseId": "side-lying-leg-lift", "sets": 3 },
-            { "exerciseId": "hip-adduction", "sets": 3 }
+            { "exerciseId": "close-grip-chest-press", "sets": 3 },
+            { "exerciseId": "low-row", "sets": 3 }
           ]
         }
       ]

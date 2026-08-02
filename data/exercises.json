@@ -1471,7 +1471,7 @@
       "peakTension": "lengthened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1501,7 +1501,7 @@
       "peakTension": "lengthened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1531,7 +1531,7 @@
       "peakTension": "lengthened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1557,7 +1557,7 @@
       "peakTension": "lengthened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1587,7 +1587,7 @@
       "peakTension": "lengthened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1613,7 +1613,7 @@
       "peakTension": "even",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1643,7 +1643,7 @@
       "peakTension": "lengthened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1669,7 +1669,7 @@
       "peakTension": "lengthened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1691,7 +1691,7 @@
       "peakTension": "lengthened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1713,7 +1713,7 @@
       "peakTension": "even",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1735,7 +1735,7 @@
       "peakTension": "even",
       "setup": {
         "position": "side-lying",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -1761,7 +1761,7 @@
       "peakTension": "shortened",
       "setup": {
         "position": "side-lying",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2376,7 +2376,7 @@
       "peakTension": "even",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2406,7 +2406,7 @@
       "peakTension": "even",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2644,7 +2644,7 @@
       "peakTension": "even",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
@@ -2666,7 +2666,7 @@
       "peakTension": "even",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "bodyFraction": 1.0,
