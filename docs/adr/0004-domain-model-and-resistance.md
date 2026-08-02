@@ -150,6 +150,14 @@ Accessory   { id, name, provides[], common, added, note? }
 Equipment   { id, kind: 'vest'|'bar'|'plate', lb, ridesIncline, ownedQty }
 ```
 
+`pattern` names the joint that does the work. It exists so the app can **draw** the movement:
+every demo is generated from `setup` + `pattern` + `attachment` + `usesPulley`, so there is no
+artwork to license, nothing to keep in step with the catalog by hand, and no megabytes of video
+to fail offline. Total Gym's photography and illustration are theirs; a stick figure on a rail is
+ours. It shows which way to face, what moves and roughly how far — the caption says out loud that
+it is not a form guide, because a trainee who takes a schematic for a coach can hurt themselves
+being faithful to it.
+
 Seated, the direction follows the cable: you face the tower for what you **pull** and away for
 what you **push**, because the cable comes off the top of the tower. That is a rule of thumb, not
 a law — anything that moves where the cable meets the trainee breaks it, and the prone pushdown

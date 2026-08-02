@@ -37,6 +37,9 @@
     "              alsoFacing names a second direction the movement works at, where one exists --",
     "              a curl is fine either way round. That is not a footnote: it lets a curl sit in",
     "              a block of pressing without anybody turning around.",
+    "pattern     : which joint does the work, so the app can draw the movement. Derived from the",
+    "              name where the name says what the movement is, overridden where it does not.",
+    "              Presentation only -- it never touches a load or a set count.",
     "peakTension : where in the range the muscle is most loaded -- 'lengthened', 'even', or",
     "              'shortened'. Loaded work at long muscle lengths grows a muscle more than the",
     "              same sets through a shortened range, and a cable machine holds tension at the",
@@ -187,6 +190,7 @@
         "facing": "floor",
         "grip": "handles"
       },
+      "pattern": "press",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Handles level with your chest, elbows tucked, press until your arms are straight.",
@@ -217,6 +221,7 @@
         "facing": "floor",
         "grip": "handles"
       },
+      "pattern": "fly",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms wide with elbows softly bent, sweep the handles together in front of your chest.",
@@ -243,6 +248,7 @@
         "facing": "floor",
         "grip": "handles"
       },
+      "pattern": "fly",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Same sweep as a chest fly, set a notch or two higher so the top of the chest takes more of it.",
@@ -269,6 +275,7 @@
         "facing": "floor",
         "grip": "single handle"
       },
+      "pattern": "press",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Press one handle at a time. Keep both hips flat on the board so you don't twist into it.",
@@ -299,6 +306,7 @@
         "facing": "floor",
         "grip": "handles, close"
       },
+      "pattern": "press",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Press with your elbows tucked close to your ribs. Most of the work moves to the triceps.",
@@ -329,6 +337,7 @@
         "facing": "floor",
         "grip": "handles"
       },
+      "pattern": "fly",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Fly the handles together and let your hands cross past each other at the top.",
@@ -355,6 +364,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "pulldown",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Arms straight overhead, pull the handles down over your chest in a wide arc.",
@@ -385,6 +395,7 @@
         "facing": "floor",
         "grip": "press-up bars"
       },
+      "pattern": "press",
       "bodyFraction": 1.0,
       "attachment": "Press-up bars",
       "cue": "Face down with your head lower than your feet, hands on the bars, press the board away.",
@@ -415,6 +426,7 @@
         "facing": "floor",
         "grip": "shaper bars"
       },
+      "pattern": "press",
       "bodyFraction": 0.85,
       "attachment": "Shaper bars",
       "cue": "Press with the shaper bars in a neutral grip. Easier on the shoulders than a flat grip.",
@@ -445,6 +457,7 @@
         "facing": "tower",
         "grip": "dip bars"
       },
+      "pattern": "press",
       "bodyFraction": 1.0,
       "attachment": "Dip bars",
       "cue": "On the dip bars with your chest leaning forward, lower until you feel a stretch and press back up.",
@@ -475,6 +488,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "pulldown",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Reach overhead and pull the handles down past your shoulders, leading with your elbows.",
@@ -501,6 +515,7 @@
         "facing": "tower",
         "grip": "handles, wide"
       },
+      "pattern": "pulldown",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "A pulldown with your hands set wide. Pull your elbows down and out to the sides.",
@@ -531,6 +546,7 @@
         "facing": "tower",
         "grip": "handles, palms up"
       },
+      "pattern": "pulldown",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Pull down with your palms facing you. The biceps get a full share of this one.",
@@ -557,6 +573,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "pulldown",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Keep your arms straight and sweep the handles from overhead down to your hips.",
@@ -583,6 +600,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "row",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Sit upright, pull the handles to your waist and squeeze your shoulder blades together.",
@@ -613,6 +631,7 @@
         "facing": "tower",
         "grip": "handles, wide"
       },
+      "pattern": "row",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Row with your hands wide and your elbows flared out, finishing at the ribs.",
@@ -639,6 +658,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "row",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Row towards your collarbones with your elbows high. Upper back and rear shoulders.",
@@ -665,6 +685,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "row",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Row low and tight to your body, finishing at the hips with elbows brushing your sides.",
@@ -691,6 +712,7 @@
         "facing": "tower",
         "grip": "single handle"
       },
+      "pattern": "row",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Row one handle at a time. Resist the pull to rotate; that is the core's job here.",
@@ -721,6 +743,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "fly",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms out in front, sweep them wide and back. Small movement, rear shoulders and upper back.",
@@ -747,6 +770,7 @@
         "facing": "tower",
         "grip": "wing bars"
       },
+      "pattern": "pulldown",
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
       "cue": "Grip the wing bars overhead and pull your chest towards them. The incline sets how hard it is.",
@@ -773,6 +797,7 @@
         "facing": "tower",
         "grip": "wing bars, palms toward you"
       },
+      "pattern": "pulldown",
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
       "cue": "Pull-up with your palms facing you, which brings the biceps in properly.",
@@ -799,6 +824,7 @@
         "facing": "tower",
         "grip": "wing bars, wide"
       },
+      "pattern": "pulldown",
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
       "cue": "Hands at the far ends of the wing, pull up leading with your elbows out to the sides.",
@@ -829,6 +855,7 @@
         "facing": "tower",
         "grip": "shaper bars"
       },
+      "pattern": "row",
       "bodyFraction": 0.85,
       "attachment": "Shaper bars",
       "cue": "Row with the shaper bars in a neutral grip, palms facing each other, elbows past your ribs.",
@@ -855,6 +882,7 @@
         "facing": "tower",
         "grip": "rope"
       },
+      "pattern": "row",
       "bodyFraction": 0.85,
       "attachment": "Triceps rope",
       "cue": "Pull the rope towards your forehead, splitting the ends apart as your elbows come back.",
@@ -881,6 +909,7 @@
         "facing": "floor",
         "grip": "handles"
       },
+      "pattern": "press",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Sit upright, handles at shoulder height, press straight overhead.",
@@ -907,6 +936,7 @@
         "facing": "floor",
         "grip": "handles"
       },
+      "pattern": "raise",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms straight, raise the handles in front of you to about eye level.",
@@ -929,6 +959,7 @@
         "facing": "floor",
         "grip": "handles"
       },
+      "pattern": "raise",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms straight, raise the handles out to the sides until they're level with your shoulders.",
@@ -951,6 +982,7 @@
         "facing": "floor",
         "grip": "handles"
       },
+      "pattern": "raise",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Raise the handles halfway between straight ahead and straight out. Kinder on the shoulder joint.",
@@ -973,6 +1005,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "row",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Pull the handles up along your body to chest height, elbows leading and above your wrists.",
@@ -1003,6 +1036,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "row",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms straight, lift your shoulders towards your ears without bending your elbows.",
@@ -1029,6 +1063,7 @@
         "facing": "tower",
         "grip": "single handle"
       },
+      "pattern": "raise",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Elbow tucked at your side and bent, rotate your forearm outwards. Light loads, this is rotator cuff work.",
@@ -1051,6 +1086,7 @@
         "facing": "tower",
         "grip": "single handle"
       },
+      "pattern": "raise",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Elbow tucked and bent, rotate your forearm across your body. Light loads.",
@@ -1074,6 +1110,7 @@
         "grip": "handles",
         "alsoFacing": "floor"
       },
+      "pattern": "curl",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Sit upright, elbows fixed at your sides, curl the handles up to your shoulders.",
@@ -1097,6 +1134,7 @@
         "grip": "handles, palms in",
         "alsoFacing": "floor"
       },
+      "pattern": "curl",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Curl with your palms facing each other the whole way, like holding a hammer.",
@@ -1120,6 +1158,7 @@
         "grip": "handles, palms down",
         "alsoFacing": "floor"
       },
+      "pattern": "curl",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Curl with your palms facing down. Harder than it looks, and it hits the forearms.",
@@ -1143,6 +1182,7 @@
         "grip": "handles, wide",
         "alsoFacing": "floor"
       },
+      "pattern": "curl",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Curl with your hands set wide and elbows out slightly.",
@@ -1165,6 +1205,7 @@
         "facing": "tower",
         "grip": "single handle"
       },
+      "pattern": "curl",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "One arm, elbow braced against your inner thigh, curl slowly and don't swing.",
@@ -1188,6 +1229,7 @@
         "grip": "single handle",
         "alsoFacing": "floor"
       },
+      "pattern": "curl",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Curl one handle at a time and keep your shoulders square as you do it.",
@@ -1214,6 +1256,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "curl",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Lie back with the cables coming from above your head and curl towards your forehead, elbows still.",
@@ -1237,6 +1280,7 @@
         "grip": "rope",
         "alsoFacing": "floor"
       },
+      "pattern": "curl",
       "bodyFraction": 0.85,
       "attachment": "Triceps rope",
       "cue": "Curl the rope with your palms facing each other and pull the ends apart at the top.",
@@ -1260,6 +1304,7 @@
         "grip": "shaper bars",
         "alsoFacing": "floor"
       },
+      "pattern": "curl",
       "bodyFraction": 0.85,
       "attachment": "Shaper bars",
       "cue": "Curl the shaper bars with your elbows pinned. The grip angle takes the strain off your wrists.",
@@ -1282,6 +1327,7 @@
         "facing": "floor",
         "grip": "handles"
       },
+      "pattern": "extend",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Elbows high and still, straighten your arms against the cable.",
@@ -1304,6 +1350,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "extend",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Elbows pinned to your sides, push the handles down until your arms lock out.",
@@ -1326,6 +1373,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "extend",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Face down with the cables in front of you, elbows still, push down until your arms straighten.",
@@ -1348,6 +1396,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "extend",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Lie back with the handles behind your head, straighten your arms without moving your elbows.",
@@ -1370,6 +1419,7 @@
         "facing": "floor",
         "grip": "single handle"
       },
+      "pattern": "extend",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Upper arm still and parallel to the board, straighten your elbow behind you.",
@@ -1392,6 +1442,7 @@
         "facing": "floor",
         "grip": "press-up bars"
       },
+      "pattern": "press",
       "bodyFraction": 1.0,
       "attachment": "Press-up bars",
       "cue": "Hands on the bars behind you, lower until your elbows are bent, then press back up.",
@@ -1422,6 +1473,7 @@
         "facing": "tower",
         "grip": "dip bars"
       },
+      "pattern": "press",
       "bodyFraction": 1.0,
       "attachment": "Dip bars",
       "cue": "On the dip bars with your torso upright and elbows tracking straight back. Triceps take it.",
@@ -1452,6 +1504,7 @@
         "facing": "tower",
         "grip": "rope"
       },
+      "pattern": "extend",
       "bodyFraction": 0.85,
       "attachment": "Triceps rope",
       "cue": "Elbows at your sides, push the rope down and spread the ends apart as your arms lock out.",
@@ -1474,6 +1527,7 @@
         "facing": "tower",
         "grip": "rope"
       },
+      "pattern": "extend",
       "bodyFraction": 1.0,
       "attachment": "Triceps rope",
       "cue": "Rope behind your head, elbows high and still, straighten your arms and split the ends.",
@@ -1496,6 +1550,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "squat",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Feet flat on the squat stand, lower until your knees are bent, then drive the board back up.",
@@ -1526,6 +1581,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "squat",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Squat with your feet wide and toes turned out. More glute and inner thigh.",
@@ -1556,6 +1612,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "row",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Squat with your feet close together. The quads take most of it.",
@@ -1582,6 +1639,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "squat",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "One foot on the stand, the other tucked away. Keep your knee tracking over your toes.",
@@ -1612,6 +1670,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "squat",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "One foot high on the stand and one low, lower and drive back up without shifting your weight.",
@@ -1638,6 +1697,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "squat",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Squat down and push off hard enough that your feet leave the stand. Land soft.",
@@ -1668,6 +1728,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "hinge",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Feet on the stand, drive your hips up until your body is a straight line, then lower.",
@@ -1694,6 +1755,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "calf",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Balls of your feet on the edge of the stand, press up onto your toes and lower slowly.",
@@ -1716,6 +1778,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "calf",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "One foot on the edge of the stand, press up onto your toes and lower under control.",
@@ -1738,6 +1801,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "calf",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Legs almost straight, push the board using only your ankles.",
@@ -1760,6 +1824,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "raise",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Lie on your side and press the board away with the top leg, opening the hip.",
@@ -1786,6 +1851,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "raise",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Lie on your side and press with the bottom leg, drawing it in towards the midline.",
@@ -1812,6 +1878,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "raise",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "On your side, lift the top leg against the incline. Small, controlled, no swinging.",
@@ -1834,6 +1901,7 @@
         "facing": "floor",
         "grip": "ankle straps"
       },
+      "pattern": "curl",
       "bodyFraction": 1.0,
       "attachment": "Ankle straps",
       "cue": "Face down with the straps on your ankles, bend your knees to draw your heels towards you.",
@@ -1860,6 +1928,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "curl",
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
       "cue": "Face down with your heels hooked on the wing, bend your knees to pull the board up the rail.",
@@ -1886,6 +1955,7 @@
         "facing": "floor",
         "grip": "ankle straps"
       },
+      "pattern": "extend",
       "bodyFraction": 0.85,
       "attachment": "Ankle straps",
       "cue": "Seated with the straps on your ankles, straighten your knees against the cable.",
@@ -1908,6 +1978,7 @@
         "facing": "floor",
         "grip": "ankle strap"
       },
+      "pattern": "hinge",
       "bodyFraction": 1.0,
       "attachment": "Ankle straps",
       "cue": "Strap on one ankle, push that leg back and up without arching your lower back.",
@@ -1934,6 +2005,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "crunch",
       "bodyFraction": 0.75,
       "attachment": null,
       "cue": "Lie back on the board and curl your ribs towards your hips. Short range, no pulling on your neck.",
@@ -1956,6 +2028,7 @@
         "facing": "tower",
         "grip": "handles by your head"
       },
+      "pattern": "crunch",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Hold the handles by your head and crunch down against the cable.",
@@ -1978,6 +2051,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "crunch",
       "bodyFraction": 0.75,
       "attachment": null,
       "cue": "Crunch up and across, taking one shoulder towards the opposite hip.",
@@ -2000,6 +2074,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "crunch",
       "bodyFraction": 0.9,
       "attachment": null,
       "cue": "Knees bent, curl your hips up off the board. The legs stay passive.",
@@ -2022,6 +2097,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "crunch",
       "bodyFraction": 0.75,
       "attachment": null,
       "cue": "Alternate elbow to opposite knee, extending the other leg as you go.",
@@ -2044,6 +2120,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "crunch",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Face down in a plank on the board, draw both knees up towards your chest.",
@@ -2070,6 +2147,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "crunch",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "From the same plank, keep your legs straight and lift your hips towards the ceiling.",
@@ -2096,6 +2174,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "hold",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Forearms on the board, body in a straight line, and hold. Count time, not reps.",
@@ -2122,6 +2201,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "hold",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "One forearm down, hips stacked and lifted. Hold, then swap sides.",
@@ -2144,6 +2224,7 @@
         "facing": "tower",
         "grip": "wing bars"
       },
+      "pattern": "raise",
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
       "cue": "Hold the wing overhead and draw your knees up towards your chest.",
@@ -2166,6 +2247,7 @@
         "facing": "tower",
         "grip": "AbCrunch pads"
       },
+      "pattern": "curl",
       "bodyFraction": 1.0,
       "attachment": "AbCrunch",
       "cue": "Head towards the top, arms hooked over the pads, curl your ribs down and let the board follow.",
@@ -2188,6 +2270,7 @@
         "facing": "tower",
         "grip": "AbCrunch pads"
       },
+      "pattern": "crunch",
       "bodyFraction": 1.0,
       "attachment": "AbCrunch",
       "cue": "Same curl-up, but drive one shoulder across towards the opposite hip. Alternate sides.",
@@ -2210,6 +2293,7 @@
         "facing": "tower",
         "grip": "leg pull bar"
       },
+      "pattern": "crunch",
       "bodyFraction": 0.9,
       "attachment": "Leg pull accessory",
       "cue": "Feet in the accessory, pull your legs down and in against the cable.",
@@ -2236,6 +2320,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "raise",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Arms out in front, rotate your ribcage away from the cable and return slowly.",
@@ -2258,6 +2343,7 @@
         "facing": "tower",
         "grip": "single handle"
       },
+      "pattern": "press",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Pull the handle diagonally across your body, high to low, turning through the trunk.",
@@ -2284,6 +2370,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "press",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Pull over from overhead, then press straight up from your chest. One rep is both halves.",
@@ -2315,6 +2402,7 @@
         "grip": "handles",
         "alsoFacing": "floor"
       },
+      "pattern": "curl",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Row to your waist, then curl the handles up to your shoulders before lowering.",
@@ -2341,6 +2429,7 @@
         "facing": "floor",
         "grip": "handles"
       },
+      "pattern": "fly",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "Press up, then open your arms wide and sweep them back together.",
@@ -2371,6 +2460,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "crunch",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Plank on the board, drive one knee up at a time at a steady pace.",
@@ -2401,6 +2491,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "squat",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Tuck your knees in, press the board out to a plank, then pull back and drive out through your feet.",
@@ -2431,6 +2522,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "squat",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "One foot loaded on the stand, drive it out explosively and return under control.",
@@ -2461,6 +2553,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "squat",
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
       "cue": "Toes on the bar, heels lifted, press the board away and return slowly under control.",
@@ -2491,6 +2584,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "squat",
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
       "cue": "Heels together and knees open, press out until your legs are straight, then fold back in.",
@@ -2521,6 +2615,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "raise",
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
       "cue": "Legs straight against the bar, trace a slow circle without letting your hips rock.",
@@ -2551,6 +2646,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "squat",
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
       "cue": "One foot on the bar and one leg free, push the board away with the working leg only.",
@@ -2581,6 +2677,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "hold",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Lie back, straighten one leg towards the ceiling and draw it gently in. Hold and breathe.",
@@ -2603,6 +2700,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "hold",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Kneel on the board and ease your hips forward until you feel the front of the thigh open.",
@@ -2625,6 +2723,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "hold",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Half-kneeling, let the incline carry your hips forward. Front of the hip, not the lower back.",
@@ -2647,6 +2746,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "hold",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Ankle crossed over the opposite knee, draw both legs in towards your chest.",
@@ -2669,6 +2769,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "hold",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Feet wide on the stand, let your knees ease apart and hold where it's comfortable.",
@@ -2691,6 +2792,7 @@
         "facing": "tower",
         "grip": "nothing"
       },
+      "pattern": "hold",
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "Ball of one foot on the edge of the stand, let the heel drop and hold.",
@@ -2713,6 +2815,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "hold",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Arms wide with the handles, let them draw your chest open. Stop well short of pain.",
@@ -2735,6 +2838,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "hold",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Reach overhead, hold the handles and let your ribs lengthen away from your hips.",
@@ -2757,6 +2861,7 @@
         "facing": "tower",
         "grip": "handles"
       },
+      "pattern": "hold",
       "bodyFraction": 0.85,
       "attachment": null,
       "cue": "One arm across your body, use the other to draw it in until the back of the shoulder opens.",
@@ -2779,6 +2884,7 @@
         "facing": "floor",
         "grip": "nothing"
       },
+      "pattern": "hold",
       "bodyFraction": 1.0,
       "attachment": null,
       "cue": "Lie back, drop both knees to one side and keep both shoulders on the board.",

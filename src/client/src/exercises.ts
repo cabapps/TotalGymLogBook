@@ -87,6 +87,11 @@ export interface Exercise {
   readonly usesPulley: boolean;
   readonly peakTension: PeakTension;
   readonly setup: ExerciseSetup;
+  /**
+   * Which joint does the work. Drives the demo animation and nothing else -- it never touches a
+   * load or a set count.
+   */
+  readonly pattern: string;
   /** Share of bodyweight riding the glideboard. Estimated, not measured. */
   readonly bodyFraction: number;
   readonly attachment: string | null;

@@ -637,6 +637,9 @@ COMMENT = [
     "              alsoFacing names a second direction the movement works at, where one exists --",
     "              a curl is fine either way round. That is not a footnote: it lets a curl sit in",
     "              a block of pressing without anybody turning around.",
+    "pattern     : which joint does the work, so the app can draw the movement. Derived from the",
+    "              name where the name says what the movement is, overridden where it does not.",
+    "              Presentation only -- it never touches a load or a set count.",
     "peakTension : where in the range the muscle is most loaded -- 'lengthened', 'even', or",
     "              'shortened'. Loaded work at long muscle lengths grows a muscle more than the",
     "              same sets through a shortened range, and a cable machine holds tension at the",
@@ -653,6 +656,64 @@ COMMENT = [
     "              Fractional accounting matters because Total Gym work is almost all compound;",
     "              see docs/adr/0010.",
 ]
+
+# WHAT ACTUALLY MOVES.
+#
+# Enough to draw the movement, and no more. Every Total Gym exercise is the glideboard travelling
+# up and down one rail plus one joint doing the work, so an animation needs the joint and the
+# direction -- not a motion-capture rig.
+#
+# Derived from the name, because the names describe the movement and a hand-written table of a
+# hundred would drift out of step with them. Overrides exist for the ones whose names do not say
+# what they do.
+PATTERNS = [
+    # Order matters: the first match wins, so the specific phrases go above the general words.
+    # "Calf Raise" is an ankle movement, not a shoulder one.
+    ("calf", ("calf raise", "toe press")),
+    ("fly", ("fly", "crossover")),
+    ("pulldown", ("pulldown", "pullover", "pull-up", "chin-up")),
+    ("row", ("row", "face pull", "shrug")),
+    ("curl", ("curl",)),
+    ("extend", ("extension", "pushdown", "kickback")),
+    ("press", ("press", "push-up", "dip")),
+    ("raise", ("raise", "fly", "rotation", "abduction", "adduction", "circle")),
+    ("squat", ("squat", "frog", "footwork", "scooter", "burpee", "sprinter", "leg pull")),
+    ("hinge", ("bridge", "hinge", "kickback")),
+    ("crunch", ("crunch", "tuck", "pike", "knee raise", "twist", "climber", "bicycle")),
+    ("hold", ("plank", "hold", "stretch")),
+]
+
+PATTERN_OVERRIDES = {
+    "leg-extension": "extend",
+    "hamstring-curl": "curl",
+    "wing-hamstring-curl": "curl",
+    "glute-kickback": "hinge",
+    "triceps-kickback": "extend",
+    "side-lying-leg-lift": "raise",
+    "hip-abduction": "raise",
+    "hip-adduction": "raise",
+    "leg-pull": "crunch",
+    "pullover-to-press": "press",
+    "press-to-fly": "fly",
+    "row-to-curl": "curl",
+    "board-burpee": "squat",
+    "mountain-climber": "crunch",
+    "jump-squat": "squat",
+    "spinal-twist": "hold",
+}
+
+
+def pattern_of(e):
+    """The joint that does the work, for the demo animation."""
+    if e.id in PATTERN_OVERRIDES:
+        return PATTERN_OVERRIDES[e.id]
+
+    name = e.name.lower()
+    for pattern, words in PATTERNS:
+        if any(word in name for word in words):
+            return pattern
+    return "press"
+
 
 def setup_of(e):
     """Position, facing and grip. Every movement is listed explicitly."""
@@ -701,6 +762,9 @@ def main():
     wrong_way = [e.id for e in EX if e.att == STAND and setup_of(e)["facing"] != "tower"]
     assert not wrong_way, f"squat-stand movements must face the tower: {sorted(wrong_way)}"
 
+    stray_pattern = set(PATTERN_OVERRIDES) - seen
+    assert not stray_pattern, f"pattern override for unknown exercises: {sorted(stray_pattern)}"
+
     stray_setup = set(SETUP) - seen
     assert not stray_setup, f"setup for unknown exercises: {sorted(stray_setup)}"
 
@@ -736,6 +800,7 @@ def main():
                 "usesPulley": e.pulley,
                 "peakTension": peak(e.id),
                 "setup": setup_of(e),
+                "pattern": pattern_of(e),
                 "bodyFraction": e.bf,
                 "attachment": e.att,
                 "cue": e.cue,
