@@ -166,14 +166,33 @@ public sealed class ProgramTemplateTests
 
     private sealed record TemplateFile(IReadOnlyList<TemplateDto> Templates);
     private sealed record TemplateDto(
-        string Id, string Name, string Description, string BestFor,
+        string Id, string Name, string Emphasis, string Description, string BestFor,
         IReadOnlyList<SessionDto> Sessions);
     private sealed record SessionDto(string Id, string Name, IReadOnlyList<PlannedDto> Exercises);
     private sealed record PlannedDto(string ExerciseId, int Sets);
 
+    private static readonly VolumeTarget Target = VolumeTarget.For(ExperienceLevel.Novice);
+
     private static readonly IReadOnlyList<TemplateDto> Templates =
         JsonSerializer.Deserialize<TemplateFile>(RepoData.Read("programs.json"), RepoData.JsonOpts)!
             .Templates;
+
+    [Fact]
+    public void Agrees_with_the_shell_on_a_shipped_template()
+    {
+        // The twin of 'agrees with the C# analyzer on a shipped template' in
+        // src/client/test/emphasis.test.ts. Two implementations of the same accounting exist
+        // because the editor needs the numbers live in the shell and the coach needs them here
+        // (docs/adr/0009); this pair is what catches one drifting from the other.
+        var weekly = new ProgramAnalyzer()
+            .WeeklySets(ToProgram(Templates.Single(t => t.Id == "push-pull-legs")), Catalog);
+
+        Assert.Equal(7, weekly[MuscleGroup.Chest]);
+        Assert.Equal(12, weekly[MuscleGroup.Back]);
+        Assert.Equal(6, weekly[MuscleGroup.Quadriceps]);
+        Assert.Equal(9, weekly[MuscleGroup.Biceps]);
+        Assert.Equal(10, weekly[MuscleGroup.Glutes]);
+    }
 
     [Fact]
     public void Every_planned_exercise_exists()
@@ -222,22 +241,139 @@ public sealed class ProgramTemplateTests
         }
     }
 
-    [Theory]
-    [InlineData("full-body")]
-    [InlineData("upper-lower")]
-    [InlineData("push-pull-legs")]
-    public void Shipped_templates_clear_the_effective_dose_where_they_claim_to(string id)
-    {
-        // The point of shipping a template is that it works out of the box. A split that leaves
-        // a muscle it is SUPPOSED to cover under the effective dose is a bug in the data.
-        var template = Templates.Single(t => t.Id == id);
-        var program = new TrainingProgram(template.Id, template.Name,
+    private static TrainingProgram ToProgram(TemplateDto template) =>
+        new(template.Id, template.Name,
             template.Sessions
                 .Select(s => new Domain.Training.ProgramSession(s.Id, s.Name,
                     s.Exercises.Select(e => new PlannedExercise(e.ExerciseId, e.Sets)).ToList()))
                 .ToList());
 
-        var weekly = new ProgramAnalyzer().WeeklySets(program, Catalog);
+    private static ProgramEmphasis EmphasisOf(TemplateDto template) => template.Emphasis switch
+    {
+        "lengthened" => ProgramEmphasis.Lengthened,
+        "largest-muscles" => ProgramEmphasis.LargestMuscles,
+        "heavy-compounds" => ProgramEmphasis.HeavyCompounds,
+        "circuit" => ProgramEmphasis.Circuit,
+        "gentle" => ProgramEmphasis.Gentle,
+        _ => throw new FormatException($"{template.Id} has emphasis '{template.Emphasis}'")
+    };
+
+    [Fact]
+    public void Every_way_of_training_the_app_asks_about_has_a_program_behind_it()
+    {
+        // Onboarding offers five answers. An answer with no program behind it is a question the
+        // app had no business asking.
+        Assert.Equal(
+            Enum.GetValues<ProgramEmphasis>().ToHashSet(),
+            Templates.Select(EmphasisOf).ToHashSet());
+    }
+
+    [Fact]
+    public void A_muscle_building_template_is_built_out_of_stretch_loaded_movements()
+    {
+        // The claim the emphasis makes. Loaded work at long muscle lengths grows a muscle more
+        // than the same sets through a shortened range, and a template that says 'lengthened'
+        // while being mostly squeeze movements is lying to the trainee who picked it.
+        var analyzer = new ProgramAnalyzer();
+
+        foreach (var template in Templates.Where(t => t.Emphasis == "lengthened"))
+        {
+            var tension = analyzer.Tension(ToProgram(template), Catalog);
+
+            Assert.True(tension.LengthenedShare >= 0.5,
+                $"{template.Id} is only {tension.LengthenedShare:P0} stretch-loaded");
+            Assert.True(tension.Lengthened > tension.Shortened, template.Id);
+        }
+    }
+
+    [Fact]
+    public void A_fat_loss_template_spends_its_sets_on_the_biggest_muscles()
+    {
+        // Training barely dents the calorie side; its job in a deficit is keeping and adding lean
+        // mass, and the most of that sits on the legs and back.
+        var big = new[]
+        {
+            MuscleGroup.Quadriceps, MuscleGroup.Back, MuscleGroup.Glutes,
+            MuscleGroup.Hamstrings, MuscleGroup.Chest,
+        };
+
+        double BigShare(TemplateDto template)
+        {
+            var planned = template.Sessions.SelectMany(s => s.Exercises).ToList();
+            var onBigMuscles = planned
+                .Where(p => Catalog.TryGet(p.ExerciseId) is { } e
+                            && big.Any(m => e.InvolvementOf(m) >= MuscleInvolvement.Direct))
+                .Sum(p => p.Sets);
+
+            return (double)onBigMuscles / planned.Sum(p => p.Sets);
+        }
+
+        var fatLoss = Templates.Single(t => t.Emphasis == "largest-muscles");
+        var share = BigShare(fatLoss);
+
+        // Stated as a COMPARISON rather than a threshold. The claim is that with the same goal —
+        // build muscle — the fat-loss emphasis spends more of its sets on the big muscles than
+        // the growth emphasis does. A fixed percentage would only ever be the number that made
+        // today's data pass, and would not notice the two templates converging.
+        //
+        // Not compared against the strength template, which is compound-heavy by definition and
+        // would win this on an axis it is not competing on.
+        foreach (var other in Templates.Where(t => t.Emphasis == "lengthened"))
+        {
+            Assert.True(share > BigShare(other),
+                $"{fatLoss.Id} is {share:P0} big-muscle work, no more than {other.Id} at {BigShare(other):P0}");
+        }
+
+        Assert.True(share >= 0.65, $"{fatLoss.Id} puts only {share:P0} of its sets on big muscles");
+    }
+
+    [Fact]
+    public void A_rehab_template_never_leads_a_trainee_into_a_loaded_stretch()
+    {
+        foreach (var template in Templates.Where(t => t.Emphasis == "gentle"))
+        {
+            Assert.Equal(0, new ProgramAnalyzer().Tension(ToProgram(template), Catalog).Lengthened);
+        }
+    }
+
+    [Fact]
+    public void The_volume_yardstick_follows_the_goal()
+    {
+        // The effective dose is a hypertrophy number. Holding a rehab program to it would have
+        // the app calling a program a failure for being exactly what the trainee asked for.
+        var gentle = Templates.Single(t => t.Emphasis == "gentle");
+        var program = ToProgram(gentle);
+        var analyzer = new ProgramAnalyzer();
+
+        var asRehab = analyzer.Critique(program, Catalog, Target, ProgramEmphasis.Gentle);
+        var asGrowth = analyzer.Critique(program, Catalog, Target, ProgramEmphasis.Lengthened);
+
+        Assert.Empty(asRehab.Warnings);
+        Assert.NotEmpty(asGrowth.Warnings);
+        Assert.Contains("cleared for", asRehab.EmphasisNote);
+
+        // Suppressing the volume warnings does not suppress the reporting: a gap is still named,
+        // whatever the goal. The trainee is told and never blocked.
+        var narrow = new TrainingProgram("p", "Arms only",
+            [new Domain.Training.ProgramSession("s", "S", [new PlannedExercise("biceps-curl", 3)])]);
+
+        Assert.Contains(
+            "Nothing in it trains",
+            analyzer.Critique(narrow, Catalog, Target, ProgramEmphasis.Gentle).Untrained);
+    }
+
+    [Theory]
+    [InlineData("full-body")]
+    [InlineData("upper-lower")]
+    [InlineData("push-pull-legs")]
+    [InlineData("big-muscle-full-body")]
+    [InlineData("strength-upper-lower")]
+    public void Shipped_templates_clear_the_effective_dose_where_they_claim_to(string id)
+    {
+        // The point of shipping a template is that it works out of the box. A split that leaves
+        // a muscle it is SUPPOSED to cover under the effective dose is a bug in the data.
+        var template = Templates.Single(t => t.Id == id);
+        var weekly = new ProgramAnalyzer().WeeklySets(ToProgram(template), Catalog);
 
         // Everything a shipped template DOES train must clear the effective dose. A template
         // the app criticizes on the day it ships is a bug in the data, and this caught exactly

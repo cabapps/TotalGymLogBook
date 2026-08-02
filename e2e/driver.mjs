@@ -123,6 +123,18 @@ async function main() {
     return text;
   };
 
+  /** waitForText against a page other than the desktop one. */
+  const waitForTextOn = async (target, locator, pattern, timeout = 10_000) => {
+    const deadline = Date.now() + timeout;
+    let text = '';
+    while (Date.now() < deadline) {
+      text = await locator.innerText().catch(() => '');
+      if (pattern.test(text)) return text;
+      await target.waitForTimeout(150);
+    }
+    return text;
+  };
+
   const results = [];
   const check = (label, ok, detail = '') => {
     results.push({ label, ok, detail });
@@ -160,10 +172,20 @@ async function main() {
   const note = await page.locator('tg-set-logger #loadNote').innerText();
   check('flags cable exercises', /half the incline load/.test(note), note.trim());
 
+  // Reps start at zero, not at a guess. A prefilled count is one the trainee has to notice and
+  // correct, and a set logged at a number they did not do reads as real data forever.
+  const startingReps = await page.locator('tg-set-logger #reps').inputValue();
+  check('reps start at zero', startingReps === '0', `${startingReps} reps`);
+
   await page.locator('tg-set-logger #plus').click();
   await page.locator('tg-set-logger #plus').click();
   const reps = await page.locator('tg-set-logger #reps').inputValue();
-  check('rep stepper works', reps === '12', `${reps} reps`);
+  check('rep stepper works', reps === '2', `${reps} reps`);
+
+  // Twelve: the top of the hypertrophy rep range, so the coach downstream has a reason to
+  // recommend more load rather than more reps. Reps now start at zero, so this has to be set
+  // rather than nudged.
+  await page.fill('tg-set-logger #reps', '12');
 
   await page.screenshot({ path: join(SHOTS, '02-logger.png'), fullPage: true });
 
@@ -380,8 +402,9 @@ async function main() {
   console.log('\nPrograms:');
   await page.locator('tg-program-panel #change').click().catch(() => {});
   await page.waitForSelector('tg-program-panel #use-0', { timeout: 15_000 });
-  check('offers the splits people actually run',
-    (await page.locator('tg-program-panel .choice h4').count()) === 3);
+  check('offers a program for every way of training',
+    (await page.locator('tg-program-panel .choice h4').count()) >= 5,
+    `${await page.locator('tg-program-panel .choice h4').count()} templates`);
 
   // Push/Pull/Legs -- its first session leads with chest press, which is already logged today,
   // so the tick list has something to show immediately.
@@ -411,9 +434,36 @@ async function main() {
 
   const afterLog = await waitForText(
     page.locator('tg-program-panel #plan li').nth(1),
-    /1\/3/,
+    /1\/\d/,
   );
-  check('logging ticks the plan along', /1\/3/.test(afterLog), afterLog.replace(/\s+/g, ' '));
+  check('logging ticks the plan along', /1\/\d/.test(afterLog), afterLog.replace(/\s+/g, ' '));
+
+  // Browsing the rotation. A program with three sessions that only ever shows one of them is a
+  // program the trainee cannot see the shape of.
+  const before = await page.locator('tg-program-panel #session-name').innerText();
+  await page.locator('tg-program-panel #next').click();
+  const browsed = await waitForText(
+    page.locator('tg-program-panel #session-name'),
+    new RegExp(`^(?!${before.trim()}$).+`),
+  );
+  check('you can step through the rotation', browsed.trim() !== before.trim(),
+    `${before.trim()} -> ${browsed.trim()}`);
+
+  const browsingNote = await page.locator('tg-program-panel #browsing').count();
+  check('and it says that is not the one you were due', browsingNote === 1);
+
+  await page.locator('tg-program-panel #prev').click();
+  const backAgain = await waitForText(
+    page.locator('tg-program-panel #session-name'),
+    new RegExp(`^${before.trim()}$`),
+  );
+  check('and step back', backAgain.trim() === before.trim(), backAgain.trim());
+
+  const pairNote = await page.locator('tg-program-panel .pairnote').count();
+  check('marks movements that can be alternated', pairNote > 0, `${pairNote} pairs`);
+
+  const sessionMinutes = await page.locator('tg-program-panel #session-minutes').innerText();
+  check('says how long the session takes', /~\d+ min/.test(sessionMinutes), sessionMinutes.trim());
 
   await page.screenshot({ path: join(SHOTS, '13-program.png'), fullPage: true });
 
@@ -432,6 +482,86 @@ async function main() {
   check('lists the sessions', sessionsListed === 3, `${sessionsListed} sessions`);
 
   await page.screenshot({ path: join(SHOTS, '14-program-critique.png'), fullPage: true });
+
+  // ---- Building a program ----
+  //
+  // The point of the editor is that the volume moves WHILE you choose, so the effective dose is
+  // a dial rather than a verdict you get afterwards. That is only observable end to end: the
+  // numbers come from the shell's own copy of the accounting, and they have to change on the
+  // same tap that changes the plan.
+  console.log('\nProgram editor:');
+  await page.locator('.tg-nav a', { hasText: 'Log' }).click().catch(() => {});
+  await page.waitForSelector('tg-program-panel #edit', { timeout: 30_000 });
+  await page.locator('tg-program-panel #edit').click();
+  await page.waitForSelector('tg-program-editor #volume', { timeout: 15_000 });
+
+  check('opens on the program you are running',
+    (await page.locator('tg-program-editor .session').count()) === 3,
+    `${await page.locator('tg-program-editor .session').count()} sessions`);
+
+  const chestBefore = await page.locator('tg-program-editor #volume li').first().innerText();
+  check('shows sets per muscle while you build', /\d/.test(chestBefore),
+    chestBefore.replace(/\s+/g, ' '));
+
+  // A movement's set count is the dial. Bumping it has to move the bar it feeds.
+  const setsBefore = await page.locator('tg-program-editor #sets-0-0').innerText();
+  await page.locator('tg-program-editor #plus-0-0').click();
+  await page.locator('tg-program-editor #plus-0-0').click();
+  const setsAfter = await page.locator('tg-program-editor #sets-0-0').innerText();
+  check('sets can be dialed up', Number(setsAfter) === Number(setsBefore) + 2,
+    `${setsBefore} -> ${setsAfter}`);
+
+  const chestAfter = await page.locator('tg-program-editor #volume li').first().innerText();
+  check('the volume moves as you edit', chestAfter !== chestBefore,
+    `${chestBefore.replace(/\s+/g, ' ')} -> ${chestAfter.replace(/\s+/g, ' ')}`);
+
+  // Ranking, not filtering: for someone building muscle the stretch-loaded movements come first,
+  // and everything else is still in the list.
+  const firstOption = await page.locator('tg-program-editor #add-0 option').nth(1).innerText();
+  check('offers stretch-loaded movements first for building muscle', /★/.test(firstOption),
+    firstOption.trim());
+
+  const optionCount = await page.locator('tg-program-editor #add-0 option').count();
+  check('still offers everything else', optionCount > 60, `${optionCount} movements`);
+
+  // Strip a session down to one arm movement: the gaps must be REPORTED and the save must
+  // still work. A program that ignores a muscle group is a choice, not an error.
+  for (const index of [2, 1]) {
+    await page.locator(`tg-program-editor #skill-${index}`).click();
+  }
+  const exerciseRows = await page.locator('tg-program-editor li.ex').count();
+  for (let i = exerciseRows - 1; i >= 1; i--) {
+    await page.locator(`tg-program-editor #drop-0-${i}`).click();
+  }
+
+  const verdictText = await waitForText(
+    page.locator('tg-program-editor #verdict'),
+    /Nothing in here trains/,
+  );
+  check('names the muscle groups a program ignores', /Nothing in here trains/.test(verdictText),
+    verdictText.replace(/\s+/g, ' ').slice(0, 80) + '…');
+
+  const saveEnabled = await page.locator('tg-program-editor #save').isEnabled();
+  check('a gap never blocks saving', saveEnabled);
+
+  await page.screenshot({ path: join(SHOTS, '15-program-editor.png'), fullPage: true });
+
+  await page.locator('tg-program-editor #save').click();
+  await page.waitForSelector('tg-program-panel #plan', { timeout: 15_000 });
+
+  const editedName = await page.locator('tg-program-panel #session-name').innerText();
+  check('the edited program becomes the one you are running', editedName.trim().length > 0,
+    editedName.trim());
+
+  // The panel refreshes asynchronously after the save, so poll rather than read once -- the
+  // stale row count is the old program, which looks exactly like the edit not sticking.
+  let planRows = 0;
+  for (let i = 0; i < 60; i++) {
+    planRows = await page.locator('tg-program-panel #plan li').count();
+    if (planRows === 1) break;
+    await page.waitForTimeout(150);
+  }
+  check('the plan reflects the edit', planRows === 1, `${planRows} movements`);
 
   // ---- History ----
   console.log('\nHistory:');
@@ -596,14 +726,20 @@ async function main() {
   const loggedReps = await phone.locator('tg-session-list .reps').first().innerText();
   check('the counted set logs with the counted reps', loggedReps === String(corrected), loggedReps);
 
-  // Motion is deliberately NOT stopped by logging a set -- the sensor costs nothing idle and
-  // re-arming it every set is friction. Voice is, and that is covered separately below.
-  await phone.waitForSelector('tg-rep-assist #stop', { timeout: 10_000 });
-  check('motion keeps counting after a set is logged', true);
+  // Motion stops when the set is logged, exactly like voice. It used to keep running on the
+  // theory that an idle accelerometer costs nothing -- but it does: a phone that keeps counting
+  // while the trainee walks away adds reps to the next set before it starts, and they cannot see
+  // it happening because they are not looking at the phone.
+  const motionStatus = await waitForTextOn(
+    phone,
+    phone.locator('tg-rep-assist #status'),
+    /Stopped counting/,
+  );
+  check('motion stops when the set is logged', /Stopped counting/.test(motionStatus),
+    motionStatus.trim());
 
-  await phone.locator('tg-rep-assist #stop').click();
   const stopped = await phone.locator('tg-rep-assist #stop').count();
-  check('an explicit Stop switches the source off', stopped === 0);
+  check('and the Stop button goes with it', stopped === 0);
 
   check('no page errors during rep assist', phoneErrors.length === 0, phoneErrors.slice(0, 2).join(' | '));
 
@@ -661,6 +797,19 @@ async function main() {
 
   const stillListed = await phone.locator('tg-set-logger #exercise option[value="squat"]').count();
   check('a squat-stand movement is gone', stillListed === 0);
+
+  // Vest and bar are accessories too, and they gate FIELDS rather than exercises. Two number
+  // inputs that are always zero are two things to scroll past on the one screen that has to stay
+  // fast, for someone who owns neither.
+  const vestField = await phone.locator('tg-set-logger #vest').count();
+  const barField = await phone.locator('tg-set-logger #bar').count();
+  check('added-load fields disappear for someone who owns neither', vestField + barField === 0);
+
+  await phone.locator('tg-equipment #att-weight-vest').check();
+  await phone.waitForSelector('tg-set-logger #vest', { state: 'attached', timeout: 15_000 });
+  check('and come back when they say they own one', true);
+  await phone.locator('tg-equipment #att-weight-vest').uncheck();
+  await phone.waitForSelector('tg-set-logger #vest', { state: 'detached', timeout: 15_000 });
 
   // An exercise names a CAPABILITY, not a product. The wing shipped as one piece and as two,
   // and either one has to unlock pull-ups -- which is only observable end to end, because the

@@ -184,6 +184,78 @@ still offers the full catalog, the tick list counts sets logged *today* rather t
 this session record — closing the app mid-workout starts a new record but is obviously the same
 workout to the trainee — and doing four sets where the plan said three is not an error.
 
+### Exercise order is setup order, and a session fits in thirty minutes
+
+A Total Gym is one station that becomes a different station in seconds — but only when the next
+movement is set up like the last one. Ordering the same exercises badly is the difference between
+a 30-minute session and a 45-minute one, so the plan is ordered by **setup**, not by muscle:
+movements sharing a position and a grip sit together, the squat stand goes on once, and the
+attachment is the only change weighty enough to order a session around (fitting one is a minute;
+sitting up or picking the cables up is seconds).
+
+Where two neighbours also drive different muscles, they are marked as a **pair to alternate** —
+the rest between one movement's sets is spent doing the other's, which is where most of the
+remaining time goes. Pairing is *derived* from the ordered plan rather than stored, so it stays
+true when the trainee edits.
+
+Some movements work **either way round** — a curl is fine facing the tower or away from it — and
+`setup.alsoFacing` records that. It is not a footnote about wording: a movement that works both
+ways can sit in the middle of a block set up the other way, so it changes the order the session
+comes out in. A model that knew only one direction would send the trainee turning around and back
+for a single exercise.
+
+`Exercise.setup` serves this and the setup instructions in the logger from one field, deliberately.
+If the ordering believed two movements shared a setup while the instructions told the trainee to
+turn around between them, one of them would be lying and there would be no way to tell which.
+
+**Thirty minutes is a constraint on the templates, not a display.** Every shipped session is
+estimated to fit inside half an hour at its goal's rest periods with its set counts as written,
+and a test enforces it. It is why the strength sessions have three movements rather than five:
+three-minute rests are the point of strength work, and a template that quietly takes fifty minutes
+is one most people stop running — while blaming themselves rather than the plan.
+
+### Set counts start at one and grow with what the trainee actually does
+
+Template set counts are a **ceiling**. The plan shown starts at one set per movement and rises to
+one more than the most the trainee has done of that movement in a day, capped by the template.
+
+Someone new to training does not want fifteen working sets, and an app whose first session is one
+they bounce off has failed before any of the coaching matters. Doing extra sets unprompted is a
+request for more work — and a better signal than any question, because it is what they did rather
+than what they predicted. Derived from history, never stored, for the same reason the rotation is.
+
+### The rotation waits for the workout to finish
+
+"Next" advances when a session is **done**, not when it starts. A workout already under way *is*
+the current session — otherwise the tick list the trainee is reading jumps to tomorrow's session
+on their first logged set.
+
+The trainee can also step through the rotation themselves. Whatever session is on screen is what
+gets stamped on the workout, so browsing and choosing are one action: they know they did legs
+yesterday somewhere the app could not see.
+
+### The trainee builds and edits their own
+
+`<tg-program-editor>` is in the **shell**, not Blazor, for the reason everything that writes is:
+IndexedDB is TypeScript's and the derived tier is read-only (0003, 0009). That forces a second
+implementation of the per-muscle volume accounting in `programs.ts`, mirroring
+`ProgramAnalyzer.WeeklySets` — paired tests on both sides assert the same figures for the same
+shipped template, the same way the resistance calculator is kept honest.
+
+**The volume moves while you choose.** The coach can already tell a trainee that a finished
+program leaves their biceps short, but that is the wrong moment — by then they have committed, and
+acting on it means coming back to edit. Showing sets-per-muscle *during* the edit turns the
+effective dose from a verdict into a dial they can watch themselves move.
+
+**Nothing in the editor blocks.** A program that ignores a muscle group saves like any other; the
+gap is named and the decision stays the trainee's. Real programs skip muscles on purpose, and an
+app that refuses to save one is wrong more often than the trainee is. Same line as *untrained is a
+choice; under-dosed is a gap*, above.
+
+**Ranked, never filtered.** The movement list is ordered by what the trainee is training for
+(0010) and still contains everything. A movement that scores badly for their goal may be exactly
+what they want for a reason the app cannot see.
+
 ## Consequences
 
 `TrainingGoal` and `Phase` are short, high-signal context that keep a small model on-topic far

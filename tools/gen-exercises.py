@@ -15,6 +15,45 @@ import json, collections
 E = collections.namedtuple("E", "id name category kind pulley bf att cue muscles")
 D, I = 1.0, 0.5  # direct / indirect involvement
 
+# WHERE IN THE RANGE THE MUSCLE IS MOST LOADED.
+#
+# Everything not listed here is 'even'. Only clear cases are named, because a three-way label
+# applied to all hundred movements by guesswork would be worse than no label at all: the program
+# builder would then rank exercises on noise.
+#
+# Why it exists: training a muscle under load while it is LENGTHENED grows it more than the same
+# sets taken through a shortened range. The Total Gym is unusually good at this -- a cable holds
+# tension at the bottom of a fly where a dumbbell goes slack -- so a hypertrophy program built on
+# this machine should lean on it. See docs/adr/0010.
+#
+# This is a judgment about each movement's mechanics, in the same class as bodyFraction: informed,
+# reviewable, and not measured. Getting one wrong changes which exercise the builder suggests
+# first, never a recorded number.
+LENGTHENED = {
+    # Chest: the cable stays taut at the bottom, where the pec is longest.
+    "chest-press", "chest-fly", "incline-chest-fly", "chest-crossover",
+    "single-arm-chest-press", "shaper-bar-press", "decline-push-up", "chest-dip",
+    # Back: lats under load with the arms overhead.
+    "pullover", "lat-pulldown", "wide-grip-pulldown", "reverse-grip-pulldown",
+    "straight-arm-pulldown", "pull-up", "chin-up", "wide-grip-pull-up",
+    # Arms: the long head of the triceps and the biceps, loaded overhead.
+    "overhead-triceps-extension", "rope-overhead-extension", "overhead-cable-curl",
+    # Legs: the bottom of a squat, and a calf raise off the edge of the stand.
+    "squat", "wide-stance-squat", "narrow-stance-squat", "single-leg-squat", "split-squat",
+    "hip-bridge", "calf-raise", "single-leg-calf-raise", "pilates-frog",
+}
+
+# Load peaks where the muscle is already short. Not bad exercises -- several are the only way to
+# reach a muscle on this machine -- but a hypertrophy program should not be built out of them.
+SHORTENED = {
+    "lateral-raise", "front-raise", "scaption-raise", "shoulder-shrug", "upright-row",
+    "reverse-fly", "concentration-curl", "triceps-kickback", "triceps-pushdown",
+    "rope-pushdown", "leg-extension", "hamstring-curl", "wing-hamstring-curl",
+    "glute-kickback", "side-lying-leg-lift", "hip-adduction",
+    "crunch", "cable-crunch", "oblique-crunch", "reverse-crunch", "bicycle-crunch",
+    "knee-tuck", "pike", "abcrunch-curl-up", "abcrunch-oblique-twist",
+}
+
 # What an exercise REQUIRES. A capability, not a product: two different accessories can satisfy
 # the same requirement, which is the whole reason this is a separate vocabulary from the
 # accessory list below. See ACCESSORIES.
@@ -59,15 +98,170 @@ ACCESSORIES = [
     A("pilates-kit", "Pilates kit", [PILATES], False, 2, None),
     A("triceps-rope", "Triceps rope", [ROPE], False, 2, None),
     A("shaper-bars", "Tri-grip shaper bars", [SHAPER], False, 2, None),
+
+    # These two unlock no exercises -- they add load to the ones you already do. They are here
+    # because the set logger asks for vest and bar weight on every set, and asking someone who
+    # owns neither is two fields of noise on the one screen that has to stay fast.
+    A("weight-vest", "Weighted vest", [], False, 3,
+      "Adds load to any exercise. Discounted by the incline -- 10 lb at level 8 is about 3 lb."),
+    A("weight-bar", "Weight bar", [], False, 3,
+      "Bolts to the glideboard, so its weight is not discounted the way a vest is."),
 ]
+
+# HOW THE TRAINEE IS ARRANGED ON THE MACHINE.
+#
+# Two jobs, one table. It is what the app tells the trainee about setting the movement up
+# (position, which way they face, what they hold), and it is what decides which movements can be
+# done back to back without rebuilding the machine -- the Total Gym's actual advantage over a rack
+# of separate stations, and the thing that decides whether a session takes 25 minutes or 50.
+#
+# Keeping both off one table is deliberate. If the ordering thought two movements shared a setup
+# while the instructions told the trainee to turn around between them, one of them would be lying,
+# and there would be no way to tell which.
+#
+# NOTHING HAPPENS OFF THE BOARD. Even the dips use it -- there is no standing position, and a
+# model with one in it would order sessions around a changeover that does not exist.
+#
+# position: face-up, face-down, seated, kneeling, side-lying
+# facing  : 'tower' (the pulley end, up the incline) or 'floor' (the low end). Lying, that is
+#           which way the head points; sitting, it is which way the trainee faces -- and it
+#           mostly follows the cable, because you sit facing the tower for what you PULL and away
+#           from it for what you PUSH.
+# also    : a SECOND facing the movement works at, where one exists. A curl is the clear case:
+#           it is fine either way round. This is not a footnote -- it is what lets a curl sit in
+#           the middle of a block of pressing without anybody turning around, so it changes the
+#           order the session comes out in and not just the wording of the instruction.
+# grip    : what is in the hands (or on the ankles)
+#
+# Every movement is listed. These are judgments about how each is normally performed, in the same
+# class as bodyFraction -- reviewable, and wrong only in the direction of a clumsier exercise
+# order or an instruction that reads oddly.
+SETUP = {
+    # ---- lying face up, head toward the tower: arms overhead, cable coming from above
+    "pullover": ("face-up", "tower", "handles"),
+    "lat-pulldown": ("face-up", "tower", "handles"),
+    "wide-grip-pulldown": ("face-up", "tower", "handles, wide"),
+    "reverse-grip-pulldown": ("face-up", "tower", "handles, palms up"),
+    "straight-arm-pulldown": ("face-up", "tower", "handles"),
+    "pullover-to-press": ("face-up", "tower", "handles"),
+    "overhead-triceps-extension": ("face-up", "tower", "handles"),
+    "rope-overhead-extension": ("face-up", "tower", "rope"),
+    "overhead-cable-curl": ("face-up", "tower", "handles"),
+    "cable-crunch": ("face-up", "tower", "handles by your head"),
+    "pull-up": ("face-up", "tower", "wing bars"),
+    "chin-up": ("face-up", "tower", "wing bars, palms toward you"),
+    "wide-grip-pull-up": ("face-up", "tower", "wing bars, wide"),
+    "hanging-knee-raise": ("face-up", "tower", "wing bars"),
+    "abcrunch-curl-up": ("face-up", "tower", "AbCrunch pads"),
+    "abcrunch-oblique-twist": ("face-up", "tower", "AbCrunch pads"),
+    "hamstring-stretch": ("face-up", "tower", "handles"),
+    "lat-stretch": ("face-up", "tower", "handles"),
+    "chest-stretch": ("face-up", "tower", "handles"),
+
+    # ---- lying face up, head toward the floor: feet up on the squat stand
+    "squat": ("face-up", "floor", "nothing"),
+    "wide-stance-squat": ("face-up", "floor", "nothing"),
+    "narrow-stance-squat": ("face-up", "floor", "nothing"),
+    "single-leg-squat": ("face-up", "floor", "nothing"),
+    "split-squat": ("face-up", "floor", "nothing"),
+    "jump-squat": ("face-up", "floor", "nothing"),
+    "hip-bridge": ("face-up", "floor", "nothing"),
+    "calf-raise": ("face-up", "floor", "nothing"),
+    "single-leg-calf-raise": ("face-up", "floor", "nothing"),
+    "toe-press": ("face-up", "floor", "nothing"),
+    "sprinter-start": ("face-up", "floor", "nothing"),
+    "board-burpee": ("face-up", "floor", "nothing"),
+    "adductor-stretch": ("face-up", "floor", "nothing"),
+    "calf-stretch": ("face-up", "floor", "nothing"),
+    "crunch": ("face-up", "floor", "nothing"),
+    "oblique-crunch": ("face-up", "floor", "nothing"),
+    "reverse-crunch": ("face-up", "floor", "nothing"),
+    "bicycle-crunch": ("face-up", "floor", "nothing"),
+    "glute-stretch": ("face-up", "floor", "nothing"),
+    "spinal-twist": ("face-up", "floor", "nothing"),
+    "pilates-footwork": ("face-up", "floor", "nothing"),
+    "pilates-frog": ("face-up", "floor", "nothing"),
+    "pilates-leg-circle": ("face-up", "floor", "nothing"),
+    "pilates-scooter": ("face-up", "floor", "nothing"),
+
+    # ---- sitting, facing the tower: the cable pulls you toward it, so everything you PULL
+    "seated-row": ("seated", "tower", "handles"),
+    "wide-grip-row": ("seated", "tower", "handles, wide"),
+    "high-row": ("seated", "tower", "handles"),
+    "low-row": ("seated", "tower", "handles"),
+    "single-arm-row": ("seated", "tower", "single handle"),
+    "reverse-fly": ("seated", "tower", "handles"),
+    "upright-row": ("seated", "tower", "handles"),
+    "shoulder-shrug": ("seated", "tower", "handles"),
+    "row-to-curl": ("seated", "tower", "handles", "floor"),
+    "shaper-bar-row": ("seated", "tower", "shaper bars"),
+    "rope-face-pull": ("seated", "tower", "rope"),
+    "torso-rotation": ("seated", "tower", "handles"),
+    "cable-woodchop": ("seated", "tower", "single handle"),
+    "external-rotation": ("seated", "tower", "single handle"),
+    "internal-rotation": ("seated", "tower", "single handle"),
+    "shoulder-stretch": ("seated", "tower", "handles"),
+    "biceps-curl": ("seated", "tower", "handles", "floor"),
+    "hammer-curl": ("seated", "tower", "handles, palms in", "floor"),
+    "reverse-curl": ("seated", "tower", "handles, palms down", "floor"),
+    "wide-grip-curl": ("seated", "tower", "handles, wide", "floor"),
+    "concentration-curl": ("seated", "tower", "single handle"),
+    "single-arm-curl": ("seated", "tower", "single handle", "floor"),
+    "shaper-bar-curl": ("seated", "tower", "shaper bars", "floor"),
+    "rope-hammer-curl": ("seated", "tower", "rope", "floor"),
+    "triceps-pushdown": ("seated", "tower", "handles"),
+    "rope-pushdown": ("seated", "tower", "rope"),
+    # Dips press down on the bars at the tower end; the board still carries you.
+    "chest-dip": ("seated", "tower", "dip bars"),
+    "upright-dip": ("seated", "tower", "dip bars"),
+
+    # ---- sitting, facing away from the tower: the cable comes from behind, so everything you PUSH
+    "chest-press": ("seated", "floor", "handles"),
+    "chest-fly": ("seated", "floor", "handles"),
+    "incline-chest-fly": ("seated", "floor", "handles"),
+    "single-arm-chest-press": ("seated", "floor", "single handle"),
+    "close-grip-chest-press": ("seated", "floor", "handles, close"),
+    "chest-crossover": ("seated", "floor", "handles"),
+    "shaper-bar-press": ("seated", "floor", "shaper bars"),
+    "press-to-fly": ("seated", "floor", "handles"),
+    "shoulder-press": ("seated", "floor", "handles"),
+    "front-raise": ("seated", "floor", "handles"),
+    "lateral-raise": ("seated", "floor", "handles"),
+    "scaption-raise": ("seated", "floor", "handles"),
+    "triceps-extension": ("seated", "floor", "handles"),
+    "leg-extension": ("seated", "floor", "ankle straps"),
+    "triceps-dip": ("seated", "floor", "press-up bars"),
+
+    # ---- kneeling
+    "quad-stretch": ("kneeling", "floor", "nothing"),
+    "hip-flexor-stretch": ("kneeling", "floor", "nothing"),
+    "triceps-kickback": ("kneeling", "floor", "single handle"),
+    "glute-kickback": ("kneeling", "floor", "ankle strap"),
+
+    # ---- face down on the board
+    "hamstring-curl": ("face-down", "floor", "ankle straps"),
+    "wing-hamstring-curl": ("face-down", "tower", "nothing"),
+    "leg-pull": ("face-down", "tower", "leg pull bar"),
+    "decline-push-up": ("face-down", "floor", "press-up bars"),
+    "knee-tuck": ("face-down", "floor", "nothing"),
+    "pike": ("face-down", "floor", "nothing"),
+    "mountain-climber": ("face-down", "floor", "nothing"),
+    "plank-hold": ("face-down", "floor", "nothing"),
+
+    # ---- on your side
+    "side-lying-leg-lift": ("side-lying", "floor", "nothing"),
+    "hip-abduction": ("side-lying", "floor", "nothing"),
+    "hip-adduction": ("side-lying", "floor", "nothing"),
+    "side-plank": ("side-lying", "floor", "nothing"),
+}
 
 EX = [
     # ---------------------------------------------------------------- chest
     E("chest-press", "Chest Press", "Chest", "strength", True, 1.0, None,
-      "Lie face up, handles level with your chest, press until your arms are straight.",
+      "Handles level with your chest, elbows tucked, press until your arms are straight.",
       [("Chest", D), ("Triceps", I), ("Shoulders", I)]),
     E("chest-fly", "Chest Fly", "Chest", "strength", True, 1.0, None,
-      "Lie face up with arms wide and elbows softly bent, sweep the handles together over your chest.",
+      "Arms wide with elbows softly bent, sweep the handles together in front of your chest.",
       [("Chest", D), ("Shoulders", I)]),
     E("incline-chest-fly", "Incline Chest Fly", "Chest", "strength", True, 1.0, None,
       "Same sweep as a chest fly, set a notch or two higher so the top of the chest takes more of it.",
@@ -186,6 +380,9 @@ EX = [
     E("single-arm-curl", "Single-Arm Curl", "Arms", "strength", True, 0.85, None,
       "Curl one handle at a time and keep your shoulders square as you do it.",
       [("Biceps", D), ("Core", I)]),
+    E("overhead-cable-curl", "Overhead Cable Curl", "Arms", "strength", True, 1.0, None,
+      "Lie back with the cables coming from above your head and curl towards your forehead, elbows still.",
+      [("Biceps", D)]),
     E("rope-hammer-curl", "Rope Hammer Curl", "Arms", "strength", True, 0.85, ROPE,
       "Curl the rope with your palms facing each other and pull the ends apart at the top.",
       [("Biceps", D)]),
@@ -420,6 +617,20 @@ COMMENT = [
     "              this, adding stretches would silently inflate every muscle's set count and",
     "              make the coach's volume advice wrong (docs/adr/0010).",
     "usesPulley  : true when the movement routes through the cable, which halves the load.",
+    "setup       : how the trainee is arranged on the machine -- position, which end of the rail",
+    "              they face ('tower' is the pulley end), and what is in their hands. Drives both",
+    "              the setup instructions and the session ordering, because two movements that",
+    "              share a setup can be done back to back without rebuilding the machine.",
+    "              alsoFacing names a second direction the movement works at, where one exists --",
+    "              a curl is fine either way round. That is not a footnote: it lets a curl sit in",
+    "              a block of pressing without anybody turning around.",
+    "peakTension : where in the range the muscle is most loaded -- 'lengthened', 'even', or",
+    "              'shortened'. Loaded work at long muscle lengths grows a muscle more than the",
+    "              same sets through a shortened range, and a cable machine holds tension at the",
+    "              bottom of a fly where a dumbbell goes slack, so a hypertrophy program built on",
+    "              this machine should lean on it (docs/adr/0010). A JUDGMENT about mechanics, in",
+    "              the same class as bodyFraction: it changes which exercise gets suggested first,",
+    "              never a recorded number.",
     "bodyFraction: share of bodyweight actually riding the glideboard. Supine work is ~1.0;",
     "              seated and kneeling positions put less of the trainee on the board.",
     "              THESE ARE ESTIMATES, not measurements -- see the open item in docs/adr/README.",
@@ -429,6 +640,22 @@ COMMENT = [
     "              Fractional accounting matters because Total Gym work is almost all compound;",
     "              see docs/adr/0010.",
 ]
+
+def setup_of(e):
+    """Position, facing and grip. Every movement is listed explicitly."""
+    entry = SETUP[e.id]
+    position, facing, grip = entry[0], entry[1], entry[2]
+    setup = {"position": position, "facing": facing, "grip": grip}
+    if len(entry) > 3:
+        setup["alsoFacing"] = entry[3]
+    return setup
+
+
+def peak(exercise_id):
+    if exercise_id in LENGTHENED:
+        return "lengthened"
+    return "shortened" if exercise_id in SHORTENED else "even"
+
 
 def main():
     seen = set()
@@ -443,12 +670,29 @@ def main():
     provided = {c for a in ACCESSORIES for c in a.provides}
     required = {e.att for e in EX if e.att is not None}
     assert required <= provided, f"no accessory provides {sorted(required - provided)}"
+    # An accessory may unlock nothing (a vest adds load to exercises that already exist), but a
+    # capability nothing provides is an exercise no trainee can ever reach.
     assert provided <= required, f"accessory provides nothing usable: {sorted(provided - required)}"
 
     ids = set()
     for a in ACCESSORIES:
         assert a.id not in ids, f"duplicate accessory id {a.id}"
         ids.add(a.id)
+
+    # A tension label on an id that no longer exists is a silent no-op, and the exercise it was
+    # meant for quietly reverts to 'even' -- so the program builder stops recommending it and
+    # nothing anywhere says why.
+    stray_setup = set(SETUP) - seen
+    assert not stray_setup, f"setup for unknown exercises: {sorted(stray_setup)}"
+
+    # Every movement must say how it is set up, or the trainee is told less about it than about
+    # the one next to it, and the session ordering has to guess where they are standing.
+    missing = [e.id for e in EX if e.id not in SETUP]
+    assert not missing, f"no setup recorded for: {sorted(missing)}"
+
+    stray = (LENGTHENED | SHORTENED) - seen
+    assert not stray, f"tension labels for unknown exercises: {sorted(stray)}"
+    assert not (LENGTHENED & SHORTENED), sorted(LENGTHENED & SHORTENED)
 
     doc = {
         "$comment": COMMENT,
@@ -471,6 +715,8 @@ def main():
                 "category": e.category,
                 "kind": e.kind,
                 "usesPulley": e.pulley,
+                "peakTension": peak(e.id),
+                "setup": setup_of(e),
                 "bodyFraction": e.bf,
                 "attachment": e.att,
                 "cue": e.cue,

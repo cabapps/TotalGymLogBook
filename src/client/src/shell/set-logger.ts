@@ -42,6 +42,8 @@ styles.replaceSync(`
   }
   label { display: block; font-size: .75rem; color: var(--muted); margin: .75rem 0 .25rem; }
   .cue { font-size: .75rem; color: var(--muted); margin: .4rem 0 0; line-height: 1.4; }
+  .setup { font-size: .75rem; color: var(--fg); margin: .5rem 0 0; line-height: 1.45; }
+  .setup b { font-weight: 600; }
   .load { display: flex; align-items: baseline; gap: .4rem; margin-top: .85rem; }
   .load b { font-size: 2.25rem; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1; }
   .load span { color: var(--muted); font-size: .8125rem; }
@@ -62,6 +64,55 @@ styles.replaceSync(`
   .row > * { flex: 1; }
 `);
 
+/**
+ * How to set the movement up, in a sentence.
+ *
+ * Composed from the structured setup rather than written per exercise, so the instructions and
+ * the session ordering cannot disagree: the ordering decides two movements can be done back to
+ * back precisely because these sentences say the same thing about both.
+ *
+ * The order is the order you do it in -- get on the board, face the right way, fit the
+ * attachment, pick up the handles.
+ */
+function describeSetup(exercise: Exercise): string {
+  const lying: Record<string, string> = {
+    'face-up': 'Lie face up on the board',
+    'face-down': 'Lie face down on the board',
+    'side-lying': 'Lie on your side on the board',
+  };
+
+  const toTower = exercise.setup.facing === 'tower';
+  const parts: string[] = [];
+
+  // Sitting, the trainee faces a direction; lying, the head points at one. Same axis, and the
+  // two readings of it are the only ones the machine has -- nothing is done off the board.
+  if (exercise.setup.position === 'seated') {
+    parts.push(
+      toTower ? 'Sit on the board facing the tower' : 'Sit on the board facing away from the tower',
+    );
+    // Worth saying out loud: a trainee who knows a movement works both ways can leave the
+    // machine as it is rather than turning around for one exercise.
+    if (exercise.setup.alsoFacing) parts.push('or the other way round, whichever suits');
+  } else if (exercise.setup.position === 'kneeling') {
+    parts.push(toTower ? 'Kneel on the board facing the tower' : 'Kneel on the board facing away');
+  } else {
+    parts.push(lying[exercise.setup.position] ?? 'Get on the board');
+    parts.push(toTower ? 'head toward the tower' : 'head toward the floor');
+  }
+
+  if (exercise.attachment) parts.push(`fit the ${exercise.attachment.toLowerCase()}`);
+
+  if (exercise.setup.grip !== 'nothing') parts.push(`hold the ${exercise.setup.grip}`);
+
+  parts.push(
+    exercise.usesPulley
+      ? 'pulling against the cable'
+      : 'pressing straight off the board — no cable',
+  );
+
+  return `<b>Set up:</b> ${parts.join(', ')}.`;
+}
+
 export class SetLogger extends HTMLElement {
   #root: ShadowRoot;
   #catalog?: ExerciseCatalog;
@@ -73,7 +124,10 @@ export class SetLogger extends HTMLElement {
   #resolveSessionId?: () => Promise<string>;
   /** Undefined means unconfigured, which filters nothing. See ExerciseCatalog.available. */
   #owned: readonly string[] | undefined;
-  #state: UiState = { exerciseId: '', level: 8, reps: 10, vestLb: 0, barLb: 0 };
+  // Reps start at ZERO, not at a guess. A prefilled 10 is a number the trainee has to notice
+  // and correct, and the failure is silent: a set logged at 10 reps they did not do reads as
+  // real data forever. Zero is obviously not a rep count, so it gets fixed before Log set.
+  #state: UiState = { exerciseId: '', level: 8, reps: 0, vestLb: 0, barLb: 0 };
 
   constructor() {
     super();
@@ -143,6 +197,40 @@ export class SetLogger extends HTMLElement {
     }
 
     void this.#assist.setExercise(exerciseId);
+  }
+
+  /**
+   * Whether the trainee owns a piece of added-load kit.
+   *
+   * Unconfigured shows both, for the same reason it shows every exercise: never having opened
+   * the equipment panel is not the same as owning nothing.
+   */
+  #owns(accessoryId: string): boolean {
+    return this.#owned === undefined || this.#owned.includes(accessoryId);
+  }
+
+  /**
+   * Vest and bar weight, asked for only when the trainee has said they own one.
+   *
+   * These are on the one screen that has to stay fast (docs/adr/0003), and two number fields
+   * that are always zero are two things to scroll past between every set.
+   */
+  #addedLoadFields(s: UiState): string {
+    const vest = this.#owns('weight-vest')
+      ? `<div>
+           <label for="vest">Vest (lb)</label>
+           <input type="number" id="vest" min="0" step="2.5" value="${s.vestLb}" />
+         </div>`
+      : '';
+
+    const bar = this.#owns('weight-bar')
+      ? `<div>
+           <label for="bar">Bar (lb)</label>
+           <input type="number" id="bar" min="0" step="2.5" value="${s.barLb}" />
+         </div>`
+      : '';
+
+    return vest || bar ? `<div class="row">${vest}${bar}</div>` : '';
   }
 
   /** Keeps the selected exercise pointing at something that is actually in the list. */
@@ -228,6 +316,7 @@ export class SetLogger extends HTMLElement {
             )
             .join('')}
         </select>
+        <p class="setup" id="setup"></p>
         <p class="cue" id="cue"></p>
 
         <div class="load">
@@ -240,21 +329,12 @@ export class SetLogger extends HTMLElement {
         <label for="reps">Reps</label>
         <div class="stepper">
           <button id="minus" aria-label="One fewer rep">&minus;</button>
-          <input type="number" id="reps" min="1" max="100" value="${s.reps}" />
+          <input type="number" id="reps" min="0" max="100" value="${s.reps}" />
           <button id="plus" aria-label="One more rep">+</button>
         </div>
         <tg-rep-assist id="assist"></tg-rep-assist>
 
-        <div class="row">
-          <div>
-            <label for="vest">Vest (lb)</label>
-            <input type="number" id="vest" min="0" step="2.5" value="${s.vestLb}" />
-          </div>
-          <div>
-            <label for="bar">Bar (lb)</label>
-            <input type="number" id="bar" min="0" step="2.5" value="${s.barLb}" />
-          </div>
-        </div>
+        ${this.#addedLoadFields(s)}
 
         <button class="log" id="log">Log set</button>
       </div>
@@ -274,24 +354,31 @@ export class SetLogger extends HTMLElement {
       this.#update();
     });
     on('reps', 'input', () => {
-      s.reps = Number((this.#root.getElementById('reps') as HTMLInputElement).value) || 1;
+      s.reps = Number((this.#root.getElementById('reps') as HTMLInputElement).value) || 0;
       this.#assist.syncCount(s.reps);
       this.#update();
     });
-    on('vest', 'input', () => {
-      s.vestLb = Number((this.#root.getElementById('vest') as HTMLInputElement).value) || 0;
-      this.#update();
-    });
-    on('bar', 'input', () => {
-      s.barLb = Number((this.#root.getElementById('bar') as HTMLInputElement).value) || 0;
-      this.#update();
-    });
+    if (this.#owns('weight-vest')) {
+      on('vest', 'input', () => {
+        s.vestLb = Number((this.#root.getElementById('vest') as HTMLInputElement).value) || 0;
+        this.#update();
+      });
+    }
+    if (this.#owns('weight-bar')) {
+      on('bar', 'input', () => {
+        s.barLb = Number((this.#root.getElementById('bar') as HTMLInputElement).value) || 0;
+        this.#update();
+      });
+    }
     on('minus', 'click', () => this.#nudgeReps(-1));
     on('plus', 'click', () => this.#nudgeReps(1));
     on('log', 'click', () => void this.#logSet());
 
     // An automatic source proposes; the field is still the truth, and the stepper still works
     // while it runs (docs/adr/0006 rule 3).
+    // Starting a counter resets the field it is going to fill.
+    this.#assist.addEventListener('assist-started', () => this.#setReps(0));
+
     this.#assist.addEventListener('reps-detected', (event) => {
       const { count } = (event as CustomEvent<{ count: number }>).detail;
       if (count > 0) this.#setReps(count);
@@ -306,7 +393,7 @@ export class SetLogger extends HTMLElement {
   }
 
   #nudgeReps(delta: number): void {
-    this.#setReps(Math.max(1, this.#state.reps + delta));
+    this.#setReps(Math.max(0, this.#state.reps + delta));
     // A manual correction re-anchors the counter, so the next spoken number is measured against
     // what the trainee can actually see rather than against a stale internal total.
     this.#assist.syncCount(this.#state.reps);
@@ -325,6 +412,7 @@ export class SetLogger extends HTMLElement {
     this.#root.getElementById('load')!.textContent = lb.toFixed(1);
     this.#root.getElementById('levelText')!.textContent = String(this.#state.level);
     this.#root.getElementById('cue')!.textContent = e.cue;
+    this.#root.getElementById('setup')!.innerHTML = describeSetup(e);
     this.#root.getElementById('loadNote')!.textContent = e.usesPulley
       ? '· cable, so half the incline load'
       : '';

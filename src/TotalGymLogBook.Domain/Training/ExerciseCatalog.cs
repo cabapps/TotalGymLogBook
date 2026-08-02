@@ -154,6 +154,14 @@ public sealed class ExerciseCatalog
             ? muscle
             : throw new FormatException($"Unknown muscle group '{name}' in the exercise catalog.");
 
+    /// <summary>
+    /// Unknown or absent reads as Even — the neutral value. Unlike a muscle name, a tension label
+    /// nobody recognizes is not a data error worth refusing to start over: it only ranks
+    /// suggestions, so the safe failure is to stop ranking rather than to stop the app.
+    /// </summary>
+    private static PeakTension ParseTension(string? name) =>
+        Enum.TryParse<PeakTension>(name, ignoreCase: true, out var tension) ? tension : PeakTension.Even;
+
     private static string Prettify(string id) =>
         string.Join(' ', id.Split('-').Where(w => w.Length > 0)
             .Select(w => char.ToUpperInvariant(w[0]) + w[1..]));
@@ -167,6 +175,7 @@ public sealed class ExerciseCatalog
             ? ExerciseKind.Stretch
             : ExerciseKind.Strength,
         UsesPulley = dto.UsesPulley,
+        PeakTension = ParseTension(dto.PeakTension),
         BodyFraction = dto.BodyFraction,
         Attachment = dto.Attachment,
         Muscles = dto.Muscles
@@ -216,6 +225,7 @@ internal sealed record CatalogDocument
         public string Category { get; init; } = "";
         public string Kind { get; init; } = "strength";
         public bool UsesPulley { get; init; }
+        public string? PeakTension { get; init; }
         public double BodyFraction { get; init; } = 1.0;
         public string? Attachment { get; init; }
         public IReadOnlyList<MuscleDto> Muscles { get; init; } = [];

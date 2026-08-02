@@ -148,6 +148,18 @@ export class ExerciseEditor extends HTMLElement {
           ).join('')}
         </div>
 
+        <label for="stretch">Is it hardest at the stretched end?</label>
+        <select id="stretch">
+          <option value="even">Hard the whole way through</option>
+          <option value="lengthened">Hardest stretched &mdash; like the bottom of a fly</option>
+          <option value="shortened">Hardest squeezed &mdash; like the top of a curl</option>
+        </select>
+        <p class="hint">
+          Movements that are hardest with the muscle long build it fastest, so the program
+          builder offers those first. Asked as what the set feels like, because that is the part
+          you can actually answer.
+        </p>
+
         <label for="cue">How do you do it? (optional)</label>
         <textarea id="cue" maxlength="200" placeholder="A line to remind you of the setup."></textarea>
 
@@ -222,6 +234,7 @@ export class ExerciseEditor extends HTMLElement {
       category: value('category'),
       bodyFraction: POSITIONS[Number(value('position'))]!.fraction,
       usesPulley: value('pulley') === 'yes',
+      peakTension: value('stretch') as 'lengthened' | 'even' | 'shortened',
       cue: (this.#root.getElementById('cue') as HTMLTextAreaElement).value.trim(),
     };
   }

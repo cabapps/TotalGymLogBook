@@ -91,6 +91,12 @@ public sealed record MachineDto
 public sealed record SettingsDto
 {
     [JsonPropertyName("goalPrimary")] public string? GoalPrimary { get; init; }
+
+    /// <summary>
+    /// What the trainee SAID they were training for. Kept alongside the derived goal because
+    /// "lose weight" and "build muscle" produce the same training style but not the same program.
+    /// </summary>
+    [JsonPropertyName("aim")] public string? Aim { get; init; }
     [JsonPropertyName("goalSecondary")] public string? GoalSecondary { get; init; }
     [JsonPropertyName("phaseOverride")] public string? PhaseOverride { get; init; }
     [JsonPropertyName("experienceOverride")] public string? ExperienceOverride { get; init; }

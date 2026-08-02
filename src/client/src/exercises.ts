@@ -39,6 +39,44 @@ export interface Accessory {
   readonly note?: string;
 }
 
+/**
+ * Where in the range the muscle is most loaded.
+ *
+ * Loaded work at long muscle lengths grows a muscle more than the same sets through a shortened
+ * range, and this machine is unusually good at it -- a cable holds tension at the bottom of a fly
+ * where a dumbbell goes slack. So a hypertrophy program built here should lean on the lengthened
+ * ones (docs/adr/0010).
+ *
+ * A judgment about mechanics, in the same class as bodyFraction: it changes which exercise gets
+ * suggested first, never a recorded number.
+ */
+export type PeakTension = 'lengthened' | 'even' | 'shortened';
+
+/**
+ * How the trainee is arranged on the machine.
+ *
+ * Two jobs, one field: it is what the app tells the trainee about setting the movement up, and it
+ * is what decides which movements can be done back to back without rebuilding the machine. Having
+ * the instructions and the ordering read the same data is the point -- if they disagreed, one of
+ * them would be lying to the trainee and there would be no way to tell which.
+ */
+export interface ExerciseSetup {
+  /** supine, prone, seated, kneeling, side-lying, plank, standing. */
+  readonly position: string;
+  /** Which end of the rail the head points at. 'tower' is the pulley end, up the incline. */
+  readonly facing: string;
+  /**
+   * A second facing this movement also works at, where one exists.
+   *
+   * A curl is the clear case: fine either way round. It matters to the ordering rather than to
+   * the wording -- a movement that works both ways can sit in a block set up the other way
+   * without anybody turning around.
+   */
+  readonly alsoFacing?: string;
+  /** What is in the hands, or on the ankles. */
+  readonly grip: string;
+}
+
 export interface Exercise {
   readonly id: string;
   readonly name: string;
@@ -47,6 +85,8 @@ export interface Exercise {
   readonly kind: ExerciseKind;
   /** Cable movements are halved by the pulley (docs/adr/0004). */
   readonly usesPulley: boolean;
+  readonly peakTension: PeakTension;
+  readonly setup: ExerciseSetup;
   /** Share of bodyweight riding the glideboard. Estimated, not measured. */
   readonly bodyFraction: number;
   readonly attachment: string | null;

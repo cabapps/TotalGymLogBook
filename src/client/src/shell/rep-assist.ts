@@ -22,6 +22,20 @@ import { MotionRepSource } from '../reps/motion.js';
 import { VoiceRepSource } from '../reps/voice.js';
 import * as db from '../db/repository.js';
 
+/**
+ * Minimal shapes for the Screen Wake Lock API.
+ *
+ * Declared here rather than pulled from lib.dom: the app targets iOS Safari, where this arrived
+ * late, and the TypeScript DOM library in use does not carry it.
+ */
+interface WakeLockSentinelLike {
+  release(): Promise<void>;
+}
+
+interface WakeLockLike {
+  request(type: 'screen'): Promise<WakeLockSentinelLike>;
+}
+
 export type AssistMode = 'off' | 'voice' | 'motion';
 
 const styles = new CSSStyleSheet();
@@ -59,6 +73,8 @@ export class RepAssist extends HTMLElement {
   #preferences: Record<string, string> = {};
   #exerciseId = '';
   #mode: AssistMode = 'off';
+  #wakeLock: WakeLockSentinelLike | undefined;
+  #visibilityHandler: (() => void) | undefined;
   #status = '';
   #statusKind: 'idle' | 'live' | 'bad' = 'idle';
   #counter = new RepCounter((count) => {
@@ -130,23 +146,29 @@ export class RepAssist extends HTMLElement {
   }
 
   /**
-   * The set is done.
+   * The set is done. Both sources stop.
    *
-   * Voice stops listening; motion keeps going. The asymmetry is deliberate and is about what
-   * the source costs while it is idle. A live microphone through a two-minute rest period is
-   * listening to a conversation it has no business hearing, and the trainee has no way to tell
-   * that it is on. An accelerometer costs nothing and re-arming it before every set is friction
-   * with no upside.
+   * Motion used to keep running through the rest period, on the theory that an accelerometer
+   * costs nothing while idle. It does not: a phone that keeps counting while you walk to the
+   * kitchen adds reps to the next set before it starts, and the trainee cannot see it happening
+   * because they are not looking at the phone. Whatever the battery argument, a counter that
+   * counts walking is worse than one that needs a tap.
    */
   async finishSet(): Promise<void> {
-    if (this.#mode === 'voice') {
-      await this.#stop();
-      this.#say('Stopped listening. Tap to count the next set.', 'idle');
-      this.#render();
+    if (this.#mode === 'off') {
+      this.reset();
       return;
     }
 
-    this.reset();
+    const wasVoice = this.#mode === 'voice';
+    await this.#stop();
+    this.#say(
+      wasVoice
+        ? 'Stopped listening. Tap to count the next set.'
+        : 'Stopped counting. Tap to count the next set.',
+      'idle',
+    );
+    this.#render();
   }
 
   /** Switches source without a user gesture. Only ever used to turn assist OFF. */
@@ -160,6 +182,46 @@ export class RepAssist extends HTMLElement {
     if (current) await current.stop();
     this.#mode = 'off';
     this.#say('', 'idle');
+    await this.#releaseScreen();
+  }
+
+  /**
+   * Keeps the screen on while a source is counting, and reacquires it when the app comes back to
+   * the foreground -- the lock is dropped automatically whenever the page is hidden, so without
+   * the listener it survives exactly one glance at a notification.
+   */
+  async #holdScreenAwake(): Promise<void> {
+    const locks = (navigator as Navigator & { wakeLock?: WakeLockLike }).wakeLock;
+    if (!locks) return;
+
+    try {
+      this.#wakeLock = await locks.request('screen');
+    } catch {
+      // Refused, or the battery is too low. Not worth telling the trainee about: the counter
+      // still works, it just stops when the screen does.
+      this.#wakeLock = undefined;
+    }
+
+    this.#visibilityHandler ??= () => {
+      if (document.visibilityState === 'visible' && this.#mode !== 'off') {
+        void this.#holdScreenAwake();
+      }
+    };
+    document.addEventListener('visibilitychange', this.#visibilityHandler);
+  }
+
+  async #releaseScreen(): Promise<void> {
+    if (this.#visibilityHandler) {
+      document.removeEventListener('visibilitychange', this.#visibilityHandler);
+      this.#visibilityHandler = undefined;
+    }
+
+    try {
+      await this.#wakeLock?.release();
+    } catch {
+      // Already released, or the page was hidden. Nothing to do either way.
+    }
+    this.#wakeLock = undefined;
   }
 
   /** Called from a click, so the permission gesture is intact (docs/adr/0006 rule 2). */
@@ -195,6 +257,22 @@ export class RepAssist extends HTMLElement {
     // and get discarded as going backwards.
     this.#counter.reset();
     this.#say(mode === 'voice' ? 'Listening — count out loud.' : 'Watching for movement.', 'live');
+
+    // The field goes back to zero with the counter. Leaving the last set's number in it while a
+    // source counts up from zero means the two disagree from the first rep, and the trainee has
+    // no way to know which one the Log button will believe.
+    this.dispatchEvent(
+      new CustomEvent('assist-started', { bubbles: true, composed: true, detail: { mode } }),
+    );
+
+    // The screen must stay awake while a source is running. Voice recognition stops with the
+    // screen, and the trainee is mid-set with the phone face down -- they find out it stopped
+    // when they pick it up and the count is wrong. Best effort: unsupported or refused, the
+    // counter still works for as long as the screen happens to stay on.
+    // Deliberately not awaited: the counter is armed and the UI should say so now. Waiting on a
+    // permission-shaped API before showing the toggle as pressed makes the button feel broken on
+    // exactly the platforms where the lock is least likely to be granted.
+    void this.#holdScreenAwake();
 
     await source.start(
       (event) => this.#counter.accept(event),

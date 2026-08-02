@@ -45,6 +45,33 @@ public static class MuscleGroups
     /// </summary>
     public static string Sets(double count) =>
         $"{count:0.#} set{(Math.Abs(count - 1) < 0.001 ? "" : "s")}";
+
+    /// <summary>
+    /// Roughly how much trainable muscle this group is, relative to the largest, on a 0–1 scale.
+    ///
+    /// Used only for RANKING exercises, never for computing a load or a set count. It is what
+    /// lets a program aimed at fat loss lead with the movements that build the most tissue per
+    /// session: more muscle is more resting metabolism, and in a deficit the training's job is
+    /// to keep and add lean mass rather than to burn calories during the set (docs/adr/0010).
+    ///
+    /// Approximate on purpose. The ordering between quads and calves is not controversial and is
+    /// all this needs to get right; the exact numbers are not claimed to be measurements.
+    /// </summary>
+    public static double RelativeMass(this MuscleGroup muscle) => muscle switch
+    {
+        MuscleGroup.Quadriceps => 1.00,
+        MuscleGroup.Back => 0.90,
+        MuscleGroup.Glutes => 0.80,
+        MuscleGroup.Hamstrings => 0.60,
+        MuscleGroup.Chest => 0.55,
+        MuscleGroup.Shoulders => 0.40,
+        MuscleGroup.Adductors => 0.30,
+        MuscleGroup.Calves => 0.30,
+        MuscleGroup.Triceps => 0.30,
+        MuscleGroup.Core => 0.25,
+        MuscleGroup.Biceps => 0.20,
+        _ => 0.25
+    };
 }
 
 /// <summary>
@@ -83,6 +110,25 @@ public enum ExerciseKind
     Stretch
 }
 
+/// <summary>
+/// Where in a movement's range the muscle is most loaded.
+///
+/// Loaded work at long muscle lengths grows a muscle more than the same sets through a shortened
+/// range, and this machine is unusually good at it: a cable holds tension at the bottom of a fly
+/// where a dumbbell goes slack. A hypertrophy program built here should lean on the lengthened
+/// ones — see docs/adr/0010.
+///
+/// A judgment about mechanics, in the same class as BodyFraction: informed, reviewable, and not
+/// measured. Getting one wrong changes which exercise the builder suggests first, never a
+/// recorded number.
+/// </summary>
+public enum PeakTension
+{
+    Lengthened,
+    Even,
+    Shortened
+}
+
 public sealed record Exercise
 {
     public required string Id { get; init; }
@@ -98,6 +144,15 @@ public sealed record Exercise
 
     /// <summary>True when the movement routes through the cable, which halves the load.</summary>
     public bool UsesPulley { get; init; }
+
+    /// <summary>Where in the range the muscle is most loaded. See <see cref="PeakTension"/>.</summary>
+    public PeakTension PeakTension { get; init; } = PeakTension.Even;
+
+    /// <summary>
+    /// True when the load is highest with the muscle long — the movements a hypertrophy program
+    /// should be built around on this machine.
+    /// </summary>
+    public bool IsLengthenedLoaded => PeakTension == PeakTension.Lengthened;
 
     /// <summary>Fraction of the body actually riding the glideboard.</summary>
     public double BodyFraction { get; init; } = 1.0;

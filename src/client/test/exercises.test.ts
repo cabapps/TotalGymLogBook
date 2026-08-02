@@ -101,6 +101,44 @@ describe('exercise catalog', () => {
     expect(stretches.every((e) => /stretch|twist/i.test(e.name))).toBe(true);
   });
 
+  describe('setup', () => {
+    it('says how every movement is set up', () => {
+      for (const exercise of catalog.all) {
+        expect(exercise.setup.position.length, exercise.id).toBeGreaterThan(0);
+        expect(['tower', 'floor'], exercise.id).toContain(exercise.setup.facing);
+      }
+    });
+
+    it('never puts the trainee off the board', () => {
+      // There is no standing exercise on this machine -- even the dips use the board. A position
+      // the machine does not have would have the session ordering budgeting for a changeover
+      // that never happens.
+      expect(catalog.all.every((e) => e.setup.position !== 'standing')).toBe(true);
+    });
+
+    it('has no cue that contradicts the position it is set up in', () => {
+      // The setup line and the cue are rendered together. A cue that says "lie face up" under a
+      // setup line that says "sit facing away from the tower" leaves the trainee to guess which
+      // half of their own app is wrong.
+      const positional = /\b(lie|lying|sit|sitting|seated|kneel|kneeling|face up|face down)\b/i;
+
+      for (const exercise of catalog.all) {
+        const said = positional.exec(exercise.cue)?.[0]?.toLowerCase();
+        if (!said) continue;
+
+        const position = exercise.setup.position;
+        const agrees =
+          ((said.startsWith('l') || said === 'face up') &&
+            (position === 'face-up' || position === 'side-lying')) ||
+          (said === 'face down' && position === 'face-down') ||
+          (said.startsWith('s') && position === 'seated') ||
+          (said.startsWith('k') && position === 'kneeling');
+
+        expect(agrees, `${exercise.id} is ${position} but its cue says "${said}"`).toBe(true);
+      }
+    });
+  });
+
   it('gives every exercise a category', () => {
     expect(catalog.all.every((e) => e.category.length > 0)).toBe(true);
   });

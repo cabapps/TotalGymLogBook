@@ -46,12 +46,24 @@ function logged(programSessionId: string, startedAt: number): SessionRecord {
 }
 
 describe('ProgramLibrary', () => {
-  it('ships the three splits people actually run', () => {
-    expect(library.templates.map((t) => t.id).sort()).toEqual([
-      'full-body',
-      'push-pull-legs',
-      'upper-lower',
-    ]);
+  it('ships a program for every way of training the app asks about', () => {
+    // One per emphasis, because the onboarding question offers five answers and an answer with
+    // no program behind it is a question the app had no business asking.
+    const emphases = new Set(library.templates.map((t) => t.emphasis));
+
+    expect(emphases).toEqual(
+      new Set(['lengthened', 'largest-muscles', 'heavy-compounds', 'circuit', 'gentle']),
+    );
+    expect(library.templates.map((t) => t.id)).toContain('full-body');
+  });
+
+  it('offers the templates built for what the trainee is training for first', () => {
+    // Ordered, never filtered: someone training for strength who wants a hypertrophy split is
+    // allowed to have one, and hiding it would be the app overruling their decision.
+    const forFatLoss = library.forEmphasis('largest-muscles');
+
+    expect(forFatLoss[0]!.emphasis).toBe('largest-muscles');
+    expect(forFatLoss).toHaveLength(library.templates.length);
   });
 
   it('only plans exercises that exist', () => {
@@ -124,6 +136,21 @@ describe('nextSession', () => {
   it('recovers when the last session was edited out of the program', () => {
     // Rather than getting stuck pointing at a session that no longer exists.
     expect(nextSession(program(['a', 'b']), [logged('gone', 100)])?.id).toBe('a');
+  });
+
+  it('stays on the session being worked right now', () => {
+    // The rotation advances when a workout is DONE, not when it starts. Advancing on the first
+    // logged set made the tick list jump to tomorrow's session mid-workout.
+    const active: SessionRecord = {
+      id: 'now', updatedAt: 0, startedAt: 900, status: 'active',
+      machineId: 'm1', programId: 'p1', programSessionId: 'b',
+    };
+
+    expect(nextSession(program(['a', 'b', 'c']), [active, logged('a', 200)])?.id).toBe('b');
+  });
+
+  it('advances once that workout is finished', () => {
+    expect(nextSession(program(['a', 'b', 'c']), [logged('b', 900)])?.id).toBe('c');
   });
 
   it('has nothing to suggest for an empty program', () => {
@@ -270,6 +297,8 @@ describe('custom exercises', () => {
     category: 'Core',
     kind: 'strength' as const,
     usesPulley: true,
+    peakTension: 'even' as const,
+    setup: { position: 'seated', facing: 'tower', grip: 'handles' },
     bodyFraction: 0.85,
     attachment: null,
     cue: 'Pull across your body.',
