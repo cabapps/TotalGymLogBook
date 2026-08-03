@@ -110,10 +110,10 @@ describe('planned volume', () => {
     // coach needs them in .NET (docs/adr/0009); this is what catches one drifting from the other.
     const volume = plannedWeeklySets(library.get('push-pull-legs').sessions, catalog);
 
-    expect(volume.get('Chest')).toBe(7);
+    expect(volume.get('Chest')).toBe(6);
     expect(volume.get('Back')).toBe(12);
     expect(volume.get('Quadriceps')).toBe(6);
-    expect(volume.get('Biceps')).toBe(9);
+    expect(volume.get('Biceps')).toBe(6);
     expect(volume.get('Glutes')).toBe(10);
     expect([...volume.values()].every((sets) => sets >= MINIMUM_EFFECTIVE_DOSE)).toBe(true);
   });

@@ -187,10 +187,10 @@ public sealed class ProgramTemplateTests
         var weekly = new ProgramAnalyzer()
             .WeeklySets(ToProgram(Templates.Single(t => t.Id == "push-pull-legs")), Catalog);
 
-        Assert.Equal(7, weekly[MuscleGroup.Chest]);
+        Assert.Equal(6, weekly[MuscleGroup.Chest]);
         Assert.Equal(12, weekly[MuscleGroup.Back]);
         Assert.Equal(6, weekly[MuscleGroup.Quadriceps]);
-        Assert.Equal(9, weekly[MuscleGroup.Biceps]);
+        Assert.Equal(6, weekly[MuscleGroup.Biceps]);
         Assert.Equal(10, weekly[MuscleGroup.Glutes]);
     }
 

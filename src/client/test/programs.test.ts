@@ -300,6 +300,7 @@ describe('custom exercises', () => {
     peakTension: 'even' as const,
     setup: { position: 'seated', facing: 'tower', grip: 'handles' },
     pattern: 'crunch',
+    typicalLevel: 0.5,
     bodyFraction: 0.85,
     attachment: null,
     cue: 'Pull across your body.',

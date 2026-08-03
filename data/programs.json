@@ -67,10 +67,10 @@
           "name": "Full Body A",
           "exercises": [
             { "exerciseId": "squat", "sets": 3 },
+            { "exerciseId": "calf-raise", "sets": 3 },
             { "exerciseId": "lat-pulldown", "sets": 3 },
             { "exerciseId": "chest-press", "sets": 3 },
-            { "exerciseId": "shoulder-press", "sets": 2 },
-            { "exerciseId": "crunch", "sets": 4 }
+            { "exerciseId": "shoulder-press", "sets": 2 }
           ]
         },
         {
@@ -79,7 +79,6 @@
           "exercises": [
             { "exerciseId": "split-squat", "sets": 3 },
             { "exerciseId": "chin-up", "sets": 3 },
-            { "exerciseId": "overhead-triceps-extension", "sets": 2 },
             { "exerciseId": "incline-chest-fly", "sets": 3 },
             { "exerciseId": "lateral-raise", "sets": 2 }
           ]
@@ -89,7 +88,7 @@
           "name": "Full Body C",
           "exercises": [
             { "exerciseId": "hip-bridge", "sets": 3 },
-            { "exerciseId": "calf-raise", "sets": 4 },
+            { "exerciseId": "calf-raise", "sets": 3 },
             { "exerciseId": "pullover", "sets": 2 },
             { "exerciseId": "seated-row", "sets": 3 },
             { "exerciseId": "close-grip-chest-press", "sets": 3 }
@@ -108,10 +107,10 @@
           "id": "upper-a",
           "name": "Upper A",
           "exercises": [
-            { "exerciseId": "lat-pulldown", "sets": 4 },
+            { "exerciseId": "lat-pulldown", "sets": 3 },
             { "exerciseId": "overhead-triceps-extension", "sets": 3 },
             { "exerciseId": "overhead-cable-curl", "sets": 3 },
-            { "exerciseId": "chest-press", "sets": 4 },
+            { "exerciseId": "chest-press", "sets": 3 },
             { "exerciseId": "shoulder-press", "sets": 3 }
           ]
         },
@@ -130,9 +129,8 @@
           "id": "upper-b",
           "name": "Upper B",
           "exercises": [
-            { "exerciseId": "chin-up", "sets": 4 },
+            { "exerciseId": "chin-up", "sets": 3 },
             { "exerciseId": "seated-row", "sets": 3 },
-            { "exerciseId": "hammer-curl", "sets": 3 },
             { "exerciseId": "reverse-fly", "sets": 3 },
             { "exerciseId": "incline-chest-fly", "sets": 3 }
           ]
@@ -161,7 +159,7 @@
           "id": "push",
           "name": "Push",
           "exercises": [
-            { "exerciseId": "chest-press", "sets": 4 },
+            { "exerciseId": "chest-press", "sets": 3 },
             { "exerciseId": "shoulder-press", "sets": 3 },
             { "exerciseId": "incline-chest-fly", "sets": 3 },
             { "exerciseId": "lateral-raise", "sets": 3 },
@@ -174,7 +172,6 @@
           "exercises": [
             { "exerciseId": "chin-up", "sets": 3 },
             { "exerciseId": "lat-pulldown", "sets": 3 },
-            { "exerciseId": "overhead-cable-curl", "sets": 3 },
             { "exerciseId": "seated-row", "sets": 3 },
             { "exerciseId": "reverse-fly", "sets": 3 }
           ]
@@ -196,7 +193,7 @@
       "id": "big-muscle-full-body",
       "name": "Big Muscle Full Body",
       "emphasis": "largest-muscles",
-      "description": "Built around legs, back and chest, with arms and calves picking up what the big movements already give them. While you are losing weight, muscle is what you are protecting \u2014 and the most of it sits below your waist.",
+      "description": "Built around legs, back and chest, with arms and calves picking up what the big movements already give them. While you are losing weight, muscle is what you are protecting — and the most of it sits below your waist.",
       "bestFor": "Losing fat, or training two to three times a week with limited time.",
       "sessions": [
         {
@@ -214,7 +211,6 @@
           "name": "Big B",
           "exercises": [
             { "exerciseId": "split-squat", "sets": 3 },
-            { "exerciseId": "calf-raise", "sets": 4 },
             { "exerciseId": "overhead-triceps-extension", "sets": 3 },
             { "exerciseId": "seated-row", "sets": 3 },
             { "exerciseId": "incline-chest-fly", "sets": 3 }
@@ -227,8 +223,7 @@
             { "exerciseId": "single-leg-squat", "sets": 3 },
             { "exerciseId": "chin-up", "sets": 3 },
             { "exerciseId": "wing-hamstring-curl", "sets": 3 },
-            { "exerciseId": "pullover", "sets": 3 },
-            { "exerciseId": "shoulder-press", "sets": 3 }
+            { "exerciseId": "pullover", "sets": 3 }
           ]
         }
       ]
@@ -237,7 +232,7 @@
       "id": "strength-upper-lower",
       "name": "Strength Upper / Lower",
       "emphasis": "heavy-compounds",
-      "description": "Fewer movements, more sets on each, and the hard ones first while you are fresh. Rest longer than feels necessary \u2014 that is what makes the next set heavy rather than tiring.",
+      "description": "Fewer movements, more sets on each, and the hard ones first while you are fresh. Rest longer than feels necessary — that is what makes the next set heavy rather than tiring.",
       "bestFor": "Getting stronger, training three to four times a week.",
       "sessions": [
         {
@@ -281,7 +276,7 @@
       "id": "conditioning-circuit",
       "name": "Conditioning Circuit",
       "emphasis": "circuit",
-      "description": "Whole-body sessions with short rests, so your heart rate stays up between sets. The load stays moderate on purpose \u2014 the work here is the pace, not the weight.",
+      "description": "Whole-body sessions with short rests, so your heart rate stays up between sets. The load stays moderate on purpose — the work here is the pace, not the weight.",
       "bestFor": "Building endurance, training three to five times a week.",
       "sessions": [
         {

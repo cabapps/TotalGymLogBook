@@ -637,6 +637,10 @@ COMMENT = [
     "              alsoFacing names a second direction the movement works at, where one exists --",
     "              a curl is fine either way round. That is not a footnote: it lets a curl sit in",
     "              a block of pressing without anybody turning around.",
+    "typicalLevel: roughly where on the rail this is done, as a fraction of it. Decides which",
+    "              movements can be alternated as a superset -- a pair only saves time if both",
+    "              run at the SAME notch. Derived from muscle group and the pulley, not measured,",
+    "              and overridden by the trainee's own logged levels once they have any.",
     "pattern     : which joint does the work, so the app can draw the movement. Derived from the",
     "              name where the name says what the movement is, overridden where it does not.",
     "              Presentation only -- it never touches a load or a set count.",
@@ -713,6 +717,46 @@ def pattern_of(e):
         if any(word in name for word in words):
             return pattern
     return "press"
+
+
+# ROUGHLY WHERE ON THE RAIL A TRAINEE SETS THIS ONE.
+#
+# A fraction of the rail, so it means the same thing on a 6-notch machine and a 14-notch one.
+#
+# It exists for supersets. Alternating two movements only saves time if both can be done at the
+# SAME notch -- otherwise every round means getting up and moving the pin, which costs more than
+# the pairing saves. Chest press against seated row is the case that proved it: the same notch
+# that makes a press hard leaves a row so light you can do twenty, because the back is simply
+# stronger than the chest.
+#
+# Derived rather than tabulated, from two facts the catalog already carries. Bigger and stronger
+# muscle groups take more load, and a cable halves it -- so a cable movement needs a higher notch
+# than a direct one to feel the same. The muscle numbers below are the only judgment, and the
+# ordering between them is the part that has to be right.
+BASE_LEVEL = {
+    "Back": 0.55,
+    "Quadriceps": 0.55,
+    "Glutes": 0.55,
+    "Calves": 0.60,
+    "Core": 0.50,
+    "Hamstrings": 0.45,
+    "Chest": 0.38,
+    "Adductors": 0.35,
+    "Shoulders": 0.28,
+    "Biceps": 0.28,
+    "Triceps": 0.25,
+}
+
+# A cable halves the load (docs/adr/0004), so the same effort needs a notch or two more rail.
+PULLEY_LEVEL_FACTOR = 1.6
+
+
+def typical_level(e):
+    """Fraction of the rail this movement is normally done at."""
+    primary = [m for m, f in e.muscles if f == D] or [m for m, _ in e.muscles]
+    base = max(BASE_LEVEL[m] for m in primary)
+    level = base * (PULLEY_LEVEL_FACTOR if e.pulley else 1.0)
+    return round(min(0.95, max(0.15, level)), 2)
 
 
 def setup_of(e):
@@ -801,6 +845,7 @@ def main():
                 "peakTension": peak(e.id),
                 "setup": setup_of(e),
                 "pattern": pattern_of(e),
+                "typicalLevel": typical_level(e),
                 "bodyFraction": e.bf,
                 "attachment": e.att,
                 "cue": e.cue,

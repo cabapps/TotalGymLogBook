@@ -33,8 +33,6 @@ quota, domains, and updates resolves in favor of not losing workout history.
 
 ## Open items
 
-- `rail-10` angles are derived rather than published and need physical confirmation
-  (see [0004](0004-domain-model-and-resistance.md)).
-- `bodyFraction` values per exercise are unmeasured; all default to 1.0.
+- `bodyFraction` values per exercise are estimated from the trainee's position, not measured.
 - The Total Gym STATS BLE protocol is unknown; [0006](0006-rep-sources.md) ships the
   interface only.

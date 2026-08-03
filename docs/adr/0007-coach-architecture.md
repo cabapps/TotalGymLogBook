@@ -198,6 +198,13 @@ the rest between one movement's sets is spent doing the other's, which is where 
 remaining time goes. Pairing is *derived* from the ordered plan rather than stored, so it stays
 true when the trainee edits.
 
+**A superset needs a matching notch.** Two movements can only be alternated if the trainee runs
+them at about the same level — otherwise every round means getting up to move the pin, which
+costs more than the pairing saves. Chest press against seated row is the case that taught this:
+it looks ideal on paper, and in practice the notch that makes a press hard leaves a row light
+enough for twenty reps, because the back is stronger than the chest. `typicalLevel` carries the
+default expectation and the trainee's own logged levels override it.
+
 Some movements work **either way round** — a curl is fine facing the tower or away from it — and
 `setup.alsoFacing` records that. It is not a footnote about wording: a movement that works both
 ways can sit in the middle of a block set up the other way, so it changes the order the session
@@ -255,6 +262,26 @@ choice; under-dosed is a gap*, above.
 **Ranked, never filtered.** The movement list is ordered by what the trainee is training for
 (0010) and still contains everything. A movement that scores badly for their goal may be exactly
 what they want for a reason the app cannot see.
+
+### The program learns from what actually happened
+
+Three things are read back out of history rather than asked for:
+
+**How long the trainee's sets really take.** `observedSecondsPerSet` divides elapsed session time
+by sets logged, so it absorbs everything the model cannot see — moving the pin, answering the
+door. The ramp then grows the plan only while it still fits the time that trainee actually
+trains for. Someone who ran out of time last week gets a plan that fits this week, and as they
+get quicker the room grows back on its own. A plan abandoned two movements short every week is
+wrong about the trainee, not a trainee who is behind.
+
+**What load they handle on each movement.** `observedLevels` takes the median working notch per
+exercise. It decides what can be alternated, because "can I row as much as I squat?" has no
+general answer — only theirs, and after a few sessions the app has it.
+
+**How many sets of each movement they choose to do**, which is the existing ramp.
+
+All three are derived, never stored. Same reasoning as the rotation: a stored figure drifts the
+first time somebody trains without the app, and nobody can see it to correct it.
 
 ## Consequences
 

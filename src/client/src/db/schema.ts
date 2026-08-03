@@ -178,6 +178,8 @@ export interface CustomExerciseRecord extends SyncFields {
   setup?: { position: string; facing: string; grip: string };
   /** Which joint does the work, for the demo drawing. Absent draws a press. */
   pattern?: string;
+  /** Where on the rail it is normally done, 0-1. Absent assumes mid-rail. */
+  typicalLevel?: number;
   bodyFraction: number;
   attachment: string | null;
   cue: string;

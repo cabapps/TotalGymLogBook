@@ -212,11 +212,35 @@ export const MUSCLES: readonly string[] = [
 export function rampedSets(
   planned: readonly PlannedExercise[],
   best: ReadonlyMap<string, number>,
+  /** Total sets there is room for at the trainee's own pace. Unlimited when unknown. */
+  roomForSets = Number.POSITIVE_INFINITY,
 ): PlannedExercise[] {
-  return planned.map((exercise) => ({
+  const wanted = planned.map((exercise) => ({
     ...exercise,
     sets: Math.max(1, Math.min(exercise.sets, (best.get(exercise.exerciseId) ?? 0) + 1)),
   }));
+
+  // AND NO MORE THAN THERE IS TIME FOR.
+  //
+  // The ramp grows the plan toward the template; this is what stops it growing past the session
+  // the trainee can actually finish. Someone who ran out of time last week gets a plan that
+  // fits this week, rather than the same plan and the same two movements left undone -- and as
+  // they get quicker, or train longer, the room grows back on its own.
+  //
+  // Trimmed from the END, because the session is ordered with the movements worth doing fresh
+  // at the front (docs/adr/0007). Losing the last movement is the cheapest loss available, and
+  // it is the one that was happening anyway.
+  let total = wanted.reduce((sum, e) => sum + e.sets, 0);
+
+  for (let i = wanted.length - 1; i >= 0 && total > roomForSets; i--) {
+    const spare = Math.min(wanted[i]!.sets - 1, total - roomForSets);
+    if (spare <= 0) continue;
+
+    wanted[i]!.sets -= spare;
+    total -= spare;
+  }
+
+  return wanted;
 }
 
 /**
@@ -243,4 +267,42 @@ export function bestDailySets(
   }
 
   return best;
+}
+
+/**
+ * The level the trainee actually works each movement at, as a fraction of their rail.
+ *
+ * Their own answer to "how much can I handle on this?", which the catalog can only guess at. Used
+ * to decide what can be alternated: two movements pair only if they run at about the same notch,
+ * and whether a row and a press do is a fact about the person, not about the exercises.
+ *
+ * The MEDIAN of recent working levels, so one warm-up set does not speak for the movement.
+ */
+export function observedLevels(
+  sets: ReadonlyArray<{ exerciseId: string; level: number }>,
+  levelCount: number,
+): Map<string, number> {
+  const byExercise = new Map<string, number[]>();
+
+  for (const set of sets) {
+    const levels = byExercise.get(set.exerciseId);
+    if (levels) levels.push(set.level);
+    else byExercise.set(set.exerciseId, [set.level]);
+  }
+
+  const median = new Map<string, number>();
+
+  for (const [exerciseId, levels] of byExercise) {
+    // Two sets is not a working level, it is a first attempt.
+    if (levels.length < 3) continue;
+
+    levels.sort((a, b) => a - b);
+    const middle = Math.floor(levels.length / 2);
+    const value =
+      levels.length % 2 === 0 ? (levels[middle - 1]! + levels[middle]!) / 2 : levels[middle]!;
+
+    median.set(exerciseId, value / levelCount);
+  }
+
+  return median;
 }

@@ -67,6 +67,7 @@ function toExercise(record: CustomExerciseRecord): Exercise {
     usesPulley: record.usesPulley,
     peakTension: record.peakTension ?? 'even',
     pattern: record.pattern ?? 'press',
+    typicalLevel: record.typicalLevel ?? 0.5,
     // A movement added before the setup question existed falls back to the machine's default
     // posture, which is also where the session ordering will assume the trainee is.
     setup: record.setup ?? {
@@ -379,6 +380,7 @@ export class AppShell extends HTMLElement {
       library: this.#library!,
       emphasis: this.#emphasis,
       aim: this.#aim,
+      levelCount: this.#profile!.levelCount,
     });
 
     // Tapping a planned movement selects it. The plan drives the picker; it never replaces it.
@@ -440,6 +442,7 @@ export class AppShell extends HTMLElement {
         library: this.#library!,
         emphasis: this.#emphasis,
         aim: this.#aim,
+        levelCount: this.#profile!.levelCount,
       });
       list.configure({ catalog: this.#catalog, ...(this.#session && { sessionId: this.#session.id }) });
     });
