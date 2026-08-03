@@ -59,6 +59,46 @@ describe('exercise demo', () => {
     expect(demoSvg(catalog.get('squat'))).not.toContain('class="cable"');
   });
 
+  it('never lets a limb leave the body', () => {
+    // The bug this replaced: the limb group sat inside the board's animated group, so it
+    // inherited the board's travel AND added its own -- arms slid off the figure and a squatting
+    // stick man's leg walked away on its own. A rotation about the joint cannot detach, whatever
+    // the angle, so what this checks is that no limb is translated.
+    for (const exercise of catalog.all) {
+      const svg = demoSvg(exercise);
+      const limbs = [...svg.matchAll(/<g class="limb">(.*?)<\/g>/gs)];
+
+      for (const [, body] of limbs) {
+        // Every moving segment starts at its own origin, which its parent has put on the joint.
+        expect(body, exercise.id).toContain('x1="0" y1="0"');
+      }
+    }
+  });
+
+  it('swings the working joint, and not for a hold', () => {
+    const swing = (id: string) => /--swing: (-?\d+)deg/.exec(demoSvg(catalog.get(id)))![1];
+
+    expect(Number(swing('biceps-curl'))).not.toBe(0);
+    expect(Number(swing('squat'))).not.toBe(0);
+    // A plank has nothing to swing, and a limb waving through one would be teaching the opposite
+    // of what it is for.
+    expect(Number(swing('plank-hold'))).toBe(0);
+  });
+
+  it('travels up the rail, always', () => {
+    // The machine's whole principle: resistance is the board's weight on the incline, so the
+    // working phase always drags it UP toward the tower -- pressing, pulling or squatting. A demo
+    // that ran a movement downhill would be showing the trainee the easy half of the rep.
+    for (const exercise of catalog.all) {
+      const [, dx, dy] = /--travel: translate\((-?[\d.]+)px, (-?[\d.]+)px\)/.exec(
+        demoSvg(exercise),
+      )!;
+
+      expect(Number(dx), exercise.id).toBeLessThanOrEqual(0);
+      expect(Number(dy), exercise.id).toBeLessThanOrEqual(0);
+    }
+  });
+
   it('says what it is not', () => {
     // A stick figure shows which way to face and what moves. A trainee who takes it for a form
     // guide can hurt themselves being faithful to it.
