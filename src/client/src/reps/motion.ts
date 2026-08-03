@@ -40,7 +40,7 @@ const SIGNAL_ALPHA = 0.35;
  * Tracking the peak instead means the threshold scales WITH the movement rather than against
  * it, so a gentle set and a violent one both count.
  */
-const PEAK_FRACTION = 0.6;
+const PEAK_FRACTION = 0.48;
 
 /** Peak memory halves in roughly four seconds at 60 Hz -- about two reps. */
 const PEAK_DECAY = 0.997;
@@ -53,20 +53,26 @@ const PEAK_DECAY = 0.997;
  * device's own resting magnitude makes the detector indifferent to the units it is handed, and
  * counting full cycles rather than directed peaks makes it indifferent to the sign convention.
  */
-const MIN_THRESHOLD_G = 0.11;
+const MIN_THRESHOLD_G = 0.065;
 
 /** Re-arming is easier than triggering, so a rep is one clean cycle, not two half ones. */
 const REARM_FRACTION = 0.4;
 
 /**
- * ERRING TOWARD UNDERCOUNTING, DELIBERATELY.
+ * WHICH KNOB DOES WHICH JOB.
  *
- * PEAK_FRACTION and MIN_THRESHOLD_G were both raised after the detector overcounted real sets
- * and counted walking as reps. The two errors are not equally bad: a missed rep is visible in
- * the field before the set is logged and takes one tap to fix, while an invented rep is only
- * visible if the trainee was counting anyway -- and if they were, they did not need the feature.
- * A counter that is trusted and slightly low beats one that is high and has to be checked,
- * because a counter that has to be checked is a worse way of counting by hand.
+ * These two were raised hard to stop the detector counting walking, and that was the wrong tool:
+ * they set how BIG a movement has to be, and a footfall is not small. All the raise achieved was
+ * to start dropping real reps -- gentle ones, the end of a hard set, anyone not slamming the
+ * board -- while walking still got through on amplitude and was caught by the timing gate below
+ * anyway.
+ *
+ * So they are back near where they started. Walking is rejected by CADENCE, in the crossing-
+ * interval gate in feed(): footfalls arrive every 500-600 ms and nothing on this machine does,
+ * so a stream of them counts nothing regardless of how hard the phone is being shaken.
+ *
+ * Amplitude thresholds are for separating movement from noise. Timing is for separating one kind
+ * of movement from another. Using either for the other's job costs accuracy at both.
  */
 
 /**

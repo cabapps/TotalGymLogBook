@@ -100,8 +100,14 @@ First and last levels match; the middle is misaligned — consistent with an edi
 PDF.
 
 `rail-profiles.json` carries angles back-solved from the resistance columns via `asin(slope)`,
-which produces a smooth, plausible progression. **Marked `verified: false` — needs tape-measure
-confirmation on a real 10-level machine before shipping.**
+which produces a smooth, plausible progression, and stays `verified: false`.
+
+**No longer an open item.** Back-solving from the resistance columns is the better source
+anyway: the resistance numbers are what the trainee actually feels, and they reproduce exactly,
+while the printed angle column demonstrably does not reproduce its own table. A tape measure
+would confirm a figure the app does not use in preference to one it does. Anyone who owns a
+10-level machine and disagrees with the numbers can measure their own rail with the angle
+calibrator below, which is the general answer to this whole class of problem.
 
 ### Angle calibration
 

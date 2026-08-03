@@ -3,12 +3,14 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { ExerciseCatalog } from '../src/exercises.js';
-import { ProgramLibrary, bestDailySets, rampedSets } from '../src/programs.js';
+import { ProgramLibrary, bestDailySets, observedLevels, rampedSets } from '../src/programs.js';
 import {
   SESSION_BUDGET_MINUTES,
+  budgetMinutesFor,
   canSuperset,
   estimateMinutes,
   orderSession,
+  observedSecondsPerSet,
   restSecondsFor,
   supersetPairs,
   totalTransitionCost,
@@ -19,12 +21,12 @@ const dataDir = join(__dirname, '..', '..', '..', 'data');
 const catalog = ExerciseCatalog.parse(readFileSync(join(dataDir, 'exercises.json'), 'utf8'));
 const library = ProgramLibrary.parse(readFileSync(join(dataDir, 'programs.json'), 'utf8'));
 
-const restFor = {
-  lengthened: restSecondsFor('build-muscle'),
-  'largest-muscles': restSecondsFor('lose-fat'),
-  'heavy-compounds': restSecondsFor('get-stronger'),
-  circuit: restSecondsFor('endurance'),
-  gentle: restSecondsFor('rehab'),
+const aimFor = {
+  lengthened: 'build-muscle',
+  'largest-muscles': 'lose-fat',
+  'heavy-compounds': 'get-stronger',
+  circuit: 'endurance',
+  gentle: 'rehab',
 } as const;
 
 const plan = (...ids: string[]) => ids.map((exerciseId) => ({ exerciseId, sets: 3 }));
@@ -112,10 +114,36 @@ describe('ordering a session', () => {
   });
 
   it('alternates muscles inside a setup so neighbours can be paired', () => {
-    // Two presses and a leg movement all done lying on the board: putting the presses next to
-    // each other would waste the pairing the shared setup makes possible.
-    const tidy = orderSession(plan('chest-press', 'lat-pulldown', 'overhead-cable-curl'), catalog);
+    // Putting two chest movements next to each other would waste the pairing the shared setup
+    // makes possible. Crunches run at about the same notch as a press, which is the other half
+    // of what makes a pair work.
+    const tidy = orderSession(plan('chest-press', 'incline-chest-fly', 'crunch'), catalog);
     expect(supersetPairs(tidy, catalog, 90).length).toBeGreaterThan(0);
+  });
+
+  it('will not pair a press with a row', () => {
+    // The pairing that prompted all this. The notch that makes a chest press hard leaves a
+    // seated row light enough for twenty reps, because the back is stronger than the chest --
+    // so alternating them means moving the pin twice a round.
+    expect(canSuperset(catalog.get('chest-press'), catalog.get('seated-row'), 90)).toBe(false);
+  });
+
+  it('pairs a squat with a calf raise', () => {
+    // Same setup, same notch, different muscles: the pairing that works.
+    expect(canSuperset(catalog.get('squat'), catalog.get('calf-raise'), 90)).toBe(true);
+  });
+
+  it('believes the trainee over the table', () => {
+    // "Pretty sure I can row about as much as I can squat. Not sure if that's the same for
+    // everyone though." It is not, which is why logged levels win: once the app has watched
+    // someone actually train both movements, its own averages stop being the best answer.
+    const observed = new Map([
+      ['chest-press', 0.8],
+      ['seated-row', 0.85],
+    ]);
+
+    expect(canSuperset(catalog.get('chest-press'), catalog.get('seated-row'), 90, observed))
+      .toBe(true);
   });
 
   it('is stable — tidying an already tidy session changes nothing', () => {
@@ -127,6 +155,85 @@ describe('ordering a session', () => {
     // A tidy-up is not a deletion. The trainee put it there.
     const tidy = orderSession([...plan('squat'), { exerciseId: 'ghost-lift', sets: 2 }], catalog);
     expect(tidy.map((p) => p.exerciseId)).toContain('ghost-lift');
+  });
+});
+
+describe('learning the trainee', () => {
+  it('measures how long their sets actually take, end to end', () => {
+    // Not the model's average of nobody. Elapsed time over sets logged, so it absorbs everything
+    // the model cannot see -- moving the pin, answering the door, standing up slowly.
+    const minute = 60_000;
+    const pace = observedSecondsPerSet([
+      { startedAt: 0, endedAt: 30 * minute, setCount: 10 },
+      { startedAt: 0, endedAt: 36 * minute, setCount: 12 },
+      { startedAt: 0, endedAt: 40 * minute, setCount: 10 },
+    ]);
+
+    expect(pace).toBe(180);
+  });
+
+  it('says nothing until it has seen enough', () => {
+    // One session, and especially one interrupted session, is worse than the default.
+    expect(observedSecondsPerSet([])).toBeUndefined();
+    expect(observedSecondsPerSet([{ startedAt: 0, endedAt: 60_000, setCount: 10 }])).toBeUndefined();
+  });
+
+  it('ignores a session left open overnight', () => {
+    const hour = 3_600_000;
+    const pace = observedSecondsPerSet([
+      { startedAt: 0, endedAt: 30 * 60_000, setCount: 10 },
+      { startedAt: 0, endedAt: 32 * 60_000, setCount: 10 },
+      { startedAt: 0, endedAt: 14 * hour, setCount: 10 },
+    ]);
+
+    // The overnight one is dropped rather than dragging the median toward an hour a set.
+    expect(pace).toBeLessThan(200);
+  });
+
+  it('plans no more sets than there is time for', () => {
+    // The trainee's report: "I wasn't able to complete all the exercises in the time I had."
+    // A plan they abandon two movements short every week is wrong about them.
+    const wanted = plan('squat', 'chest-press', 'seated-row', 'crunch');
+    const best = new Map([
+      ['squat', 3],
+      ['chest-press', 3],
+      ['seated-row', 3],
+      ['crunch', 3],
+    ]);
+
+    const roomy = rampedSets(wanted, best);
+    const cramped = rampedSets(wanted, best, 6);
+
+    expect(roomy.reduce((n, e) => n + e.sets, 0)).toBeGreaterThan(6);
+    expect(cramped.reduce((n, e) => n + e.sets, 0)).toBe(6);
+  });
+
+  it('trims from the end, and never below one set', () => {
+    // The front of the session is what is worth doing fresh, and dropping the tail is what was
+    // happening anyway -- this just stops pretending otherwise.
+    const wanted = plan('squat', 'chest-press', 'crunch');
+    const best = new Map([['squat', 3], ['chest-press', 3], ['crunch', 3]]);
+
+    const cramped = rampedSets(wanted, best, 3);
+
+    expect(cramped[0]!.sets).toBeGreaterThanOrEqual(cramped[2]!.sets);
+    expect(cramped.every((e) => e.sets >= 1)).toBe(true);
+  });
+
+  it('reads a working level out of logged sets', () => {
+    const sets = [
+      { exerciseId: 'squat', level: 8 },
+      { exerciseId: 'squat', level: 8 },
+      { exerciseId: 'squat', level: 9 },
+      // Two sets is a first attempt, not a working level.
+      { exerciseId: 'chest-press', level: 3 },
+      { exerciseId: 'chest-press', level: 4 },
+    ];
+
+    const levels = observedLevels(sets, 14);
+
+    expect(levels.get('squat')).toBeCloseTo(8 / 14, 3);
+    expect(levels.has('chest-press')).toBe(false);
   });
 });
 
@@ -144,18 +251,26 @@ describe('how long a session takes', () => {
     expect(paired).toBeLessThan(unpaired);
   });
 
-  it('every shipped session fits in half an hour', () => {
+  it('every shipped session fits the time its goal is given', () => {
     // The constraint that shaped the templates. A program that quietly takes fifty minutes is a
     // program most people stop running, and they will blame themselves rather than the plan.
+    //
+    // Half an hour for everyone but strength, which gets forty-five. Three minutes of rest is
+    // the method rather than a delay, so holding strength to thirty produced not a faster
+    // program but one with the chest press deleted to make room.
     for (const template of library.templates) {
-      const rest = restFor[template.emphasis as keyof typeof restFor];
+      const aim = aimFor[template.emphasis as keyof typeof aimFor];
+      const budget = budgetMinutesFor(aim);
 
       for (const session of template.sessions) {
-        const minutes = estimateMinutes(session.exercises, catalog, rest);
-        expect(minutes, `${template.id}/${session.name} takes ${minutes} min`)
-          .toBeLessThanOrEqual(SESSION_BUDGET_MINUTES);
+        const minutes = estimateMinutes(session.exercises, catalog, restSecondsFor(aim));
+        expect(minutes, `${template.id}/${session.name} takes ${minutes} min against ${budget}`)
+          .toBeLessThanOrEqual(budget);
       }
     }
+
+    // ...and the general budget still means what it says for everything else.
+    expect(budgetMinutesFor('build-muscle')).toBe(SESSION_BUDGET_MINUTES);
   });
 
   it('every shipped session is already in setup order', () => {

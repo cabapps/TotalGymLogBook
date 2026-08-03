@@ -92,6 +92,14 @@ export interface Exercise {
    * load or a set count.
    */
   readonly pattern: string;
+  /**
+   * Roughly where on the rail this is done, as a fraction of it.
+   *
+   * Decides which movements can be alternated: a superset only saves time if both run at the
+   * same notch. Derived from muscle group and the pulley, and overridden by the trainee's own
+   * logged levels once they have any.
+   */
+  readonly typicalLevel: number;
   /** Share of bodyweight riding the glideboard. Estimated, not measured. */
   readonly bodyFraction: number;
   readonly attachment: string | null;

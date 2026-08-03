@@ -229,6 +229,23 @@ describe('RepDetector', () => {
     expect(reps).toBeLessThanOrEqual(1);
   });
 
+  it('counts a gentle set, not just a violent one', () => {
+    // The undercounting bug: the amplitude thresholds were raised to fight walking, which they
+    // could never do, and the cost was every rep that was not slammed. Half the amplitude of the
+    // clean-set case above, which is a controlled rep rather than a quiet one.
+    const reps = sweep(new RepDetector(), { cycles: 10, periodMs: 2500, amplitude: 1.2 });
+
+    expect(reps).toBeGreaterThanOrEqual(9);
+  });
+
+  it('counts a brisk set', () => {
+    // 1.4 s a rep is quick but real -- the top of a light set. The refractory period has to sit
+    // below it, which is why walking is rejected on cadence rather than by raising this gate.
+    const reps = sweep(new RepDetector(), { cycles: 10, periodMs: 1400, amplitude: 2 });
+
+    expect(reps).toBeGreaterThanOrEqual(9);
+  });
+
   it('still counts a deliberately slow set', () => {
     // The other side of the same gate: raising the refractory period must not start rejecting
     // real reps. Four seconds a rep is a slow tempo, not an implausible one.

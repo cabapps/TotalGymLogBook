@@ -19,12 +19,20 @@ import {
   bestDailySets,
   nextExercise,
   nextSession,
+  observedLevels,
   rampedSets,
   sessionPosition,
   sessionProgress,
   type PlannedProgress,
 } from '../programs.js';
-import { estimateMinutes, restSecondsFor, supersetPairs } from '../session-plan.js';
+import {
+  budgetMinutesFor,
+  estimateMinutes,
+  observedSecondsPerSet,
+  restSecondsFor,
+  setsThatFit,
+  supersetPairs,
+} from '../session-plan.js';
 import type { PlannedExercise, ProgramRecord, ProgramSession } from '../db/schema.js';
 import type { ProgramEmphasis, TrainingAim } from '../emphasis.js';
 
@@ -97,6 +105,12 @@ export class ProgramPanel extends HTMLElement {
   #program: ProgramRecord | undefined;
   #session: ProgramSession | undefined;
   #progress: PlannedProgress[] = [];
+  /** Sets there is time for at the trainee's observed pace. Infinite until there is history. */
+  #room = Number.POSITIVE_INFINITY;
+  /** The trainee's own working level per exercise, as a fraction of the rail. */
+  #levels: ReadonlyMap<string, number> = new Map();
+  /** Notches on this machine's rail, so a logged level can be read as a fraction of it. */
+  #levelCount = 12;
   #plan: PlannedExercise[] = [];
   #picking = false;
   #aim: TrainingAim = 'build-muscle';
@@ -119,11 +133,14 @@ export class ProgramPanel extends HTMLElement {
     emphasis?: ProgramEmphasis;
     /** Sets the rest periods the session estimate is built from. */
     aim?: TrainingAim;
+    /** Notches on this rail, so a logged level reads as a fraction of it. */
+    levelCount?: number;
   }): void {
     this.#catalog = opts.catalog;
     this.#library = opts.library;
     this.#emphasis = opts.emphasis ?? this.#emphasis;
     this.#aim = opts.aim ?? this.#aim;
+    this.#levelCount = opts.levelCount ?? this.#levelCount;
     void this.refresh();
   }
 
@@ -148,6 +165,30 @@ export class ProgramPanel extends HTMLElement {
   get plan(): { programId: string; programSessionId: string } | undefined {
     if (!this.#program || !this.#session) return undefined;
     return { programId: this.#program.id, programSessionId: this.#session.id };
+  }
+
+  /**
+   * How many sets fit the time this trainee actually trains for.
+   *
+   * Infinite until there is enough history to say, so a new trainee gets the plan as written and
+   * the ramp is the only thing shortening it.
+   */
+  async #roomForSets(history: readonly { sessionId: string }[]): Promise<number> {
+    const sessions = await db.listSessions();
+    const counts = new Map<string, number>();
+    for (const set of history) counts.set(set.sessionId, (counts.get(set.sessionId) ?? 0) + 1);
+
+    const pace = observedSecondsPerSet(
+      sessions.map((s) => ({
+        startedAt: s.startedAt,
+        ...(s.endedAt !== undefined && { endedAt: s.endedAt }),
+        setCount: counts.get(s.id) ?? 0,
+      })),
+    );
+
+    return pace === undefined
+      ? Number.POSITIVE_INFINITY
+      : setsThatFit(budgetMinutesFor(this.#aim), pace);
   }
 
   async refresh(): Promise<void> {
@@ -178,8 +219,18 @@ export class ProgramPanel extends HTMLElement {
       // The plan starts at one set per movement and grows with what the trainee has actually
       // been doing -- the template's numbers are the ceiling, not the opening ask.
       const history = await db.getSetsBetween(toIsoDate(Date.now() - RAMP_WINDOW_MS), today);
+
+      // ...and no further than the trainee actually gets through. A plan they abandon two
+      // movements short every week is a plan that is wrong about them, not a trainee who is
+      // behind: see observedSecondsPerSet.
+      this.#room = await this.#roomForSets(history);
+
+      // The trainee's own working levels beat the catalog's averages for deciding what can be
+      // alternated -- "can I row as much as I squat" has no general answer, only theirs.
+      this.#levels = observedLevels(history, this.#levelCount);
+
       this.#plan = this.#session
-        ? rampedSets(this.#session.exercises, bestDailySets(history))
+        ? rampedSets(this.#session.exercises, bestDailySets(history), this.#room)
         : [];
 
       this.#progress = this.#session
@@ -207,11 +258,11 @@ export class ProgramPanel extends HTMLElement {
     const position = this.#session ? sessionPosition(this.#program, this.#session.id) : 0;
 
     const rest = restSecondsFor(this.#aim);
-    const minutes = estimateMinutes(this.#plan, this.#catalog, rest);
+    const minutes = estimateMinutes(this.#plan, this.#catalog, rest, this.#levels);
     // Pairs are computed from the ordered plan, so they mark the movement you alternate with --
     // which is only meaningful because the plan is already ordered by setup.
     this.#pairs = new Map(
-      supersetPairs(this.#plan, this.#catalog, rest).flatMap((pair) => [
+      supersetPairs(this.#plan, this.#catalog, rest, this.#levels).flatMap((pair) => [
         [pair.first, pair.second],
         [pair.second, pair.first],
       ]),

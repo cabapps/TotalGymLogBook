@@ -52,13 +52,18 @@ export interface RepSource {
 /**
  * Refractory period between counted reps.
  *
- * 1200 ms, not 600. Walking is the failure case that matters: a phone in a pocket sees a
- * footfall every 500-600 ms, which sailed straight through the old floor, so a trainee who
- * logged a set and walked to the kitchen came back to a counter that had counted the walk. No
- * Total Gym rep is done in under a second and a bit, so the slower gate costs nothing real and
- * rules out an entire class of nonsense.
+ * Walking is the failure case this exists for: a phone in a pocket sees a footfall every
+ * 500-600 ms, and the original 600 ms floor let every one of them through, so a trainee who
+ * logged a set and walked to the kitchen came back to a counter that had counted the walk.
+ *
+ * 900 ms, having tried 1200. The refractory period is a blunt instrument -- it cannot tell a
+ * fast rep from a footstep, and set high enough to be sure of walking it starts dropping real
+ * reps, which is what 1200 did. The actual defence is in the detector, which gates on the
+ * interval between signal CROSSINGS rather than between counted reps: a stream of fast crossings
+ * counts nothing at all, rather than counting every other one. That works at any threshold, so
+ * this one only has to rule out a rep and its own echo.
  */
-export const MIN_REP_MS = 1200;
+export const MIN_REP_MS = 900;
 
 /**
  * How far a single spoken number may jump ahead of the running count.

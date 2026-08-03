@@ -36,6 +36,22 @@ export const PAIR_SWITCH_SECONDS = 10;
 export const SESSION_BUDGET_MINUTES = 30;
 
 /**
+ * How long a session may run, given what the trainee is training for.
+ *
+ * Thirty minutes for everyone except strength, and the exception is not a fudge. Strength work is
+ * three minutes of rest between sets -- that IS the method, it is what makes the next set heavy
+ * rather than tiring -- so nine working sets is already half an hour before anything else
+ * happens. Holding a strength program to thirty minutes does not produce a fast strength program;
+ * it produces a program with the chest press deleted, which is what it produced here.
+ *
+ * Somebody who chose "get stronger" has opted into the long rests. Better to tell them the
+ * session takes forty minutes than to hand them a shorter one that no longer trains half of them.
+ */
+export function budgetMinutesFor(aim: TrainingAim): number {
+  return aim === 'get-stronger' ? 45 : SESSION_BUDGET_MINUTES;
+}
+
+/**
  * Rest between sets, mirroring GoalParameters in .NET. Kept short here because the shell needs it
  * to estimate a session before .NET exists, and a session estimate that only appears once Blazor
  * boots is not much use to someone deciding whether they have time to train.
@@ -103,7 +119,44 @@ function primeMovers(exercise: Exercise): Set<string> {
  * the machine twice per set and costs more time than it saves. And they must not drive the same
  * muscle, or the second movement is not rest — it is a drop set the trainee did not ask for.
  */
-export function canSuperset(a: Exercise, b: Exercise, restSeconds: number): boolean {
+/**
+ * How far apart two movements sit on the rail, as a fraction of it.
+ *
+ * The trainee's own logged levels win where they exist. The table is an average, and averages
+ * are exactly what the question "can I row as much as I squat?" has no useful answer in -- some
+ * people can, some cannot, and after a few sessions the app knows which they are.
+ */
+function levelGap(a: Exercise, b: Exercise, observed?: ReadonlyMap<string, number>): number {
+  return Math.abs(
+    (observed?.get(a.id) ?? a.typicalLevel) - (observed?.get(b.id) ?? b.typicalLevel),
+  );
+}
+
+/**
+ * The most two movements' working notches can differ and still be run as a pair. About two
+ * notches on a fourteen-notch rail.
+ */
+export const MAX_LEVEL_GAP = 0.15;
+
+/**
+ * Whether two movements can be alternated set for set.
+ *
+ * Three conditions, all necessary.
+ *
+ * The setup must be close enough that switching is seconds, not a rebuild. They must not drive
+ * the same muscle, or the second movement is not rest -- it is a drop set nobody asked for. And
+ * THEY MUST RUN AT ABOUT THE SAME NOTCH, which is the one that had to be learned the hard way:
+ * chest press against seated row looks ideal on paper, and in practice the notch that makes a
+ * press hard leaves a row so light you can do twenty, because the back is stronger than the
+ * chest. Every round then means getting up to move the pin, which costs more time than
+ * alternating saves and is worse than just doing the two movements in sequence.
+ */
+export function canSuperset(
+  a: Exercise,
+  b: Exercise,
+  restSeconds: number,
+  observed?: ReadonlyMap<string, number>,
+): boolean {
   if (a.id === b.id) return false;
   // Anything short of an attachment change is quick enough to do between alternating sets.
   // Requiring an IDENTICAL setup rules out the pairs people actually run -- press against row,
@@ -111,6 +164,7 @@ export function canSuperset(a: Exercise, b: Exercise, restSeconds: number): bool
   if (transitionCost(a, b) >= 3) return false;
   // Below about a minute the pair has no room to breathe; the trainee is just rushing.
   if (restSeconds < 60) return false;
+  if (levelGap(a, b, observed) > MAX_LEVEL_GAP) return false;
 
   const first = primeMovers(a);
   return ![...primeMovers(b)].some((muscle) => first.has(muscle));
@@ -224,9 +278,21 @@ function alternate(
 
     if (previous) {
       const used = primeMovers(catalog.get(previous.exerciseId));
-      const found = remaining.findIndex(
-        (item) => ![...primeMovers(catalog.get(item.exerciseId))].some((m) => used.has(m)),
+      // Prefer a neighbour that can actually be PAIRED with the last one -- different muscles
+      // and about the same notch. Alternating movements that need different notches is not a
+      // superset, it is two exercises with a trip to the pin between every set.
+      const previousExercise = catalog.get(previous.exerciseId);
+      const pairable = remaining.findIndex(
+        (item) =>
+          ![...primeMovers(catalog.get(item.exerciseId))].some((m) => used.has(m)) &&
+          levelGap(previousExercise, catalog.get(item.exerciseId)) <= MAX_LEVEL_GAP,
       );
+
+      const found = pairable >= 0
+        ? pairable
+        : remaining.findIndex(
+            (item) => ![...primeMovers(catalog.get(item.exerciseId))].some((m) => used.has(m)),
+          );
       if (found >= 0) index = found;
     }
 
@@ -246,6 +312,7 @@ export function supersetPairs(
   planned: readonly PlannedExercise[],
   catalog: ExerciseCatalog,
   restSeconds: number,
+  observed?: ReadonlyMap<string, number>,
 ): SupersetPair[] {
   const pairs: SupersetPair[] = [];
 
@@ -257,7 +324,7 @@ export function supersetPairs(
     const a = catalog.tryGet(planned[i]!.exerciseId);
     const b = catalog.tryGet(planned[i + 1]!.exerciseId);
 
-    if (a && b && canSuperset(a, b, restSeconds)) pairs.push({ first: i, second: i + 1 });
+    if (a && b && canSuperset(a, b, restSeconds, observed)) pairs.push({ first: i, second: i + 1 });
   }
 
   return pairs;
@@ -276,10 +343,11 @@ export function estimateMinutes(
   planned: readonly PlannedExercise[],
   catalog: ExerciseCatalog,
   restSeconds: number,
+  observed?: ReadonlyMap<string, number>,
 ): number {
   if (planned.length === 0) return 0;
 
-  const pairs = supersetPairs(planned, catalog, restSeconds);
+  const pairs = supersetPairs(planned, catalog, restSeconds, observed);
   const paired = new Set(pairs.flatMap((p) => [p.first, p.second]));
 
   let seconds = 0;
@@ -320,4 +388,49 @@ export function totalTransitionCost(
   }
 
   return cost;
+}
+
+/**
+ * How long this trainee's sets actually take, from their own logged sessions.
+ *
+ * The constants above are averages of nobody. A trainee who rests two minutes when the plan says
+ * ninety seconds is not doing it wrong -- but a plan estimated at their pace is the difference
+ * between a session that fits the time they have and one they abandon two movements short, which
+ * is what happens today.
+ *
+ * Measured end to end: a session's elapsed time divided by the sets in it, so it absorbs
+ * everything the model does not know about -- fiddling with the pin, answering the door,
+ * standing up too slowly. Returns undefined until there is enough history to mean anything,
+ * because two data points from a session that was interrupted is worse than the default.
+ */
+export function observedSecondsPerSet(
+  sessions: ReadonlyArray<{ startedAt: number; endedAt?: number; setCount: number }>,
+): number | undefined {
+  const rates = sessions
+    .filter((s) => s.endedAt !== undefined && s.setCount >= 3)
+    .map((s) => (s.endedAt! - s.startedAt) / 1000 / s.setCount)
+    // A session left open overnight and finished the next morning is not a slow trainee.
+    .filter((seconds) => seconds > 20 && seconds < 600)
+    .sort((a, b) => a - b);
+
+  if (rates.length < 2) return undefined;
+
+  // Median, not mean: one interrupted session should not reshape the plan.
+  const middle = Math.floor(rates.length / 2);
+  return rates.length % 2 === 0
+    ? (rates[middle - 1]! + rates[middle]!) / 2
+    : rates[middle]!;
+}
+
+/**
+ * How many sets fit in the time available, at whatever pace the trainee actually works.
+ *
+ * Deliberately blunt: total sets, not which ones. The ordering decides what to drop -- this only
+ * says how much there is room for.
+ */
+export function setsThatFit(
+  budgetMinutes: number,
+  secondsPerSet: number,
+): number {
+  return Math.max(1, Math.floor((budgetMinutes * 60) / secondsPerSet));
 }
