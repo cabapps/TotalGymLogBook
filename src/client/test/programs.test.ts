@@ -299,6 +299,7 @@ describe('custom exercises', () => {
     usesPulley: true,
     peakTension: 'even' as const,
     setup: { position: 'seated', facing: 'tower', grip: 'handles' },
+    pattern: 'crunch',
     bodyFraction: 0.85,
     attachment: null,
     cue: 'Pull across your body.',

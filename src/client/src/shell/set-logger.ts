@@ -14,9 +14,11 @@ import type { Exercise, ExerciseCatalog } from '../exercises.js';
 import * as db from '../db/repository.js';
 import { FORMULA_VERSION, PULLEY_FACTOR_CABLE, PULLEY_FACTOR_DIRECT } from '../resistance.js';
 import type { RepAssist } from './rep-assist.js';
+import type { ExerciseDemo } from './exercise-demo.js';
 import { setFocus } from '../focus.js';
 
 import './rep-assist.js';
+import './exercise-demo.js';
 
 /** In-flight UI state. sessionStorage per docs/adr/0005: fast, and gone when the tab closes. */
 const UI_KEY = 'tg.logger';
@@ -42,6 +44,11 @@ styles.replaceSync(`
   }
   label { display: block; font-size: .75rem; color: var(--muted); margin: .75rem 0 .25rem; }
   .cue { font-size: .75rem; color: var(--muted); margin: .4rem 0 0; line-height: 1.4; }
+  button.demo-toggle {
+    font: inherit; font-size: .7rem; padding: .25rem .6rem; margin-top: .1rem;
+    border: 1px solid var(--border); border-radius: .5rem;
+    background: var(--bg); color: var(--muted); cursor: pointer;
+  }
   .setup { font-size: .75rem; color: var(--fg); margin: .5rem 0 0; line-height: 1.45; }
   .setup b { font-weight: 600; }
   .load { display: flex; align-items: baseline; gap: .4rem; margin-top: .85rem; }
@@ -128,6 +135,8 @@ export class SetLogger extends HTMLElement {
   // and correct, and the failure is silent: a set logged at 10 reps they did not do reads as
   // real data forever. Zero is obviously not a rep count, so it gets fixed before Log set.
   #state: UiState = { exerciseId: '', level: 8, reps: 0, vestLb: 0, barLb: 0 };
+  /** Whether the movement demo is open. Session state, not a setting. */
+  #showDemo = false;
 
   constructor() {
     super();
@@ -318,6 +327,8 @@ export class SetLogger extends HTMLElement {
         </select>
         <p class="setup" id="setup"></p>
         <p class="cue" id="cue"></p>
+        <button class="demo-toggle" id="demo-toggle" aria-expanded="false">Show me</button>
+        <tg-exercise-demo id="demo" hidden></tg-exercise-demo>
 
         <div class="load">
           <b id="load">—</b><span>lb</span><span id="loadNote"></span>
@@ -370,6 +381,7 @@ export class SetLogger extends HTMLElement {
         this.#update();
       });
     }
+    on('demo-toggle', 'click', () => this.#toggleDemo());
     on('minus', 'click', () => this.#nudgeReps(-1));
     on('plus', 'click', () => this.#nudgeReps(1));
     on('log', 'click', () => void this.#logSet());
@@ -399,6 +411,31 @@ export class SetLogger extends HTMLElement {
     this.#assist.syncCount(this.#state.reps);
   }
 
+  /**
+   * Shows or hides the drawing.
+   *
+   * Closed by default and remembered for the session, not stored. Someone who needs it needs it
+   * for the first few sessions and then never again, and a demo that has to be dismissed every
+   * time is a demo that gets in the way of the logging loop (docs/adr/0003).
+   */
+  #toggleDemo(): void {
+    this.#showDemo = !this.#showDemo;
+    this.#renderDemo();
+  }
+
+  #renderDemo(): void {
+    const demo = this.#root.getElementById('demo') as ExerciseDemo | null;
+    const toggle = this.#root.getElementById('demo-toggle');
+    if (!demo || !toggle) return;
+
+    demo.hidden = !this.#showDemo;
+    toggle.setAttribute('aria-expanded', String(this.#showDemo));
+    toggle.textContent = this.#showDemo ? 'Hide the demo' : 'Show me';
+
+    if (this.#showDemo) demo.show(this.#exercise);
+    else demo.clear();
+  }
+
   #setReps(reps: number): void {
     this.#state.reps = reps;
     (this.#root.getElementById('reps') as HTMLInputElement).value = String(reps);
@@ -413,6 +450,7 @@ export class SetLogger extends HTMLElement {
     this.#root.getElementById('levelText')!.textContent = String(this.#state.level);
     this.#root.getElementById('cue')!.textContent = e.cue;
     this.#root.getElementById('setup')!.innerHTML = describeSetup(e);
+    this.#renderDemo();
     this.#root.getElementById('loadNote')!.textContent = e.usesPulley
       ? '· cable, so half the incline load'
       : '';

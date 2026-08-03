@@ -743,6 +743,44 @@ async function main() {
 
   check('no page errors during rep assist', phoneErrors.length === 0, phoneErrors.slice(0, 2).join(' | '));
 
+  // ---- Movement demo ----
+  //
+  // Generated from the exercise's own data rather than authored, so the thing worth checking end
+  // to end is that it reaches the DOM at all and redraws when the exercise changes -- a drawing
+  // stuck on the last movement is worse than none.
+  console.log('\nMovement demo:');
+  await phone.locator('tg-set-logger #demo-toggle').click();
+  await phone.waitForSelector('tg-exercise-demo svg', { timeout: 10_000 });
+
+  const demoLabel = await phone.locator('tg-exercise-demo svg').getAttribute('aria-label');
+  check('the demo draws the selected movement', /chest press/i.test(demoLabel ?? ''),
+    (demoLabel ?? '').slice(0, 60) + '…');
+
+  await phone.screenshot({ path: join(SHOTS, '16-demo-cable.png'), fullPage: false });
+
+  const boardBefore = await phone.locator('tg-exercise-demo svg').getAttribute('style');
+  await phone.locator('tg-set-logger #exercise').selectOption({ value: 'squat' });
+  await phone.waitForTimeout(200);
+
+  const squatLabel = await phone.locator('tg-exercise-demo svg').getAttribute('aria-label');
+  check('it redraws when the exercise changes', /squat/i.test(squatLabel ?? ''),
+    (squatLabel ?? '').slice(0, 40) + '…');
+
+  const boardAfter = await phone.locator('tg-exercise-demo svg').getAttribute('style');
+  check('a squat moves the board further than a press', boardBefore !== boardAfter,
+    `${boardBefore} -> ${boardAfter}`);
+
+  const standDrawn = await phone.locator('tg-exercise-demo svg .accessory').count();
+  check('the squat stand is drawn for squat-stand work', standDrawn === 1);
+
+  await phone.screenshot({ path: join(SHOTS, '16-demo.png'), fullPage: false });
+
+  await phone.locator('tg-set-logger #demo-toggle').click();
+  const hidden = await phone.locator('tg-exercise-demo svg').count();
+  check('it closes again', hidden === 0);
+
+  await phone.locator('tg-set-logger #exercise').selectOption({ value: 'chest-press' });
+
   // ---- Equipment ----
   //
   // A hundred exercises is a long list to scroll past things you cannot do. The filter is a
