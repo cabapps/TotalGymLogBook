@@ -79,66 +79,100 @@ function railPoint(fraction: number): { x: number; y: number } {
 }
 
 /**
+ * How far the working limb swings, in degrees, and which way.
+ *
+ * Positive is "away from the body" in the figure's own frame. A press opens the joint, a curl
+ * closes it, and the sign is what makes the drawing read as the movement rather than as a limb
+ * waving about.
+ */
+function swingFor(pattern: string): number {
+  switch (pattern) {
+    case 'press': return -38;
+    case 'fly': return -50;
+    case 'pulldown': return 55;
+    case 'row': return 40;
+    case 'curl': return -65;
+    case 'extend': return 45;
+    case 'raise': return -40;
+    case 'squat': return -30;
+    case 'hinge': return -25;
+    case 'calf': return -14;
+    case 'crunch': return 28;
+    default: return 0;
+  }
+}
+
+/**
+ * A limb that pivots at its joint.
+ *
+ * TWO NESTED GROUPS, and the reason is the bug this replaced. The outer group translates to the
+ * joint; the inner one rotates about its own origin, which is now that joint. Animating a limb
+ * inside the board's own animated group made it inherit the board's travel AND add its own, so
+ * arms and legs slid off the figure entirely -- a leg walking away from a squatting stick man.
+ *
+ * A rotation cannot detach: whatever the angle, the segment still starts at the joint.
+ */
+function limb(joint: [number, number], to: [number, number], moving: boolean): string {
+  const segment = `<line class="figure" x1="0" y1="0" x2="${to[0] - joint[0]}" y2="${to[1] - joint[1]}" />`;
+
+  return `<g transform="translate(${joint[0]} ${joint[1]})">
+            <g class="${moving ? 'limb' : ''}">${segment}</g>
+          </g>`;
+}
+
+/**
  * The figure, drawn lying, sitting, kneeling or face down.
  *
  * Head first, because which end the head is at is the single thing a trainee most needs to get
- * right before they start -- and it is the thing the app was wrong about for a fortnight.
+ * right before they start -- and it is the thing the app itself was wrong about for a fortnight.
+ *
+ * Board-local coordinates: x runs along the rail, negative toward the tower, y is height above
+ * the board.
  */
-function figureFor(exercise: Exercise, limb: Pose['limb']): string {
+function figureFor(exercise: Exercise, pose: Pose): string {
   const { position, facing } = exercise.setup;
-  const towardTower = facing === 'tower';
 
-  // The board's local frame: x runs up the rail toward the tower.
-  const head = towardTower ? -16 : 16;
-  const foot = -head;
-
-  const torso = `<line class="figure" x1="${head * 0.55}" y1="-8" x2="${foot * 0.5}" y2="-8" />`;
-  const headDot = `<circle class="head" cx="${head}" cy="-10" r="4" />`;
+  // Which way the head points along the rail, and therefore which way the figure faces.
+  const hs = facing === 'tower' ? -1 : 1;
+  const arms = pose.limb === 'arms' || pose.limb === 'forearms';
 
   if (position === 'seated' || position === 'kneeling') {
-    // Upright: the torso stands off the board and the legs fold along it.
+    const hip: [number, number] = [-2 * hs, -7];
+    const shoulder: [number, number] = [4 * hs, -25];
+
     return `
       <g>
-        <circle class="head" cx="${head * 0.5}" cy="-26" r="4" />
-        <line class="figure" x1="${head * 0.5}" y1="-22" x2="${head * 0.2}" y2="-8" />
-        <line class="figure" x1="${head * 0.2}" y1="-8" x2="${foot * 0.7}" y2="-6" />
-        <g class="${limb === 'legs' ? 'anim' : ''}">
-          <line class="figure" x1="${foot * 0.7}" y1="-6" x2="${foot}" y2="-2" />
-        </g>
-        <g class="${limb === 'arms' || limb === 'forearms' ? 'anim' : ''}">
-          <line class="figure" x1="${head * 0.45}" y1="-20" x2="${head * 1.1}" y2="-16" />
-        </g>
+        <circle class="head" cx="${6 * hs}" cy="-31" r="4" />
+        <line class="figure" x1="${hip[0]}" y1="${hip[1]}" x2="${shoulder[0]}" y2="${shoulder[1]}" />
+        ${limb(hip, [-18 * hs, -4], pose.limb === 'legs')}
+        ${limb(shoulder, [18 * hs, -20], arms)}
       </g>`;
   }
 
   if (position === 'face-down') {
+    const shoulder: [number, number] = [9 * hs, -9];
+    const hip: [number, number] = [-8 * hs, -8];
+
     return `
       <g>
-        ${headDot}
-        ${torso}
-        <g class="${limb === 'arms' || limb === 'forearms' ? 'anim' : ''}">
-          <line class="figure" x1="${head * 0.55}" y1="-8" x2="${head * 1.15}" y2="-2" />
-        </g>
-        <g class="${limb === 'legs' ? 'anim' : ''}">
-          <line class="figure" x1="${foot * 0.5}" y1="-8" x2="${foot}" y2="-4" />
-        </g>
+        <circle class="head" cx="${15 * hs}" cy="-11" r="4" />
+        <line class="figure" x1="${shoulder[0]}" y1="${shoulder[1]}" x2="${hip[0]}" y2="${hip[1]}" />
+        ${limb(shoulder, [14 * hs, 0], arms)}
+        ${limb(hip, [-20 * hs, -3], pose.limb === 'legs' || pose.limb === 'torso')}
       </g>`;
   }
 
   // Face up, and side-lying, which reads the same from this angle.
+  const shoulder: [number, number] = [9 * hs, -10];
+  const hip: [number, number] = [-8 * hs, -8];
+
   return `
     <g>
-      ${headDot}
-      ${torso}
-      <g class="${limb === 'arms' || limb === 'forearms' ? 'anim' : ''}">
-        <line class="figure" x1="${head * 0.5}" y1="-8" x2="${head * 1.05}" y2="-20" />
-      </g>
-      <g class="${limb === 'legs' ? 'anim' : ''}">
-        <line class="figure" x1="${foot * 0.5}" y1="-8" x2="${foot * 1.1}" y2="-16" />
-      </g>
-      <g class="${limb === 'torso' ? 'anim' : ''}">
-        <line class="figure" x1="${head * 0.55}" y1="-8" x2="${head * 0.8}" y2="-18" />
-      </g>
+      <circle class="head" cx="${15 * hs}" cy="-12" r="4" />
+      <line class="figure" x1="${shoulder[0]}" y1="${shoulder[1]}" x2="${hip[0]}" y2="${hip[1]}" />
+      ${limb(shoulder, [12 * hs, -24], arms)}
+      ${limb(hip, [-22 * hs, -10], pose.limb === 'legs')}
+      ${pose.limb === 'torso' ? limb(hip, [10 * hs, -20], true) : ''}
     </g>`;
 }
 
@@ -175,7 +209,7 @@ export function demoSvg(exercise: Exercise): string {
   return `
     <svg viewBox="0 0 190 120" role="img"
          aria-label="${exercise.name}: ${pose.caption}"
-         style="--travel: translate(${dx}px, ${dy}px)">
+         style="--travel: translate(${dx}px, ${dy}px); --swing: ${swingFor(exercise.pattern)}deg">
       <line class="tower" x1="${RAIL.topX}" y1="${RAIL.topY - 20}" x2="${RAIL.topX}" y2="${RAIL.topY + 8}" />
       <line class="rail" x1="${RAIL.topX}" y1="${RAIL.topY}" x2="${RAIL.bottomX}" y2="${RAIL.bottomY}" />
       <line class="rail" x1="${RAIL.bottomX - 14}" y1="${RAIL.bottomY + 8}" x2="${RAIL.bottomX + 14}" y2="${RAIL.bottomY + 8}" />
@@ -188,7 +222,7 @@ export function demoSvg(exercise: Exercise): string {
       <g id="board" transform="translate(${rest.x} ${rest.y})">
         <g class="anim">
           <rect class="board" x="-22" y="-6" width="44" height="8" rx="3" />
-          ${figureFor(exercise, pose.limb)}
+          ${figureFor(exercise, pose)}
         </g>
       </g>
     </svg>`;

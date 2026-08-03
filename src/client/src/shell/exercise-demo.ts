@@ -23,14 +23,23 @@ styles.replaceSync(`
   .head { fill: var(--fg); stroke: none; }
   .accessory { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
 
-  /* One clock drives the whole drawing, so the board and the limb cannot drift apart. */
+  /* One clock for both, so the limb and the board cannot drift out of phase. */
   .anim { animation: work 3s ease-in-out infinite alternate; }
+  .limb { animation: swing 3s ease-in-out infinite alternate; }
 
   @keyframes work { from { transform: translate(0, 0); } to { transform: var(--travel); } }
+
+  /*
+    The limb ROTATES about its joint rather than translating. Its parent group has already
+    translated the origin onto the joint, and an SVG element's transform-origin is that origin,
+    so this pivots where the shoulder or hip actually is.
+  */
+  @keyframes swing { from { transform: rotate(0deg); } to { transform: rotate(var(--swing)); } }
 
   /* A demo that moves without being asked is worse than none for anyone who set this. */
   @media (prefers-reduced-motion: reduce) {
     .anim { animation: none; transform: var(--travel); }
+    .limb { animation: none; transform: rotate(var(--swing)); }
   }
 `);
 

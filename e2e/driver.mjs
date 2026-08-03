@@ -756,7 +756,13 @@ async function main() {
   check('the demo draws the selected movement', /chest press/i.test(demoLabel ?? ''),
     (demoLabel ?? '').slice(0, 60) + '…');
 
+  await phone.waitForTimeout(900);
   await phone.screenshot({ path: join(SHOTS, '16-demo-cable.png'), fullPage: false });
+
+  await phone.locator('tg-set-logger #exercise').selectOption({ value: 'seated-row' });
+  await phone.waitForTimeout(900);
+  await phone.screenshot({ path: join(SHOTS, '16-demo-row.png'), fullPage: false });
+  await phone.locator('tg-set-logger #exercise').selectOption({ value: 'chest-press' });
 
   const boardBefore = await phone.locator('tg-exercise-demo svg').getAttribute('style');
   await phone.locator('tg-set-logger #exercise').selectOption({ value: 'squat' });
@@ -773,6 +779,8 @@ async function main() {
   const standDrawn = await phone.locator('tg-exercise-demo svg .accessory').count();
   check('the squat stand is drawn for squat-stand work', standDrawn === 1);
 
+  // Mid-swing, so the screenshot shows the limb doing something rather than at rest.
+  await phone.waitForTimeout(900);
   await phone.screenshot({ path: join(SHOTS, '16-demo.png'), fullPage: false });
 
   await phone.locator('tg-set-logger #demo-toggle').click();
