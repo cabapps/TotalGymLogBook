@@ -180,7 +180,17 @@ SETUP = {
     "board-burpee": ("face-up", "tower", "nothing"),
     "adductor-stretch": ("face-up", "tower", "nothing"),
     "calf-stretch": ("face-up", "tower", "nothing"),
-    "crunch": ("face-up", "floor", "nothing"),
+    # ---- lying face up, head toward the FLOOR: feet anchored in the wing
+    #
+    # Head at the bottom means the feet are at the top, where the wing bolts on -- and they have
+    # to be held by something, or curling the ribs up just drags the trainee down the rail
+    # instead of moving the board. So the wing is not optional here: it is what makes the
+    # movement possible, with the cable unhooked because it would be behind the trainee's head.
+    #
+    # The other direction is a separate exercise, not a variation: head at the tower, cables in
+    # the hands, crunching against them. See cable-crunch.
+    "crunch": ("face-up", "floor", "feet under the wing bars"),
+
     "oblique-crunch": ("face-up", "floor", "nothing"),
     "reverse-crunch": ("face-up", "floor", "nothing"),
     "bicycle-crunch": ("face-up", "floor", "nothing"),
@@ -251,7 +261,7 @@ SETUP = {
     # ---- face down on the board
     "hamstring-curl": ("face-down", "floor", "ankle straps"),
     "wing-hamstring-curl": ("face-down", "tower", "nothing"),
-    "leg-pull": ("face-down", "tower", "leg pull bar"),
+    "leg-pull": ("face-down", "tower", "feet in the leg pull bar"),
     "decline-push-up": ("face-down", "floor", "press-up bars"),
     "knee-tuck": ("face-down", "floor", "nothing"),
     "pike": ("face-down", "floor", "nothing"),
@@ -486,11 +496,13 @@ EX = [
       [("Glutes", D), ("Hamstrings", I)]),
 
     # ---------------------------------------------------------------- core
-    E("crunch", "Crunch", "Core", "strength", False, 0.75, None,
-      "Lie back on the board and curl your ribs towards your hips. Short range, no pulling on your neck.",
+    E("crunch", "Crunch", "Core", "strength", False, 0.75, WING,
+      "Unhook the cable so it is clear of your head, then curl your ribs towards your hips. "
+      "Short range, no pulling on your neck.",
       [("Core", D)]),
     E("cable-crunch", "Cable Crunch", "Core", "strength", True, 0.85, None,
-      "Hold the handles by your head and crunch down against the cable.",
+      "The other way round: head at the tower, a handle in each hand by your head, "
+      "and crunch down against the cable.",
       [("Core", D)]),
     E("oblique-crunch", "Oblique Crunch", "Core", "strength", False, 0.75, None,
       "Crunch up and across, taking one shoulder towards the opposite hip.",
@@ -805,6 +817,15 @@ def main():
     # is asserted rather than left to whoever edits the table next.
     wrong_way = [e.id for e in EX if e.att == STAND and setup_of(e)["facing"] != "tower"]
     assert not wrong_way, f"squat-stand movements must face the tower: {sorted(wrong_way)}"
+
+    # Same class of fact from the other end of the rail: the wing bolts on at the top, so a
+    # movement whose setup has the trainee holding or hooking it REQUIRES it. Getting this wrong
+    # is not a cosmetic slip -- the instructions tell the trainee to use a bar the picker never
+    # checked they own, and the exercise stays in the list for someone who cannot do it.
+    unbolted = [
+        e.id for e in EX if "wing" in setup_of(e)["grip"] and e.att != WING
+    ]
+    assert not unbolted, f"setups using the wing must require it: {sorted(unbolted)}"
 
     stray_pattern = set(PATTERN_OVERRIDES) - seen
     assert not stray_pattern, f"pattern override for unknown exercises: {sorted(stray_pattern)}"

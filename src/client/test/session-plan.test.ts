@@ -117,7 +117,12 @@ describe('ordering a session', () => {
     // Putting two chest movements next to each other would waste the pairing the shared setup
     // makes possible. Crunches run at about the same notch as a press, which is the other half
     // of what makes a pair work.
-    const tidy = orderSession(plan('chest-press', 'incline-chest-fly', 'crunch'), catalog);
+    //
+    // The oblique crunch rather than the plain one, because the plain crunch needs the wing
+    // bolted on to anchor the feet -- and a pair that means fitting an attachment between rounds
+    // is not a pair. That it stopped qualifying the moment the wing was recorded is the
+    // transition model working, so this asks a movement that really does share the setup.
+    const tidy = orderSession(plan('chest-press', 'incline-chest-fly', 'oblique-crunch'), catalog);
     expect(supersetPairs(tidy, catalog, 90).length).toBeGreaterThan(0);
   });
 

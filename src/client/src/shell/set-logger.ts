@@ -63,6 +63,27 @@ styles.replaceSync(`
 `);
 
 /**
+ * How the trainee takes the thing the setup names.
+ *
+ * "Hold the ankle straps" is wrong in a way that matters: they go around the ankles, and a
+ * trainee who reaches for them with their hands has the exercise backwards before they start.
+ * The verb comes off the noun rather than being stored alongside it, because the noun already
+ * says which one it is -- anything worn goes on, anything the feet go under gets hooked, and
+ * everything else is held.
+ */
+function takeHold(grip: string): string {
+  if (grip.startsWith('feet ')) return `hook your ${grip}`;
+  if (grip.includes('ankle strap')) return `put on the ${grip}`;
+  return `hold the ${grip}`;
+}
+
+/** Whether the grip already says which attachment is on the machine. */
+function gripNames(attachment: string, grip: string): boolean {
+  const words = attachment.toLowerCase().split(/[^a-z-]+/).filter((w) => w.length >= 3);
+  return words.some((word) => grip.toLowerCase().includes(word));
+}
+
+/**
  * How to set the movement up, in a sentence.
  *
  * Composed from the structured setup rather than written per exercise, so the instructions and
@@ -98,14 +119,23 @@ function describeSetup(exercise: Exercise): string {
     parts.push(toTower ? 'head toward the tower' : 'head toward the floor');
   }
 
-  if (exercise.attachment) parts.push(`fit the ${exercise.attachment.toLowerCase()}`);
+  // "Fit the ankle straps, put on the ankle straps" is what saying both gets you. When the grip
+  // already names the attachment, the grip clause has fitting covered -- and the trainee reads
+  // one instruction instead of two that look like different steps.
+  if (exercise.attachment && !gripNames(exercise.attachment, exercise.setup.grip)) {
+    parts.push(`fit the ${exercise.attachment.toLowerCase()}`);
+  }
 
-  if (exercise.setup.grip !== 'nothing') parts.push(`hold the ${exercise.setup.grip}`);
+  if (exercise.setup.grip !== 'nothing') parts.push(takeHold(exercise.setup.grip));
 
+  // "Pressing straight off the board" was only ever true of the presses. It is wrong for a
+  // squat, a plank, a pull-up and a crunch, and on the crunch it directly contradicts the cue,
+  // which tells the trainee to unhook the cable and curl. What every cable-less movement on this
+  // machine has in common is the thing worth saying instead.
   parts.push(
     exercise.usesPulley
       ? 'pulling against the cable'
-      : 'pressing straight off the board — no cable',
+      : 'no cable — just your own weight up the rail',
   );
 
   return `<b>Set up:</b> ${parts.join(', ')}.`;
