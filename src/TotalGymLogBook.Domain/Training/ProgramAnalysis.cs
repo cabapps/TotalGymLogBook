@@ -197,11 +197,13 @@ public sealed class ProgramAnalyzer
 
         return emphasis switch
         {
+            // Percentages spelled out rather than :P0, which the invariant culture the browser
+            // runtime falls back to renders as "67 %" -- a space that reads as a typo mid-sentence.
             ProgramEmphasis.Lengthened when share >= 0.5 =>
-                $"{share:P0} of these sets load the muscle stretched, which is where this machine "
-                + "builds the most. Good shape for growth.",
+                $"{share * 100:0}% of these sets load the muscle stretched, which is where this "
+                + "machine builds the most. Good shape for growth.",
             ProgramEmphasis.Lengthened =>
-                $"Only {share:P0} of these sets load the muscle stretched. Swapping a squeeze "
+                $"Only {share * 100:0}% of these sets load the muscle stretched. Swapping a squeeze "
                 + "movement for a fly, a pulldown or a deeper squat would do more for growth.",
             ProgramEmphasis.LargestMuscles =>
                 "Built around the biggest muscles, which is what protects lean mass while you "
