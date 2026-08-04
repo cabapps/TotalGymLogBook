@@ -2118,18 +2118,18 @@
       "name": "Oblique Crunch",
       "category": "Core",
       "kind": "strength",
-      "usesPulley": false,
+      "usesPulley": true,
       "peakTension": "shortened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
-        "grip": "nothing"
+        "facing": "tower",
+        "grip": "handles by your head"
       },
       "pattern": "crunch",
-      "typicalLevel": 0.5,
+      "typicalLevel": 0.8,
       "bodyFraction": 0.75,
       "attachment": null,
-      "cue": "Crunch up and across, taking one shoulder towards the opposite hip.",
+      "cue": "A handle in each hand, crunch up and across so one shoulder travels towards the opposite hip. The dip bars anchor you just as well if you have them.",
       "muscles": [
         {
           "muscle": "Core",
@@ -2142,18 +2142,18 @@
       "name": "Reverse Crunch",
       "category": "Core",
       "kind": "strength",
-      "usesPulley": false,
+      "usesPulley": true,
       "peakTension": "shortened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
-        "grip": "nothing"
+        "facing": "tower",
+        "grip": "handles by your head"
       },
       "pattern": "crunch",
-      "typicalLevel": 0.5,
+      "typicalLevel": 0.8,
       "bodyFraction": 0.9,
       "attachment": null,
-      "cue": "Knees bent, curl your hips up off the board. The legs stay passive.",
+      "cue": "Hold the handles above your head, knees bent, and curl your hips up off the board. The legs stay passive.",
       "muscles": [
         {
           "muscle": "Core",
@@ -2166,18 +2166,18 @@
       "name": "Bicycle Crunch",
       "category": "Core",
       "kind": "strength",
-      "usesPulley": false,
+      "usesPulley": true,
       "peakTension": "shortened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
-        "grip": "nothing"
+        "facing": "tower",
+        "grip": "handles by your head"
       },
       "pattern": "crunch",
-      "typicalLevel": 0.5,
+      "typicalLevel": 0.8,
       "bodyFraction": 0.75,
       "attachment": null,
-      "cue": "Alternate elbow to opposite knee, extending the other leg as you go.",
+      "cue": "Handles by your head, alternate elbow to opposite knee, extending the other leg as you go.",
       "muscles": [
         {
           "muscle": "Core",

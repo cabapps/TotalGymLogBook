@@ -150,7 +150,14 @@ SETUP = {
     "overhead-triceps-extension": ("face-up", "tower", "handles"),
     "rope-overhead-extension": ("face-up", "tower", "rope"),
     "overhead-cable-curl": ("face-up", "tower", "handles"),
+    # Every crunch except the plain one is done this way round: head at the tower, hands holding
+    # something at that end to anchor the upper body. The cables are what everyone has; the dip
+    # bars do the same job for anyone who owns them, which is why the cues mention both and the
+    # catalog records the one that needs no accessory.
     "cable-crunch": ("face-up", "tower", "handles by your head"),
+    "oblique-crunch": ("face-up", "tower", "handles by your head"),
+    "reverse-crunch": ("face-up", "tower", "handles by your head"),
+    "bicycle-crunch": ("face-up", "tower", "handles by your head"),
     "pull-up": ("face-up", "tower", "wing bars"),
     "chin-up": ("face-up", "tower", "wing bars, palms toward you"),
     "wide-grip-pull-up": ("face-up", "tower", "wing bars, wide"),
@@ -191,9 +198,6 @@ SETUP = {
     # the hands, crunching against them. See cable-crunch.
     "crunch": ("face-up", "floor", "feet under the wing bars"),
 
-    "oblique-crunch": ("face-up", "floor", "nothing"),
-    "reverse-crunch": ("face-up", "floor", "nothing"),
-    "bicycle-crunch": ("face-up", "floor", "nothing"),
     "glute-stretch": ("face-up", "floor", "nothing"),
     "spinal-twist": ("face-up", "floor", "nothing"),
     "pilates-footwork": ("face-up", "floor", "nothing"),
@@ -504,14 +508,16 @@ EX = [
       "The other way round: head at the tower, a handle in each hand by your head, "
       "and crunch down against the cable.",
       [("Core", D)]),
-    E("oblique-crunch", "Oblique Crunch", "Core", "strength", False, 0.75, None,
-      "Crunch up and across, taking one shoulder towards the opposite hip.",
+    E("oblique-crunch", "Oblique Crunch", "Core", "strength", True, 0.75, None,
+      "A handle in each hand, crunch up and across so one shoulder travels towards the opposite "
+      "hip. The dip bars anchor you just as well if you have them.",
       [("Core", D)]),
-    E("reverse-crunch", "Reverse Crunch", "Core", "strength", False, 0.9, None,
-      "Knees bent, curl your hips up off the board. The legs stay passive.",
+    E("reverse-crunch", "Reverse Crunch", "Core", "strength", True, 0.9, None,
+      "Hold the handles above your head, knees bent, and curl your hips up off the board. "
+      "The legs stay passive.",
       [("Core", D)]),
-    E("bicycle-crunch", "Bicycle Crunch", "Core", "strength", False, 0.75, None,
-      "Alternate elbow to opposite knee, extending the other leg as you go.",
+    E("bicycle-crunch", "Bicycle Crunch", "Core", "strength", True, 0.75, None,
+      "Handles by your head, alternate elbow to opposite knee, extending the other leg as you go.",
       [("Core", D)]),
     E("knee-tuck", "Knee Tuck", "Core", "strength", False, 1.0, None,
       "Face down in a plank on the board, draw both knees up towards your chest.",

@@ -118,11 +118,11 @@ describe('ordering a session', () => {
     // makes possible. Crunches run at about the same notch as a press, which is the other half
     // of what makes a pair work.
     //
-    // The oblique crunch rather than the plain one, because the plain crunch needs the wing
-    // bolted on to anchor the feet -- and a pair that means fitting an attachment between rounds
-    // is not a pair. That it stopped qualifying the moment the wing was recorded is the
-    // transition model working, so this asks a movement that really does share the setup.
-    const tidy = orderSession(plan('chest-press', 'incline-chest-fly', 'oblique-crunch'), catalog);
+    // A knee tuck rather than a crunch, because no crunch qualifies any more and both reasons
+    // are the model working rather than a gap in it. The plain crunch needs the wing bolted on,
+    // and a pair that means fitting an attachment between rounds is not a pair. The rest are
+    // cable movements, which sit two notches up the rail from a press.
+    const tidy = orderSession(plan('chest-press', 'incline-chest-fly', 'knee-tuck'), catalog);
     expect(supersetPairs(tidy, catalog, 90).length).toBeGreaterThan(0);
   });
 
