@@ -18,6 +18,7 @@ was revised during design, the record reflects where we landed, with the rejecte
 | [0008](0008-service-worker-and-offline.md) | Service worker and offline strategy | Accepted |
 | [0009](0009-repo-structure-and-build.md) | Repo structure and build pipeline | Accepted |
 | [0010](0010-goals-and-training-phase.md) | Training goals and energy phase | Accepted |
+| [0011](0011-visual-design-system.md) | Visual design system: Apple HIG on the web | Accepted |
 
 ## The two principles everything else follows from
 

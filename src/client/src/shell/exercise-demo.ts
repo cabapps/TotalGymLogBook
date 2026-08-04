@@ -8,17 +8,21 @@
 import type { Exercise } from '../exercises.js';
 import { demoCaption, demoSvg } from '../demo.js';
 
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; }
-  figure { margin: .5rem 0 0; }
-  svg { width: 100%; height: auto; display: block; border-radius: .5rem;
-        background: var(--bg); border: 1px solid var(--border); }
-  figcaption { font-size: .7rem; color: var(--muted); margin-top: .3rem; line-height: 1.4; }
-  .rail { stroke: var(--border); stroke-width: 3; stroke-linecap: round; }
-  .tower { stroke: var(--border); stroke-width: 3; stroke-linecap: round; }
+  figure { margin: .6rem 0 0; }
+  svg { width: 100%; height: auto; display: block; border-radius: var(--radius-field);
+        background: var(--fill); }
+  figcaption { font-size: var(--text-footnote); color: var(--muted); margin-top: .35rem;
+               line-height: 1.4; }
+  /* The machine is drawn in systemGray rather than the separator color: a hairline tint that
+     reads correctly as a 1px rule is nearly invisible as a 3px stroke on a tinted panel. */
+  .rail { stroke: var(--system-gray); stroke-width: 3; stroke-linecap: round; }
+  .tower { stroke: var(--system-gray); stroke-width: 3; stroke-linecap: round; }
   .cable { stroke: var(--accent); stroke-width: 1.5; fill: none; opacity: .8; }
-  .board { fill: var(--surface); stroke: var(--muted); stroke-width: 1.5; }
+  .board { fill: var(--surface); stroke: var(--system-gray); stroke-width: 1.5; }
   .figure { stroke: var(--fg); stroke-width: 2.5; stroke-linecap: round; fill: none; }
   .head { fill: var(--fg); stroke: none; }
   .accessory { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
@@ -50,7 +54,7 @@ export class ExerciseDemo extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   show(exercise: Exercise): void {

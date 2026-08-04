@@ -11,6 +11,18 @@
 
 import { UPDATE_READY_EVENT, applyUpdate, isUpdateReady } from '../updates.js';
 
+/**
+ * How long the handover gets before the banner stops claiming to be working on it.
+ *
+ * A worker that takes over does it in well under a second, phone included. Anything past this is
+ * a worker that is never going to answer -- one built before the SKIP_WAITING protocol existed,
+ * or a browser that has decided otherwise -- and the trainee is owed something they can act on
+ * rather than an ellipsis and a dead button.
+ */
+const HANDOVER_TIMEOUT_MS = 8000;
+
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
   :host { display: none; }
@@ -18,27 +30,38 @@ styles.replaceSync(`
      the host with a zero-height box, which reads as "not visible" to anything measuring it --
      assistive tech and e2e checks included. */
   :host([open]) { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 900; }
+  /* A bottom bar in the same blurred material as the nav bar, so the two read as one chrome. */
   .bar {
     display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
-    padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
-    background: var(--surface); border-top: 1px solid var(--border);
-    box-shadow: 0 -2px 12px rgb(0 0 0 / .18);
+    padding: .75rem var(--gutter) calc(.75rem + env(safe-area-inset-bottom));
+    background: var(--material);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-top: var(--hairline) solid var(--separator);
   }
-  p { margin: 0; flex: 1 1 12rem; font-size: .8125rem; line-height: 1.4; }
+  p { margin: 0; flex: 1 1 12rem; font-size: var(--text-subhead);
+      color: var(--fg); line-height: 1.4; }
   button {
-    font: inherit; font-size: .8125rem; padding: .45rem .8rem; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--fg); cursor: pointer;
+    min-height: 2.25rem; padding: 0 .9rem;
+    border: 0; border-radius: var(--radius-small);
+    background: var(--fill); color: var(--accent);
+    font-size: var(--text-subhead); font-weight: 500;
   }
-  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+  button.primary {
+    width: auto; min-height: 2.25rem; margin-top: 0;
+    background: var(--accent); color: #fff;
+  }
 `);
 
 export class UpdateBanner extends HTMLElement {
   #root: ShadowRoot;
+  /** Pending handover deadline. `| undefined` rather than `?`: exactOptionalPropertyTypes. */
+  #stall: number | undefined;
 
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   connectedCallback(): void {
@@ -52,6 +75,7 @@ export class UpdateBanner extends HTMLElement {
 
   disconnectedCallback(): void {
     window.removeEventListener(UPDATE_READY_EVENT, this.#onReady);
+    if (this.#stall !== undefined) clearTimeout(this.#stall);
   }
 
   #onReady = (): void => {
@@ -78,7 +102,28 @@ export class UpdateBanner extends HTMLElement {
       this.#root.getElementById('message')!.textContent = 'Updating…';
       (this.#root.getElementById('update') as HTMLButtonElement).disabled = true;
       applyUpdate();
+
+      // Nothing here can force a worker to hand over. If it does not, this is the difference
+      // between an app that looks broken and one that tells you the way out.
+      this.#stall = window.setTimeout(() => this.#stalled(), HANDOVER_TIMEOUT_MS);
     });
+  }
+
+  /**
+   * The update did not take. A waiting worker takes control once every page using the old one is
+   * gone, so closing the app is the one thing that reliably finishes it -- and on a home-screen
+   * PWA, swiping it out of the app switcher is exactly that.
+   */
+  #stalled(): void {
+    this.#stall = undefined;
+
+    const message = this.#root.getElementById('message');
+    const update = this.#root.getElementById('update') as HTMLButtonElement | null;
+    if (!message || !update) return;
+
+    message.textContent = 'Close the app completely and open it again to finish updating.';
+    update.disabled = false;
+    update.textContent = 'Try again';
   }
 }
 

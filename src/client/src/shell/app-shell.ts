@@ -82,6 +82,8 @@ function toExercise(record: CustomExerciseRecord): Exercise {
   };
 }
 
+import { ios } from './theme.js';
+
 import './set-logger.js';
 import './session-list.js';
 import './rest-timer.js';
@@ -96,30 +98,56 @@ const DEFAULT_REST_SECONDS = 90;
 
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; padding: 1rem; max-width: 34rem; margin: 0 auto; }
-  h1 { font-size: 1.15rem; margin: 0 0 .15rem; }
-  .sub { color: var(--muted); font-size: .8125rem; margin: 0 0 1rem; }
-  label { display: block; font-size: .75rem; color: var(--muted); margin: .85rem 0 .25rem; }
-  input, select {
-    width: 100%; padding: .55rem; font: inherit; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--fg);
+  :host { display: block; }
+
+  /*
+    The nav bar. Sticky, and it extends UNDER the status bar via the top safe-area inset -- a
+    bar that stops below the notch reads as a web page with a gray strip on top, which is
+    exactly the thing this change exists to stop.
+
+    The material is the point: iOS bars are translucent and blur what scrolls beneath them.
+    backdrop-filter is what makes a fixed header feel like part of the OS rather than a div.
+  */
+  .navbar {
+    position: sticky; top: 0; z-index: 50;
+    padding-top: env(safe-area-inset-top);
+    background: var(--material);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    /* The hairline appears only once something has scrolled under the bar -- see .condensed. */
+    border-bottom: var(--hairline) solid transparent;
+    transition: border-color .2s ease;
   }
-  button.primary {
-    width: 100%; margin-top: 1.1rem; padding: .8rem; font: inherit; font-weight: 600;
-    border: 0; border-radius: .65rem; background: var(--accent); color: #fff; cursor: pointer;
+  .navbar-inner {
+    max-width: 34rem; margin: 0 auto; height: var(--tap);
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 var(--gutter);
   }
-  button.ghost {
-    width: 100%; margin-top: .5rem; padding: .6rem; font: inherit;
-    border: 1px solid var(--border); border-radius: .65rem;
-    background: transparent; color: var(--muted); cursor: pointer;
+  /*
+    The large title collapses into the bar as you scroll: the iOS navigation pattern, and the
+    single strongest signal that a screen is native rather than a document.
+  */
+  .navbar-title {
+    font-size: var(--text-headline); font-weight: 600; letter-spacing: -0.01em;
+    opacity: 0; transform: translateY(.4rem);
+    transition: opacity .2s ease, transform .2s ease;
   }
-  .bar { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: .5rem; }
-  .bar small { color: var(--muted); font-size: .75rem; }
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: .75rem; padding: 1rem; margin-bottom: .75rem;
+  .navbar.condensed { border-bottom-color: var(--separator); }
+  .navbar.condensed .navbar-title { opacity: 1; transform: none; }
+
+  .screen {
+    max-width: 34rem; margin: 0 auto;
+    padding: .25rem var(--gutter) calc(3rem + env(safe-area-inset-bottom));
   }
-  .card p { margin: 0 0 .5rem; font-size: .875rem; line-height: 1.45; }
+
+  h1 {
+    font-size: var(--text-large-title); font-weight: 700; letter-spacing: -0.022em;
+    line-height: 1.1; margin: .35rem 0 .2rem;
+  }
+  .sub { color: var(--muted); font-size: var(--text-subhead); margin: 0 0 1.1rem; }
+
+  .card p { color: var(--fg); font-size: var(--text-body); }
+  .card p + button { margin-top: .5rem; }
 `);
 
 export class AppShell extends HTMLElement {
@@ -148,15 +176,17 @@ export class AppShell extends HTMLElement {
   /** Raw latest scale reading, snapshotted alongside for auditability. */
   #bodyweightRawLb = 0;
   #session: SessionRecord | undefined;
+  /** Watches the large title so the nav bar can take it over on scroll. */
+  #titleWatch?: IntersectionObserver;
 
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   async connectedCallback(): Promise<void> {
-    this.#root.innerHTML = `<p class="sub">Loading&hellip;</p>`;
+    this.#root.innerHTML = `<div class="screen"><p class="sub">Loading&hellip;</p></div>`;
 
     const [catalog, profilesJson, library, custom] = await Promise.all([
       ExerciseCatalog.load(),
@@ -245,41 +275,89 @@ export class AppShell extends HTMLElement {
     this.#bodyweightLb = smoothedLb(readings) ?? this.#bodyweightRawLb;
   }
 
+  // ---------------------------------------------------------------- chrome
+
+  /**
+   * Wraps a screen in the navigation bar and the large title.
+   *
+   * The title is written twice on purpose: once large in the content, once compact in the bar.
+   * The observer below cross-fades between them on scroll, which is how every stock iOS screen
+   * behaves and is not something CSS can do on its own.
+   */
+  #chrome(title: string, subtitle: string, body: string): string {
+    return `
+      <header class="navbar" id="navbar">
+        <div class="navbar-inner"><span class="navbar-title">${title}</span></div>
+      </header>
+      <main class="screen">
+        <h1 id="large-title">${title}</h1>
+        <p class="sub">${subtitle}</p>
+        ${body}
+      </main>
+    `;
+  }
+
+  /**
+   * Condenses the nav bar once the large title has scrolled under it.
+   *
+   * rootMargin is measured from the bar rather than hardcoded, because the bar's height is the
+   * status bar inset plus 44pt and the inset is different on every device -- and zero on a
+   * desktop browser, where a hardcoded 91px would condense the title while it was still on
+   * screen.
+   */
+  #watchTitle(): void {
+    this.#titleWatch?.disconnect();
+
+    const navbar = this.#root.getElementById('navbar');
+    const title = this.#root.getElementById('large-title');
+    if (!navbar || !title || typeof IntersectionObserver !== 'function') return;
+
+    this.#titleWatch = new IntersectionObserver(
+      ([entry]) => navbar.classList.toggle('condensed', !entry!.isIntersecting),
+      { rootMargin: `-${Math.round(navbar.getBoundingClientRect().height)}px 0px 0px 0px` },
+    );
+    this.#titleWatch.observe(title);
+  }
+
   // ---------------------------------------------------------------- onboarding
 
   #renderOnboarding(): void {
     const profiles = this.#profiles!;
 
-    this.#root.innerHTML = `
-      <h1>Total Gym Logbook</h1>
-      <p class="sub">Three questions and you're logging.</p>
+    this.#root.innerHTML = this.#chrome(
+      'Total Gym Logbook',
+      "Three questions and you're logging.",
+      `
+      <div class="card">
+        <label for="bw">What do you weigh? (lb)</label>
+        <input type="number" id="bw" min="50" max="500" step="0.1" value="180" />
 
-      <label for="bw">What do you weigh? (lb)</label>
-      <input type="number" id="bw" min="50" max="500" step="0.1" value="180" />
+        <label for="notches">How many notches are on your rail?</label>
+        <select id="notches">
+          ${profiles.profiles
+            .slice()
+            .sort((a, b) => a.levelCount - b.levelCount)
+            .map(
+              (p) =>
+                `<option value="${p.id}"${p.levelCount === 14 ? ' selected' : ''}>${p.levelCount} levels</option>`,
+            )
+            .join('')}
+        </select>
 
-      <label for="notches">How many notches are on your rail?</label>
-      <select id="notches">
-        ${profiles.profiles
-          .slice()
-          .sort((a, b) => a.levelCount - b.levelCount)
-          .map(
-            (p) =>
-              `<option value="${p.id}"${p.levelCount === 14 ? ' selected' : ''}>${p.levelCount} levels</option>`,
-          )
-          .join('')}
-      </select>
-
-      <label for="goal">What are you working toward?</label>
-      <select id="goal">
-        <option value="build-muscle">Build muscle</option>
-        <option value="lose-fat">Lose weight</option>
-        <option value="get-stronger">Get stronger</option>
-        <option value="endurance">Improve endurance</option>
-        <option value="rehab">Recover from an injury</option>
-      </select>
+        <label for="goal">What are you working toward?</label>
+        <select id="goal">
+          <option value="build-muscle">Build muscle</option>
+          <option value="lose-fat">Lose weight</option>
+          <option value="get-stronger">Get stronger</option>
+          <option value="endurance">Improve endurance</option>
+          <option value="rehab">Recover from an injury</option>
+        </select>
+      </div>
 
       <button class="primary" id="start">Start logging</button>
-    `;
+    `,
+    );
+    this.#watchTitle();
 
     this.#root.getElementById('start')!.addEventListener('click', async () => {
       const lb = Number((this.#root.getElementById('bw') as HTMLInputElement).value);
@@ -309,14 +387,18 @@ export class AppShell extends HTMLElement {
   #renderResume(orphan: SessionRecord): void {
     const started = new Date(orphan.startedAt);
 
-    this.#root.innerHTML = `
-      <h1>Unfinished workout</h1>
+    this.#root.innerHTML = this.#chrome(
+      'Unfinished workout',
+      `Still open from ${started.toLocaleString()}.`,
+      `
       <div class="card">
-        <p>You have a session still open from ${started.toLocaleString()}.</p>
-        <button class="primary" id="resume">Resume it</button>
-        <button class="ghost" id="close">Close it and start fresh</button>
+        <p>Pick it up where you left off, or close it and start a new session.</p>
       </div>
-    `;
+      <button class="primary" id="resume">Resume it</button>
+      <button class="ghost destructive" id="close">Close it and start fresh</button>
+    `,
+    );
+    this.#watchTitle();
 
     this.#root.getElementById('resume')!.addEventListener('click', () => {
       this.#session = orphan;
@@ -332,12 +414,10 @@ export class AppShell extends HTMLElement {
   // ---------------------------------------------------------------- workout
 
   #renderWorkout(): void {
-    this.#root.innerHTML = `
-      <div class="bar">
-        <h1>Log a set</h1>
-        <small><span id="bwLabel">${this.#bodyweightLb.toFixed(1)} lb</span> &middot; ${this.#profile!.levelCount} notches</small>
-      </div>
-
+    this.#root.innerHTML = this.#chrome(
+      'Log a set',
+      `<span id="bwLabel">${this.#bodyweightLb.toFixed(1)} lb</span> &middot; ${this.#profile!.levelCount} notches`,
+      `
       <tg-rest-timer id="timer" hidden></tg-rest-timer>
       <tg-weigh-in id="weight"></tg-weigh-in>
       <tg-program-panel id="program"></tg-program-panel>
@@ -358,7 +438,9 @@ export class AppShell extends HTMLElement {
       <slot name="derived"></slot>
 
       <tg-data-safety></tg-data-safety>
-    `;
+    `,
+    );
+    this.#watchTitle();
 
     const logger = this.#root.getElementById('logger') as SetLogger;
     const list = this.#root.getElementById('list') as SessionList;

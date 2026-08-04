@@ -93,37 +93,48 @@ else
 }
 
 <style>
-    /* Slotted into the app shell, which already supplies the 34rem column and the side
-       padding. Adding our own would double it. */
-    .tg-derived { margin: 0; padding: 0; }
-    .tg-derived h2 { font-size: 1.05rem; margin: 1.25rem 0 .5rem; }
-    .tg-derived .note { color: var(--muted); font-size: .8125rem; }
-    .focus { margin: 0 0 .4rem; font-size: .75rem; letter-spacing: .04em;
+    /* Slotted into the app shell, which already supplies the 34rem column and the side padding;
+       the headings and .note live in MainLayout, which survives navigation. */
+    .focus { margin: 0 0 .4rem; font-size: var(--text-footnote); letter-spacing: .04em;
              text-transform: uppercase; color: var(--muted); }
     .rec {
-        background: var(--surface); border: 1px solid var(--border);
-        border-radius: .75rem; padding: 1rem;
+        background: var(--surface); border-radius: var(--radius-card);
+        padding: var(--card-pad-y) var(--gutter);
     }
-    .rec-load { font-size: 2.25rem; font-weight: 650; line-height: 1; font-variant-numeric: tabular-nums; }
-    .rec-load small { font-size: .9rem; font-weight: 400; color: var(--muted); margin-left: .25rem; }
-    .rec-setup { margin-top: .35rem; font-size: .9rem; }
-    .rec-why { margin: .75rem 0 0; font-size: .85rem; color: var(--muted); line-height: 1.45; }
+    /* The recommended load is the payoff for logging, so it gets the metric treatment: SF
+       Rounded, tabular, the same face the set logger uses for the live figure. */
+    .rec-load {
+        font-family: var(--font-rounded);
+        font-size: var(--text-metric); font-weight: 700; line-height: 1;
+        letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+    }
+    .rec-load small { font-size: var(--text-subhead); font-weight: 400; color: var(--muted);
+                      margin-left: .25rem; }
+    .rec-setup { margin-top: .45rem; font-size: var(--text-callout); }
+    .rec-why { margin: .75rem 0 0; font-size: var(--text-footnote); color: var(--muted);
+               line-height: 1.45; }
     .week {
-        background: var(--surface); border: 1px solid var(--border);
-        border-radius: .75rem; padding: .9rem 1rem;
+        background: var(--surface); border-radius: var(--radius-card);
+        padding: var(--card-pad-y) var(--gutter);
     }
-    .week.gap { border-color: #d97706; }
-    .week .headline { margin: 0; font-size: .85rem; line-height: 1.5; }
-    ul.gaps { list-style: none; margin: .75rem 0 0; padding: 0; font-size: .8125rem; }
+    /* Tinted, not outlined -- a border around a card is the most reliable way to look like a
+       web form rather than an iOS list. */
+    .week.gap { background: var(--surface-warn); }
+    .week .headline { margin: 0; font-size: var(--text-subhead); line-height: 1.5; }
+    ul.gaps { list-style: none; margin: .5rem 0 0; padding: 0; font-size: var(--text-subhead); }
     ul.gaps li { display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap;
-                 padding: .35rem 0; border-top: 1px solid var(--border); }
+                 padding: .5rem 0; border-top: var(--hairline) solid var(--separator); }
     ul.gaps .muscle { text-transform: capitalize; font-weight: 600; }
     ul.gaps .sets { color: var(--muted); font-variant-numeric: tabular-nums; }
-    ul.gaps .fixes { color: var(--muted); flex-basis: 100%; font-size: .75rem; }
-    .facts { display: grid; grid-template-columns: auto 1fr; gap: .3rem .75rem; margin-top: 1rem;
-             font-size: .8125rem; }
+    ul.gaps .fixes { color: var(--muted); flex-basis: 100%; font-size: var(--text-footnote); }
+    .facts {
+        display: grid; grid-template-columns: auto 1fr; gap: .5rem .75rem;
+        background: var(--surface); border-radius: var(--radius-card);
+        padding: var(--card-pad-y) var(--gutter); margin-top: .75rem;
+        font-size: var(--text-subhead);
+    }
     .facts dt { color: var(--muted); }
-    .facts dd { margin: 0; }
+    .facts dd { margin: 0; text-align: right; }
 </style>
 
 @code {

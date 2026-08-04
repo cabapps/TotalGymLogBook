@@ -27,51 +27,76 @@ const POSITIONS = [
   { label: 'Kneeling', fraction: 0.7 },
 ] as const;
 
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; margin-top: .75rem; }
+  :host { display: block; margin-top: var(--group-gap); }
   details {
-    background: var(--surface); border: 1px solid var(--border); border-radius: .75rem;
-    padding: .6rem .9rem;
+    background: var(--surface); border-radius: var(--radius-card);
+    padding: 0 var(--gutter) .8rem;
   }
-  summary { cursor: pointer; font-size: .8125rem; color: var(--muted); }
-  label { display: block; font-size: .7rem; color: var(--muted); margin: .7rem 0 .2rem; }
-  input, select, textarea {
-    width: 100%; padding: .45rem; font: inherit; font-size: .8125rem; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--fg);
+  details:not([open]) { padding-bottom: 0; }
+  summary {
+    display: flex; align-items: center; gap: .4rem;
+    min-height: var(--tap); cursor: pointer;
+    font-size: var(--text-body); color: var(--fg);
+    list-style: none;
+    -webkit-tap-highlight-color: transparent;
   }
-  textarea { resize: vertical; min-height: 2.6rem; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after {
+    content: ''; flex: 0 0 .5rem; height: .8125rem; margin-left: auto;
+    background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='13' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 1.5l5 5-5 5'/%3E%3C/svg%3E") no-repeat center;
+    transition: transform .2s ease;
+  }
+  details[open] summary::after { transform: rotate(90deg); }
+
+  textarea { resize: vertical; min-height: 3.5rem; }
   .row { display: flex; gap: .6rem; }
   .row > * { flex: 1; }
-  .muscles { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .3rem; }
+
+  /* Muscle involvement: tinted capsules that fill in as they are promoted. */
+  .muscles { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .35rem; }
   .muscles button {
-    font: inherit; font-size: .7rem; padding: .22rem .5rem; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer;
+    min-height: 2rem; padding: 0 .7rem;
+    border: 0; border-radius: 999px;
+    background: var(--fill); color: var(--muted);
+    font-size: var(--text-subhead); font-weight: 500;
   }
-  .muscles button[data-state="direct"] {
-    background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
-  }
-  .muscles button[data-state="indirect"] { border-color: var(--accent); color: var(--accent); }
+  .muscles button[data-state="direct"] { background: var(--accent); color: #fff; }
+  .muscles button[data-state="indirect"] { background: var(--accent-tint); color: var(--accent); }
+
   .preview {
-    margin-top: .7rem; padding: .5rem .6rem; border-radius: .5rem;
-    background: var(--bg); border: 1px solid var(--border); font-size: .75rem; color: var(--muted);
+    margin-top: .8rem; padding: .6rem .7rem; border-radius: var(--radius-small);
+    background: var(--fill); font-size: var(--text-footnote); color: var(--muted);
   }
-  .preview b { font-size: 1.1rem; color: var(--fg); font-variant-numeric: tabular-nums; }
-  .hint { font-size: .7rem; color: var(--muted); margin: .25rem 0 0; line-height: 1.4; }
-  .actions { display: flex; gap: .5rem; margin-top: .9rem; }
+  .preview b { font-family: var(--font-rounded); font-size: var(--text-title3);
+               font-weight: 700; color: var(--fg); font-variant-numeric: tabular-nums; }
+  .hint { font-size: var(--text-caption); color: var(--muted); margin: .3rem 0 0;
+          line-height: 1.4; }
+
+  .actions { display: flex; gap: .5rem; margin-top: 1rem; }
   button.save {
-    font: inherit; font-size: .8125rem; font-weight: 600; padding: .45rem .9rem;
-    border: 0; border-radius: .5rem; background: var(--accent); color: #fff; cursor: pointer;
+    min-height: 2.25rem; padding: 0 1rem;
+    border: 0; border-radius: var(--radius-small);
+    background: var(--accent); color: #fff;
+    font-size: var(--text-subhead); font-weight: 600;
   }
-  button.save:disabled { opacity: .5; cursor: default; }
-  .mine { list-style: none; margin: .8rem 0 0; padding: 0; }
+  button.save:disabled { background: var(--fill-strong); color: var(--faint); opacity: 1; }
+
+  .mine { list-style: none; margin: .9rem 0 0; padding: 0; }
   .mine li { display: flex; align-items: center; justify-content: space-between; gap: .5rem;
-             padding: .35rem 0; border-top: 1px solid var(--border); font-size: .8125rem; }
+             min-height: var(--tap); padding: .2rem 0;
+             border-top: var(--hairline) solid var(--separator);
+             font-size: var(--text-body); }
   .mine button {
-    font: inherit; font-size: .7rem; padding: .2rem .5rem; border-radius: .35rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer;
+    min-height: 2rem; padding: 0 .6rem;
+    border: 0; border-radius: var(--radius-small);
+    background: var(--fill); color: var(--danger);
+    font-size: var(--text-subhead);
   }
-  .result { font-size: .75rem; color: var(--accent); margin-top: .5rem; }
+  .result { font-size: var(--text-footnote); color: var(--system-green); margin-top: .5rem; }
 `);
 
 type Involvement = 'none' | 'direct' | 'indirect';
@@ -88,7 +113,7 @@ export class ExerciseEditor extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   configure(opts: { catalog: ExerciseCatalog; profile: RailProfile; bodyweightLb: number }): void {

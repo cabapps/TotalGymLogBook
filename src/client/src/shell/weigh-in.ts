@@ -15,31 +15,36 @@ import { onChange } from '../db/events.js';
 import { toIsoDate } from '../db/schema.js';
 import { describeCoverage, smoothedLb, toReadings } from '../bodyweight.js';
 
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; }
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: .75rem; padding: .85rem 1rem; margin-bottom: .75rem;
-  }
   .head { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
-  .now { font-size: 1.35rem; font-weight: 650; font-variant-numeric: tabular-nums; }
-  .now small { font-size: .8rem; font-weight: 400; color: var(--muted); margin-left: .2rem; }
-  .smoothed { color: var(--muted); font-size: .75rem; }
-  .note { color: var(--muted); font-size: .75rem; margin: .4rem 0 0; line-height: 1.4; }
-  .note.warn { color: #b45309; }
-  form { display: flex; gap: .5rem; margin-top: .7rem; }
-  input {
-    flex: 1; padding: .5rem; font: inherit; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--fg);
+  .now {
+    font-family: var(--font-rounded);
+    font-size: var(--text-title1); font-weight: 700; letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
   }
-  button {
-    font: inherit; font-weight: 600; padding: .5rem .9rem; border: 0; border-radius: .5rem;
-    background: var(--accent); color: #fff; cursor: pointer;
+  .now small { font-size: var(--text-subhead); font-weight: 400; color: var(--muted);
+               margin-left: .2rem; }
+  .smoothed { color: var(--muted); font-size: var(--text-footnote); }
+  .note { color: var(--muted); font-size: var(--text-footnote); margin: .3rem 0 0;
+          line-height: 1.4; }
+  .note.warn { color: var(--warn); }
+
+  form { display: flex; align-items: center; gap: .5rem; margin-top: .7rem; }
+  form input { flex: 1; }
+  form button {
+    flex: 0 0 auto; min-height: var(--tap); padding: 0 1.1rem;
+    border: 0; border-radius: var(--radius-field);
+    background: var(--accent); color: #fff;
+    font-size: var(--text-headline); font-weight: 600;
   }
+  /* The "I already weighed in" path: a plain tint-colored button, not an underlined link. */
   button.link {
-    background: transparent; color: var(--muted); font-weight: 400; padding: 0;
-    font-size: .75rem; text-decoration: underline; margin-top: .5rem;
+    display: block; min-height: var(--tap); padding: 0;
+    background: none; border: 0; color: var(--accent);
+    font-size: var(--text-body); text-align: left;
   }
   form[hidden] { display: none; }
 `);
@@ -52,7 +57,7 @@ export class WeighIn extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   connectedCallback(): void {

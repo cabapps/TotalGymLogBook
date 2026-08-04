@@ -20,29 +20,31 @@ import {
   type StorageStatus,
 } from '../storage.js';
 
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; margin-top: 1.25rem; }
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: .75rem; padding: .9rem 1rem;
-  }
-  .card.warn { border-color: #d97706; }
-  h3 { font-size: .8125rem; margin: 0 0 .4rem; font-weight: 600; }
-  p { margin: 0 0 .6rem; font-size: .8125rem; color: var(--muted); line-height: 1.45; }
-  p.warn { color: #b45309; }
+  :host { display: block; margin-top: var(--group-gap); }
+  .card.warn { background: var(--surface-warn); }
+  h3 { margin: 0 0 .3rem; }
+  p { margin: 0 0 .6rem; font-size: var(--text-footnote); }
+  p.warn { color: var(--warn); }
   .row { display: flex; gap: .5rem; flex-wrap: wrap; }
   button {
-    font: inherit; font-size: .8125rem; padding: .45rem .8rem; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--fg); cursor: pointer;
+    min-height: 2.25rem; padding: 0 .9rem;
+    border: 0; border-radius: var(--radius-small);
+    background: var(--fill); color: var(--accent);
+    font-size: var(--text-subhead); font-weight: 500;
   }
-  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
-  button:hover { border-color: var(--accent); }
-  .meta { font-size: .7rem; color: var(--muted); margin-top: .6rem; }
+  button.primary {
+    width: auto; min-height: 2.25rem; margin-top: 0;
+    background: var(--accent); color: #fff;
+  }
+  .meta { font-size: var(--text-caption); color: var(--muted); margin-top: .6rem; }
   input[type=file] { display: none; }
-  .result { font-size: .75rem; margin-top: .5rem; }
-  .result.ok { color: var(--accent); }
-  .result.bad { color: #b45309; }
+  .result { font-size: var(--text-footnote); margin-top: .5rem; }
+  .result.ok { color: var(--system-green); }
+  .result.bad { color: var(--warn); }
 `);
 
 export class DataSafety extends HTMLElement {
@@ -54,7 +56,7 @@ export class DataSafety extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   connectedCallback(): void {

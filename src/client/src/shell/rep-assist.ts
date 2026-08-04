@@ -38,29 +38,33 @@ interface WakeLockLike {
 
 export type AssistMode = 'off' | 'voice' | 'motion';
 
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; margin-top: .6rem; }
+  :host { display: block; margin-top: .7rem; }
   .bar { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; }
-  .label { font-size: .7rem; color: var(--muted); margin-right: .1rem; }
+  .label { font-size: var(--text-footnote); color: var(--muted); margin-right: .15rem; }
   button {
-    font: inherit; font-size: .7rem; padding: .28rem .6rem; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer;
+    min-height: 2rem; padding: 0 .8rem;
+    border: 0; border-radius: var(--radius-small);
+    background: var(--fill); color: var(--accent);
+    font-size: var(--text-subhead); font-weight: 500;
   }
-  button[aria-pressed="true"] {
-    background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
-  }
-  button.stop { border-color: #b45309; color: #b45309; font-weight: 600; }
-  .status { font-size: .7rem; color: var(--muted); margin: .4rem 0 0; line-height: 1.4; }
+  button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  /* Stop is not destructive -- nothing is lost -- but it is the one control that must be found
+     without reading, so it gets the warning color rather than the tint. */
+  button.stop { color: var(--warn); }
+  .status { font-size: var(--text-footnote); color: var(--muted); margin: .45rem 0 0;
+            line-height: 1.4; }
   .status.live { color: var(--accent); }
-  .status.bad { color: #b45309; }
+  .status.bad { color: var(--warn); }
   .dot {
     display: inline-block; width: .45rem; height: .45rem; border-radius: 50%;
     background: var(--accent); margin-right: .3rem; vertical-align: baseline;
     animation: pulse 1.4s ease-in-out infinite;
   }
   @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: .25 } }
-  @media (prefers-reduced-motion: reduce) { .dot { animation: none } }
 `);
 
 export class RepAssist extends HTMLElement {
@@ -87,7 +91,7 @@ export class RepAssist extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   async connectedCallback(): Promise<void> {

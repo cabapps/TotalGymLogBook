@@ -16,6 +16,7 @@ import { FORMULA_VERSION, PULLEY_FACTOR_CABLE, PULLEY_FACTOR_DIRECT } from '../r
 import type { RepAssist } from './rep-assist.js';
 import type { ExerciseDemo } from './exercise-demo.js';
 import { setFocus } from '../focus.js';
+import { ios } from './theme.js';
 
 import './rep-assist.js';
 import './exercise-demo.js';
@@ -33,40 +34,30 @@ interface UiState {
 
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; }
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: .75rem; padding: 1rem; margin-bottom: .75rem;
-  }
-  select, input[type=number] {
-    width: 100%; padding: .5rem; font: inherit; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--fg);
-  }
-  label { display: block; font-size: .75rem; color: var(--muted); margin: .75rem 0 .25rem; }
-  .cue { font-size: .75rem; color: var(--muted); margin: .4rem 0 0; line-height: 1.4; }
-  button.demo-toggle {
-    font: inherit; font-size: .7rem; padding: .25rem .6rem; margin-top: .1rem;
-    border: 1px solid var(--border); border-radius: .5rem;
-    background: var(--bg); color: var(--muted); cursor: pointer;
-  }
-  .setup { font-size: .75rem; color: var(--fg); margin: .5rem 0 0; line-height: 1.45; }
+  .cue { font-size: var(--text-footnote); color: var(--muted); margin: .4rem 0 0; line-height: 1.4; }
+  .setup { font-size: var(--text-footnote); color: var(--fg); margin: .5rem 0 0; line-height: 1.45; }
   .setup b { font-weight: 600; }
-  .load { display: flex; align-items: baseline; gap: .4rem; margin-top: .85rem; }
-  .load b { font-size: 2.25rem; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1; }
-  .load span { color: var(--muted); font-size: .8125rem; }
-  input[type=range] { width: 100%; accent-color: var(--accent); }
-  .stepper { display: flex; align-items: stretch; gap: .5rem; }
-  .stepper button {
-    flex: 0 0 3rem; font: inherit; font-size: 1.35rem; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--fg); cursor: pointer;
+  button.demo-toggle { margin-top: .6rem; }
+
+  /*
+    The load readout is the answer to the only question this screen exists to answer, so it is
+    sized like one -- an iOS metric, in the rounded numeric face, not a paragraph with a big
+    font-size.
+  */
+  .load { display: flex; align-items: baseline; gap: .35rem; margin: 1rem 0 .25rem; }
+  .load b {
+    font-family: var(--font-rounded);
+    font-size: var(--text-metric); font-weight: 700; line-height: 1;
+    letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
   }
-  .stepper button:active { background: var(--surface); }
-  .stepper input { text-align: center; font-size: 1.15rem; font-variant-numeric: tabular-nums; }
-  .log {
-    width: 100%; margin-top: 1rem; padding: .85rem; font: inherit; font-weight: 600;
-    border: 0; border-radius: .65rem; background: var(--accent); color: #fff; cursor: pointer;
-  }
-  .log:disabled { opacity: .5; cursor: default; }
+  .load span { color: var(--muted); font-size: var(--text-subhead); }
+  .load span#loadNote { font-size: var(--text-caption); }
+
+  .level-row { display: flex; align-items: baseline; justify-content: space-between; }
+  .level-row .value { font-size: var(--text-subhead); color: var(--fg);
+                      font-variant-numeric: tabular-nums; }
+
+  .log { margin-top: 1.1rem; }
   .row { display: flex; gap: .75rem; }
   .row > * { flex: 1; }
 `);
@@ -141,7 +132,7 @@ export class SetLogger extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   /** Called by the shell once the catalog and machine are known. */
@@ -334,7 +325,10 @@ export class SetLogger extends HTMLElement {
           <b id="load">—</b><span>lb</span><span id="loadNote"></span>
         </div>
 
-        <label for="level">Level <span id="levelText">${s.level}</span></label>
+        <div class="level-row">
+          <label for="level">Level</label>
+          <span class="value" id="levelText">${s.level}</span>
+        </div>
         <input type="range" id="level" min="1" max="${profile.levelCount}" step="1" value="${s.level}" />
 
         <label for="reps">Reps</label>
@@ -347,7 +341,7 @@ export class SetLogger extends HTMLElement {
 
         ${this.#addedLoadFields(s)}
 
-        <button class="log" id="log">Log set</button>
+        <button class="primary log" id="log">Log set</button>
       </div>
     `;
 
@@ -448,6 +442,12 @@ export class SetLogger extends HTMLElement {
 
     this.#root.getElementById('load')!.textContent = lb.toFixed(1);
     this.#root.getElementById('levelText')!.textContent = String(this.#state.level);
+
+    // An iOS slider is tinted behind the thumb and gray ahead of it. CSS cannot know where the
+    // thumb is, so the value is handed to it as a percentage.
+    const slider = this.#root.getElementById('level') as HTMLInputElement;
+    const span = this.#profile!.levelCount - 1;
+    slider.style.setProperty('--pct', `${span > 0 ? ((this.#state.level - 1) / span) * 100 : 0}%`);
     this.#root.getElementById('cue')!.textContent = e.cue;
     this.#root.getElementById('setup')!.innerHTML = describeSetup(e);
     this.#renderDemo();
