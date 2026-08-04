@@ -45,57 +45,49 @@ import type { ProgramEmphasis, TrainingAim } from '../emphasis.js';
 const RAMP_WINDOW_MS = 60 * 24 * 60 * 60 * 1000;
 import { toIsoDate } from '../db/schema.js';
 
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; margin-bottom: .75rem; }
-  /* Without this the host's own display:block wins over [hidden], and the panel stays on
-     screen while the trainee is editing the very plan it is showing. */
-  :host([hidden]) { display: none; }
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: .75rem; padding: .9rem 1rem;
-  }
-  .head { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; }
-  h3 { font-size: .95rem; margin: 0; }
-  .sub { color: var(--muted); font-size: .7rem; display: flex; align-items: center; gap: .2rem; }
+  .head { display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+          min-height: 1.75rem; }
+  .sub { color: var(--muted); font-size: var(--text-footnote);
+         display: flex; align-items: center; gap: .1rem; }
+  /* The session pager: two glyph buttons flanking the position, sized to be hit, not admired. */
   button.step {
-    font: inherit; font-size: .95rem; line-height: 1; padding: 0 .3rem;
-    border: 1px solid var(--border); border-radius: .35rem;
-    background: var(--bg); color: var(--fg); cursor: pointer;
+    min-width: 2rem; min-height: 2rem; padding: 0;
+    font-size: var(--text-body); line-height: 1;
   }
-  .browsing { color: #b45309; }
-  p { margin: .4rem 0 0; font-size: .75rem; color: var(--muted); line-height: 1.45; }
-  ol { list-style: none; margin: .7rem 0 0; padding: 0; }
+  .browsing { color: var(--warn); }
+  p { margin: .4rem 0 0; font-size: var(--text-footnote); }
+
+  ol { list-style: none; margin: .6rem 0 0; padding: 0; }
   li {
-    display: flex; align-items: center; gap: .5rem;
-    padding: .4rem 0; border-top: 1px solid var(--border); font-size: .8125rem;
+    display: flex; align-items: center; gap: .6rem;
+    min-height: var(--tap); padding: .1rem 0;
+    border-top: var(--hairline) solid var(--separator);
+    font-size: var(--text-body);
   }
+  li:first-child { border-top: 0; }
   li.done .name { color: var(--muted); text-decoration: line-through; }
-  li.next .name { font-weight: 650; }
-  .tick { width: 1rem; flex: 0 0 1rem; text-align: center; color: var(--muted); }
-  li.done .tick { color: var(--accent); }
+  li.next .name { font-weight: 600; }
+  .tick { width: 1.1rem; flex: 0 0 1.1rem; text-align: center; color: var(--faint); }
+  li.done .tick { color: var(--system-green); }
   .name { flex: 1; text-align: left; font: inherit; background: none; border: 0;
-          color: var(--fg); padding: 0; cursor: pointer; }
-  .name:hover { color: var(--accent); }
-  .sets { color: var(--muted); font-variant-numeric: tabular-nums; font-size: .75rem; }
-  .missing { color: #b45309; font-size: .7rem; }
-  li.pairnote { border-top: 0; padding: 0 0 .3rem 1.5rem; font-size: .68rem;
-                color: var(--accent); }
+          color: var(--fg); padding: .55rem 0; }
+  .sets { color: var(--muted); font-variant-numeric: tabular-nums;
+          font-size: var(--text-subhead); }
+  .missing { color: var(--warn); font-size: var(--text-caption); }
+  li.pairnote { border-top: 0; min-height: 0; padding: 0 0 .35rem 1.7rem;
+                font-size: var(--text-caption); color: var(--accent); }
   li.paired .tick { color: var(--accent); }
-  .row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .75rem; }
-  button.action {
-    font: inherit; font-size: .75rem; padding: .35rem .7rem; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer;
-  }
-  button.action.primary {
-    background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
-  }
-  select { width: 100%; padding: .5rem; font: inherit; border-radius: .5rem; margin-top: .5rem;
-           border: 1px solid var(--border); background: var(--bg); color: var(--fg); }
+
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .8rem; }
+  select { margin-top: .5rem; }
   .choices { margin-top: .5rem; }
-  .choice { border-top: 1px solid var(--border); padding: .55rem 0; }
-  .choice h4 { margin: 0; font-size: .8125rem; }
-  .choice p { margin: .2rem 0 .4rem; }
+  .choice { border-top: var(--hairline) solid var(--separator); padding: .7rem 0; }
+  .choice h4 { margin: 0 0 .15rem; font-size: var(--text-headline); }
+  .choice p { margin: 0 0 .55rem; }
 `);
 
 export class ProgramPanel extends HTMLElement {
@@ -123,7 +115,7 @@ export class ProgramPanel extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   configure(opts: {

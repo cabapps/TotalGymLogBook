@@ -13,13 +13,44 @@
 </article>
 
 <style>
-    /* The rule is the seam between the instant tier and the derived tier -- it appears when
-       Blazor arrives, so it also doubles as the "the coach is here now" cue. */
-    .tg-nav { display: flex; gap: .25rem; margin: 1.5rem 0 .25rem;
-              border-top: 1px solid var(--border); padding-top: 1rem; }
-    .tg-nav a {
-        font-size: .8125rem; padding: .35rem .75rem; border-radius: .5rem;
-        color: var(--muted); text-decoration: none; border: 1px solid transparent;
+    /* Typography shared by every derived view.
+
+       It lives in the LAYOUT rather than in the pages because Blazor removes a page's style
+       block along with its markup when you navigate away: the same rules written in Home.razor
+       styled the coach and then silently stopped applying to History, so one heading was an
+       iOS section header and the identical heading one tap away was a browser default h2.
+
+       (Razor parses HTML tags inside CSS comments too, so do not name that element here --
+       an unclosed one fails the build with a message that points at this line.) */
+    .tg-derived { margin: 0; padding: 0; }
+    .tg-derived h2 {
+        font-size: var(--text-footnote); font-weight: 400; letter-spacing: .04em;
+        text-transform: uppercase; color: var(--muted);
+        margin: 1.5rem var(--gutter) .4rem;
     }
-    .tg-nav a.active { color: var(--fg); border-color: var(--border); background: var(--surface); }
+    .tg-derived .note { color: var(--muted); font-size: var(--text-subhead); line-height: 1.45; }
+
+    /* A segmented control: one gray trough, equal segments, and a white "thumb" that lands on
+       the selected one. It is the standard iOS way to switch between peer views of the same
+       data, which is exactly what Coach / Program / History are.
+
+       It also still marks the seam between the instant tier and the derived tier -- the whole
+       control appears when Blazor arrives, which doubles as the "the coach is here now" cue. */
+    .tg-nav {
+        display: flex; gap: .125rem; margin: 1.75rem 0 1rem;
+        padding: .125rem; border-radius: .5625rem;
+        background: var(--fill);
+    }
+    .tg-nav a {
+        flex: 1; text-align: center;
+        display: flex; align-items: center; justify-content: center;
+        min-height: 2rem; padding: 0 .5rem; border-radius: .4375rem;
+        font-size: var(--text-footnote); font-weight: 500;
+        color: var(--fg); text-decoration: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .tg-nav a.active {
+        background: var(--segment-thumb); font-weight: 600;
+        box-shadow: 0 .1875rem .5rem rgb(0 0 0 / .12), 0 .0625rem .0625rem rgb(0 0 0 / .04);
+    }
 </style>

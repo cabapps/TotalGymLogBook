@@ -30,63 +30,57 @@ import {
   supersetPairs,
 } from '../session-plan.js';
 
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; margin-bottom: .75rem; }
-  .card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: .75rem; padding: .9rem 1rem;
-  }
-  h3 { font-size: .95rem; margin: 0 0 .5rem; }
-  h4 { font-size: .78rem; margin: .9rem 0 .3rem; }
-  p { margin: .35rem 0 .5rem; font-size: .75rem; color: var(--muted); line-height: 1.45; }
-  label { display: block; font-size: .7rem; color: var(--muted); margin: .6rem 0 .2rem; }
-  input[type=text], select {
-    width: 100%; padding: .45rem; font: inherit; font-size: .8125rem; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--fg);
-  }
+  h3 { margin: 0 0 .35rem; }
+  h4 { font-size: var(--text-footnote); font-weight: 400; letter-spacing: .04em;
+       text-transform: uppercase; color: var(--muted); margin: 1rem 0 .3rem; }
+  p { margin: .35rem 0 .5rem; font-size: var(--text-footnote); }
+
   ul, ol { list-style: none; margin: 0; padding: 0; }
   li.ex {
-    display: flex; align-items: center; gap: .4rem;
-    padding: .35rem 0; border-top: 1px solid var(--border); font-size: .8125rem;
+    display: flex; align-items: center; gap: .5rem;
+    min-height: var(--tap); padding: .2rem 0;
+    border-top: var(--hairline) solid var(--separator);
+    font-size: var(--text-callout);
   }
   li.ex .name { flex: 1; }
-  li.ex .tag { font-size: .62rem; text-transform: uppercase; letter-spacing: .04em;
-               color: var(--accent); border: 1px solid var(--accent);
-               border-radius: .3rem; padding: 0 .25rem; }
-  .step, .kill {
-    font: inherit; font-size: .8125rem; min-width: 1.7rem; padding: .1rem .4rem;
-    border: 1px solid var(--border); border-radius: .4rem;
-    background: var(--bg); color: var(--fg); cursor: pointer;
+  /* The superset tag: a tinted capsule, which is how iOS marks a badge inside a row. */
+  li.ex .tag {
+    font-size: var(--text-caption2); font-weight: 600; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--accent);
+    background: var(--fill); border-radius: 999px; padding: .15rem .4rem;
   }
-  .count { min-width: 1.4rem; text-align: center; font-variant-numeric: tabular-nums; }
-  .row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .7rem; }
-  button.action {
-    font: inherit; font-size: .75rem; padding: .35rem .7rem; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer;
-  }
-  button.action.primary {
-    background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600;
-  }
-  .session { border-top: 1px solid var(--border); padding-top: .5rem; margin-top: .8rem; }
-  .session .head { display: flex; align-items: center; gap: .4rem; }
+  .step, .kill { min-width: 2rem; min-height: 2rem; padding: 0; }
+  .count { min-width: 1.5rem; text-align: center; font-variant-numeric: tabular-nums; }
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: .8rem; }
+
+  .session { border-top: var(--hairline) solid var(--separator);
+             padding-top: .6rem; margin-top: .9rem; }
+  .session .head { display: flex; align-items: center; gap: .5rem; }
   .session .head input { flex: 1; }
-  ul.volume { margin: .3rem 0 0; font-size: .75rem; }
-  ul.volume li { display: flex; align-items: center; gap: .5rem; padding: .16rem 0; }
+
+  /* Weekly sets per muscle, as a bar chart of thin tracks -- the Health app's idiom. */
+  ul.volume { margin: .35rem 0 0; font-size: var(--text-footnote); }
+  ul.volume li { display: flex; align-items: center; gap: .5rem; padding: .22rem 0; }
   ul.volume .muscle { flex: 0 0 5.5rem; }
-  ul.volume .bar { flex: 1; height: .45rem; border-radius: 999px; background: var(--border);
+  ul.volume .bar { flex: 1; height: .375rem; border-radius: 999px; background: var(--fill-strong);
                    overflow: hidden; }
-  ul.volume .bar span { display: block; height: 100%; background: var(--accent); }
-  ul.volume li.short .bar span { background: #d97706; }
+  ul.volume .bar span { display: block; height: 100%; background: var(--accent);
+                        border-radius: 999px; }
+  ul.volume li.short .bar span { background: var(--system-orange); }
   ul.volume li.none .bar span { background: transparent; }
   ul.volume .sets { flex: 0 0 2.2rem; text-align: right; color: var(--muted);
                     font-variant-numeric: tabular-nums; }
-  .time { font-size: .7rem; color: var(--muted); margin: .2rem 0 .1rem; }
-  .time.over { color: #d97706; }
+
+  .time { font-size: var(--text-caption); color: var(--muted); margin: .3rem 0 .1rem; }
+  .time.over { color: var(--warn); }
   .pair { color: var(--accent); }
-  .verdict { font-size: .75rem; line-height: 1.5; margin: .5rem 0 0;
-             padding: .5rem .6rem; border-radius: .5rem;
-             background: var(--bg); border: 1px solid var(--border); color: var(--muted); }
+  .verdict { font-size: var(--text-footnote); line-height: 1.5; margin: .6rem 0 0;
+             padding: .6rem .7rem; border-radius: var(--radius-small);
+             background: var(--fill); color: var(--muted); }
 `);
 
 /** A blank session, so a new program starts as something you can add to rather than a form. */
@@ -109,7 +103,7 @@ export class ProgramEditor extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   configure(opts: {

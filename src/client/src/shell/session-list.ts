@@ -14,30 +14,48 @@ import type { ExerciseCatalog } from '../exercises.js';
 import { onChange } from '../db/events.js';
 import type { SetLogRecord } from '../db/schema.js';
 
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; }
-  h3 { font-size: .8125rem; color: var(--muted); font-weight: 500; margin: 1.25rem 0 .5rem; }
-  ol { list-style: none; margin: 0; padding: 0; }
+  :host { display: block; margin-top: .5rem; }
+  h3 {
+    font-size: var(--text-footnote); font-weight: 400; letter-spacing: .04em;
+    text-transform: uppercase; color: var(--muted);
+    margin: 1.5rem var(--gutter) .4rem;
+  }
+  /* The list IS the card -- rows on white, hairlines between, nothing around the outside. */
+  ol {
+    list-style: none; margin: 0; padding: 0 var(--gutter);
+    background: var(--surface); border-radius: var(--radius-card);
+  }
   li {
     display: flex; align-items: center; gap: .6rem;
-    padding: .55rem .25rem; border-bottom: 1px solid var(--border);
+    min-height: var(--tap); padding: .35rem 0;
+    border-top: var(--hairline) solid var(--separator);
   }
-  .name { flex: 1; font-size: .875rem; }
-  .detail { color: var(--muted); font-size: .75rem; }
+  li:first-child { border-top: 0; }
+  .name { flex: 1; font-size: var(--text-body); }
+  .detail { color: var(--muted); font-size: var(--text-footnote); }
   .reps {
-    font-variant-numeric: tabular-nums; font-weight: 600; font-size: .95rem;
-    min-width: 2.6rem; text-align: right;
+    font-variant-numeric: tabular-nums; font-weight: 600; font-size: var(--text-body);
+    min-width: 2.2rem; text-align: right;
   }
-  .lb { color: var(--muted); font-size: .8125rem; min-width: 3.6rem; text-align: right;
-        font-variant-numeric: tabular-nums; }
+  .lb { color: var(--muted); font-size: var(--text-subhead); min-width: 3.4rem;
+        text-align: right; font-variant-numeric: tabular-nums; }
   button {
-    font: inherit; font-size: .75rem; padding: .2rem .45rem; border-radius: .35rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--muted); cursor: pointer;
+    flex: 0 0 auto; min-width: 2rem; min-height: 2rem; padding: 0 .5rem;
+    border: 0; border-radius: var(--radius-small);
+    background: var(--fill); color: var(--accent);
+    font-size: var(--text-subhead);
   }
-  button:hover { color: var(--fg); border-color: var(--accent); }
-  .empty { color: var(--muted); font-size: .8125rem; padding: .5rem .25rem; }
-  .total { color: var(--muted); font-size: .75rem; margin-top: .5rem; }
+  /* Deleting is destructive, and iOS never lets that share a color with anything else. */
+  button.delete { color: var(--danger); }
+  .empty { color: var(--muted); font-size: var(--text-subhead);
+           background: var(--surface); border-radius: var(--radius-card);
+           padding: .85rem var(--gutter); margin: 0; }
+  .total { color: var(--muted); font-size: var(--text-footnote);
+           margin: .5rem var(--gutter) 0; }
 `);
 
 export class SessionList extends HTMLElement {
@@ -49,7 +67,7 @@ export class SessionList extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   configure(opts: { catalog: ExerciseCatalog; sessionId?: string }): void {
@@ -153,7 +171,7 @@ export class SessionList extends HTMLElement {
         <div class="reps">${set.reps}</div>
         <div class="lb">${set.computedLb.toFixed(1)}</div>
         <button id="edit-${set.id}" aria-label="Edit reps">edit</button>
-        <button id="del-${set.id}" aria-label="Delete set">&times;</button>
+        <button class="delete" id="del-${set.id}" aria-label="Delete set">&times;</button>
       </li>
     `;
   }

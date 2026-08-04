@@ -11,6 +11,8 @@
 
 import { UPDATE_READY_EVENT, applyUpdate, isUpdateReady } from '../updates.js';
 
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
   :host { display: none; }
@@ -18,18 +20,27 @@ styles.replaceSync(`
      the host with a zero-height box, which reads as "not visible" to anything measuring it --
      assistive tech and e2e checks included. */
   :host([open]) { display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 900; }
+  /* A bottom bar in the same blurred material as the nav bar, so the two read as one chrome. */
   .bar {
     display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
-    padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
-    background: var(--surface); border-top: 1px solid var(--border);
-    box-shadow: 0 -2px 12px rgb(0 0 0 / .18);
+    padding: .75rem var(--gutter) calc(.75rem + env(safe-area-inset-bottom));
+    background: var(--material);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-top: var(--hairline) solid var(--separator);
   }
-  p { margin: 0; flex: 1 1 12rem; font-size: .8125rem; line-height: 1.4; }
+  p { margin: 0; flex: 1 1 12rem; font-size: var(--text-subhead);
+      color: var(--fg); line-height: 1.4; }
   button {
-    font: inherit; font-size: .8125rem; padding: .45rem .8rem; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--fg); cursor: pointer;
+    min-height: 2.25rem; padding: 0 .9rem;
+    border: 0; border-radius: var(--radius-small);
+    background: var(--fill); color: var(--accent);
+    font-size: var(--text-subhead); font-weight: 500;
   }
-  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+  button.primary {
+    width: auto; min-height: 2.25rem; margin-top: 0;
+    background: var(--accent); color: #fff;
+  }
 `);
 
 export class UpdateBanner extends HTMLElement {
@@ -38,7 +49,7 @@ export class UpdateBanner extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   connectedCallback(): void {

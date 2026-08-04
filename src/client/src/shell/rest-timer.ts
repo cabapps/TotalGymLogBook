@@ -13,26 +13,30 @@
 
 const KEY = 'tg.restEndsAt';
 
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; }
+  :host { display: block; margin-bottom: var(--group-gap); }
   .bar {
-    display: flex; align-items: center; gap: .75rem;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: .75rem; padding: .6rem .85rem;
+    display: flex; align-items: center; gap: .6rem;
+    background: var(--surface); border-radius: var(--radius-card);
+    padding: .5rem .75rem .5rem var(--gutter);
   }
+  /* A countdown is a number you glance at from three feet away mid-set. Rounded, tabular, big. */
   .time {
-    font-size: 1.5rem; font-weight: 650; font-variant-numeric: tabular-nums;
-    min-width: 4.2rem; letter-spacing: -.02em;
+    font-family: var(--font-rounded);
+    font-size: var(--text-title1); font-weight: 700; letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums; min-width: 4rem;
   }
-  .time.done { color: var(--accent); }
-  .label { color: var(--muted); font-size: .8125rem; flex: 1; }
+  .time.done { color: var(--system-green); }
+  .label { color: var(--muted); font-size: var(--text-subhead); flex: 1; }
   button {
-    font: inherit; font-size: .8125rem; padding: .35rem .7rem; border-radius: .5rem;
-    border: 1px solid var(--border); background: var(--bg); color: var(--fg); cursor: pointer;
+    min-height: 2rem; padding: 0 .75rem;
+    border: 0; border-radius: var(--radius-small);
+    background: var(--fill); color: var(--accent);
+    font-size: var(--text-subhead); font-weight: 500;
   }
-  button:hover { border-color: var(--accent); }
-  :host([hidden]) { display: none; }
 `);
 
 export class RestTimer extends HTMLElement {
@@ -43,7 +47,7 @@ export class RestTimer extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
     this.#root.innerHTML = `
       <div class="bar">
         <div class="time" id="time">0:00</div>

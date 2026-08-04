@@ -7,8 +7,17 @@
     <title>Total Gym Logbook</title>
     <base href="/" />
     <meta name="description" content="Track your Total Gym workouts. Free, works offline, your data stays on your device." />
-    <meta name="theme-color" content="#111418" />
+    <!-- The status bar takes its color from here when the app is installed to the Home Screen,
+         so it has to match the nav bar's material in BOTH appearances -- a single value leaves
+         a light strip above a black app, which is the most visible way to look non-native. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f9f9f9" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#1e1e1e" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- 'default' rather than 'black-translucent': translucent pins the status bar text to
+         white, which disappears against the light appearance. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Logbook" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="manifest.webmanifest" rel="manifest" />
     <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
@@ -27,26 +36,134 @@
     <script type="importmap"></script>
 
     <!-- docs/adr/0003: critical CSS is inlined so first paint needs zero round trips.
-         Everything else is deferred. -->
+         Everything else is deferred.
+
+         This block is the design SYSTEM; src/client/src/shell/theme.ts is the components built
+         out of it. Tokens have to live here rather than there because custom properties inherit
+         through shadow boundaries and stylesheets do not -- Blazor's light-DOM views and the
+         shell's eleven shadow roots can only agree on a color if it is declared once, above
+         both of them. -->
     <style>
         :root {
             color-scheme: light dark;
-            --bg: #ffffff; --fg: #111418; --muted: #5c6672; --accent: #0b6bcb;
-            --surface: #f4f6f8; --border: #d8dee4;
+
+            /* Apple's system colors, light appearance. Named for what they ARE in the HIG so
+               the next person can look them up rather than guess what #f2f2f7 meant. */
+            --system-blue: #007aff;
+            --system-green: #34c759;
+            --system-orange: #ff9500;
+            --system-red: #ff3b30;
+            --system-gray: #8e8e93;
+
+            --bg: #f2f2f7;                      /* systemGroupedBackground */
+            --surface: #ffffff;                 /* secondarySystemGroupedBackground */
+            --fg: #000000;                      /* label */
+            --muted: rgb(60 60 67 / .6);        /* secondaryLabel */
+            --faint: rgb(60 60 67 / .3);        /* tertiaryLabel */
+            --separator: rgb(60 60 67 / .29);
+            --fill: rgb(120 120 128 / .12);     /* tertiarySystemFill -- field backgrounds */
+            --fill-strong: rgb(120 120 128 / .2);
+            --material: rgb(249 249 249 / .8);  /* the nav bar's blurred material */
+            /* The moving thumb of a segmented control. Not --surface: in dark appearance the
+               selected segment is a LIGHTER gray than the trough, not the card color, or the
+               selection disappears into the group it is sitting on. */
+            --segment-thumb: #ffffff;
+
+            --accent: var(--system-blue);
+            --accent-tint: rgb(0 122 255 / .15);
+            --warn: #b25000;                    /* systemOrange, darkened to pass contrast on text */
+            --danger: var(--system-red);
+            /* A card that needs attention is TINTED, never outlined -- iOS almost never draws a
+               border. Declared twice on purpose: a browser without color-mix drops the second
+               declaration and keeps the flat fallback rather than losing the tint entirely. */
+            --surface-warn: #fff2e0;
+            --surface-warn: color-mix(in srgb, var(--system-orange) 12%, var(--surface));
+
+            /* Legacy alias. Rules written before the palette existed still say --border, and a
+               separator is what every one of them meant. */
+            --border: var(--separator);
+
+            /* iOS text styles at their default (Large) Dynamic Type size. */
+            --text-large-title: 2.125rem;  /* 34 */
+            --text-title1: 1.75rem;        /* 28 */
+            --text-title3: 1.25rem;        /* 20 */
+            --text-headline: 1.0625rem;    /* 17, semibold */
+            --text-body: 1.0625rem;        /* 17 */
+            --text-callout: 1rem;          /* 16 */
+            --text-subhead: .9375rem;      /* 15 */
+            --text-footnote: .8125rem;     /* 13 */
+            --text-caption: .75rem;        /* 12 */
+            --text-caption2: .6875rem;     /* 11 */
+            --text-metric: 2.5rem;
+
+            --radius-card: .625rem;        /* 10pt, the inset grouped list corner */
+            --radius-control: .75rem;
+            --radius-field: .625rem;
+            --radius-small: .5rem;
+            --tap: 2.75rem;                /* 44pt. The floor for anything tappable. */
+            --gutter: 1rem;
+            --card-pad-y: .75rem;
+            --group-gap: 1.25rem;
+            --hairline: 1px;
+
+            /* SF Pro on Apple hardware, and its optical sizing, which system-ui alone does not
+               guarantee. SF Rounded is what iOS uses for numbers that are the content. */
+            --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui,
+                         "Segoe UI", Roboto, sans-serif;
+            --font-rounded: ui-rounded, "SF Pro Rounded", var(--font-text);
         }
+
         @media (prefers-color-scheme: dark) {
-            :root { --bg: #111418; --fg: #e8ecf0; --muted: #9aa5b1; --accent: #4c9aff;
-                    --surface: #1a1f26; --border: #2b323b; }
+            :root {
+                --system-blue: #0a84ff;
+                --system-green: #30d158;
+                --system-orange: #ff9f0a;
+                --system-red: #ff453a;
+
+                --bg: #000000;
+                --surface: #1c1c1e;
+                --fg: #ffffff;
+                --muted: rgb(235 235 245 / .6);
+                --faint: rgb(235 235 245 / .3);
+                --separator: rgb(84 84 88 / .65);
+                --fill: rgb(120 120 128 / .24);
+                --fill-strong: rgb(120 120 128 / .36);
+                --material: rgb(30 30 30 / .8);
+                --segment-thumb: #636366;
+                --accent-tint: rgb(10 132 255 / .22);
+                --warn: #ff9f0a;
+                --surface-warn: #2e271d;
+                --surface-warn: color-mix(in srgb, var(--system-orange) 12%, var(--surface));
+            }
         }
+
+        /* A separator is one physical pixel, which on a Retina screen is not one CSS pixel.
+           Drawing it at 1px there gives a line twice as heavy as anything iOS draws. */
+        @media (min-resolution: 2dppx) {
+            :root { --hairline: .5px; }
+        }
+
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; }
         body {
             background: var(--bg); color: var(--fg);
-            font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            font: var(--text-body)/1.45 var(--font-text);
             -webkit-text-size-adjust: 100%;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right)
+            -webkit-font-smoothing: antialiased;
+            /* No text selection on chrome, no blue flash on tap, no rubber-banding past the
+               app -- the three things that give a web app away within one gesture. */
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            overscroll-behavior-y: contain;
+            /* Only the sides and the bottom. The top inset belongs to the nav bar, which has to
+               extend UNDER the status bar for its blur to look like iOS rather than like a
+               floating gray box. */
+            padding: 0 env(safe-area-inset-right)
                      env(safe-area-inset-bottom) env(safe-area-inset-left);
         }
+        /* Fields and readouts are still selectable -- a trainee may want to copy a number. */
+        input, textarea { -webkit-user-select: auto; user-select: auto; }
+
         #app { min-height: 100dvh; }
         #blazor-error-ui {
             display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;

@@ -14,26 +14,49 @@
 import * as db from '../db/repository.js';
 import type { Accessory, ExerciseCatalog } from '../exercises.js';
 
+import { ios } from './theme.js';
+
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
-  :host { display: block; margin-top: .75rem; }
+  :host { display: block; margin-top: var(--group-gap); }
+
+  /* A disclosure row on a card: the Settings idiom, right down to the chevron that turns. */
   details {
-    background: var(--surface); border: 1px solid var(--border); border-radius: .75rem;
-    padding: .6rem .9rem;
+    background: var(--surface); border-radius: var(--radius-card);
+    padding: 0 var(--gutter);
   }
-  summary { cursor: pointer; font-size: .8125rem; color: var(--muted); }
-  summary::marker { color: var(--muted); }
-  p { margin: .5rem 0 .6rem; font-size: .75rem; color: var(--muted); line-height: 1.45; }
-  ul { list-style: none; margin: 0; padding: 0; }
-  li { padding: .3rem 0; }
-  label { display: flex; align-items: center; gap: .5rem; font-size: .8125rem; cursor: pointer; }
-  input[type=checkbox] { width: 1.05rem; height: 1.05rem; accent-color: var(--accent); }
-  .count { color: var(--muted); font-size: .7rem; margin-left: .25rem; }
-  h4 { font-size: .7rem; font-weight: 600; color: var(--muted); text-transform: uppercase;
-       letter-spacing: .04em; margin: .8rem 0 .1rem; }
-  h4:first-of-type { margin-top: .2rem; }
-  .note { display: block; font-size: .7rem; color: var(--muted); line-height: 1.4;
-          margin: .05rem 0 0 1.55rem; }
+  summary {
+    display: flex; align-items: center; gap: .4rem;
+    min-height: var(--tap); cursor: pointer;
+    font-size: var(--text-body); color: var(--fg);
+    list-style: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary::after {
+    content: ''; flex: 0 0 .5rem; height: .8125rem; margin-left: auto;
+    background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='13' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 1.5l5 5-5 5'/%3E%3C/svg%3E") no-repeat center;
+    transition: transform .2s ease;
+  }
+  details[open] summary::after { transform: rotate(90deg); }
+
+  p { margin: 0 0 .6rem; font-size: var(--text-footnote); }
+  ul { list-style: none; margin: 0 0 .5rem; padding: 0; }
+
+  /* Label leading, switch trailing. A checkbox in front of the name is a form; a switch at the
+     end of the row is a setting, and this is a setting. */
+  li { border-top: var(--hairline) solid var(--separator); }
+  label {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    min-height: var(--tap); margin: 0;
+    font-size: var(--text-body); color: var(--fg); cursor: pointer;
+  }
+  .text { display: flex; flex-direction: column; gap: .1rem; padding: .35rem 0; }
+  .note { font-size: var(--text-footnote); color: var(--muted); line-height: 1.35; }
+  .count { color: var(--muted); font-size: var(--text-footnote); }
+
+  h4 { font-size: var(--text-footnote); font-weight: 400; letter-spacing: .04em;
+       text-transform: uppercase; color: var(--muted); margin: .9rem 0 .2rem; }
 `);
 
 export class Equipment extends HTMLElement {
@@ -46,7 +69,7 @@ export class Equipment extends HTMLElement {
   constructor() {
     super();
     this.#root = this.attachShadow({ mode: 'open' });
-    this.#root.adoptedStyleSheets = [styles];
+    this.#root.adoptedStyleSheets = [ios, styles];
   }
 
   configure(opts: { catalog: ExerciseCatalog }): void {
@@ -105,11 +128,13 @@ export class Equipment extends HTMLElement {
     return `
       <li>
         <label>
+          <span class="text">
+            ${accessory.name}
+            ${accessory.note ? `<span class="note">${accessory.note}</span>` : ''}
+          </span>
           <input type="checkbox" id="att-${accessory.id}" data-attachment="${accessory.id}"
                  ${checked ? 'checked' : ''} />
-          ${accessory.name}
         </label>
-        ${accessory.note ? `<span class="note">${accessory.note}</span>` : ''}
       </li>`;
   }
 
