@@ -33,29 +33,44 @@ else
         @_setsPerMuscle.ToString("0.#") sets per muscle a week
     </p>
 
-    @* The dual-axis chart from docs/adr/0004: absolute load and bodyweight together are the
-       only honest read for anyone whose weight is deliberately changing. Hand-rolled SVG --
-       a chart library would be a CDN dependency the CSP blocks anyway. *@
-    @if (_chart.Points.Count > 1)
+    @* What the week actually delivered, against whatever the trainee's program is for.
+       Hand-rolled -- a chart library would be a CDN dependency the CSP blocks anyway. *@
+    @if (_progress.Bars.Count > 0)
     {
-        <div class="chart-wrap">
-            <svg viewBox="0 0 320 120" preserveAspectRatio="none" role="img"
-                 aria-label="Top set load and bodyweight over time" id="history-chart">
-                <polyline class="load" points="@_chart.LoadPath" />
-                @if (_chart.HasBodyweight)
+        <h2>@(_progress.Yardstick == ProgressYardstick.ProgramGoal ? "This rotation" : "This week")</h2>
+
+        <div class="chart-wrap" id="history-chart">
+            <div class="bars" style="--target: @Pct(_progress.TargetPercent / 100)">
+                @foreach (var bar in _progress.Bars)
                 {
-                    <polyline class="bw" points="@_chart.BodyweightPath" />
+                    <div class="bar-row">
+                        <span class="bar-label">@bar.Label</span>
+                        <span class="track">
+                            <span class="fill @(bar.Short ? "short" : "")"
+                                  style="width: @Pct(_progress.WidthPercent(bar))%"></span>
+                        </span>
+                        <span class="bar-value">@bar.Detail</span>
+                    </div>
                 }
-            </svg>
-            <div class="legend">
-                <span class="k load"></span> top set (@_chart.LoadMin.ToString("0")&ndash;@_chart.LoadMax.ToString("0") lb)
-                @if (_chart.HasBodyweight)
+                @if (_progress.HasTarget)
                 {
-                    <span class="k bw"></span>
-                    <text>bodyweight (@_chart.BwMin.ToString("0")&ndash;@_chart.BwMax.ToString("0") lb)</text>
+                    <span class="goal-line" aria-hidden="true"></span>
                 }
             </div>
-            <p class="note small">@_trendNote</p>
+
+            @if (_progress.HasTarget)
+            {
+                <div class="legend">
+                    <span class="k goal"></span>
+                    <text>the goal: @_progress.TargetLabel</text>
+                </div>
+            }
+
+            <p class="note small" id="history-goal">@_progress.Headline</p>
+            @if (_trendNote.Length > 0)
+            {
+                <p class="note small" id="history-trend">@_trendNote</p>
+            }
         </div>
     }
 
@@ -82,16 +97,30 @@ else
         background: var(--surface); border-radius: var(--radius-card);
         padding: var(--card-pad-y) var(--gutter); margin: 0 0 1rem;
     }
-    .chart-wrap svg { width: 100%; height: 120px; display: block; }
-    .chart-wrap polyline { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
-    .chart-wrap polyline.load { stroke: var(--accent); }
-    .chart-wrap polyline.bw { stroke: var(--system-gray); stroke-dasharray: 3 3; }
+    /* The bars and the goal line share one coordinate space: every bar is a share of its own
+       target, so the line can sit at a single --target percentage across all of them. */
+    .bars { position: relative; }
+    .bar-row { display: flex; align-items: center; gap: .5rem; padding: .28rem 0;
+               font-size: var(--text-footnote); }
+    .bar-label { flex: 0 0 5.5rem; }
+    .track { position: relative; flex: 1; height: .5rem; border-radius: 999px;
+             background: var(--fill-strong); overflow: hidden; }
+    .fill { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+    /* Short of the goal is a state to notice, not a failure -- the same orange the program
+       critique uses for a muscle under the dose. */
+    .fill.short { background: var(--system-orange); }
+    .bar-value { flex: 0 0 4.5rem; text-align: right; color: var(--muted);
+                 font-variant-numeric: tabular-nums; }
+    /* Spans the track column only. The insets are the row's own geometry: 5.5rem of label plus
+       a .5rem gap in front, a .5rem gap and 4.5rem of value behind. --target is a fraction, not
+       a percentage, because calc cannot divide one percentage by another. */
+    .goal-line { position: absolute; top: 0; bottom: 0; pointer-events: none;
+                 left: calc(6rem + (100% - 11rem) * var(--target));
+                 border-left: 2px dashed var(--fg); opacity: .45; }
     .legend { font-size: var(--text-caption); color: var(--muted); margin-top: .5rem;
               display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
-    .legend .k { display: inline-block; width: .8rem; height: 0; border-top: 2px solid; }
-    .legend .k.load { border-color: var(--accent); }
-    .legend .k.bw { border-color: var(--system-gray); border-top-style: dashed;
-                    margin-left: .6rem; }
+    .legend .k { display: inline-block; width: .8rem; height: 0; border-top: 2px dashed var(--fg);
+                 opacity: .45; }
     /* The list is the card: rows on white, hairlines between, nothing drawn around it. */
     ul.sessions {
         list-style: none; margin: 0; padding: 0 var(--gutter);
@@ -115,12 +144,17 @@ else
 @code {
     private sealed record Row(string Id, DateTime When, int Sets, string Trained, string Summary);
 
-    private sealed record Chart(
-        IReadOnlyList<(DateOnly On, double Load, double? Bw)> Points,
-        string LoadPath, string BodyweightPath,
-        double LoadMin, double LoadMax, double BwMin, double BwMax, bool HasBodyweight)
+    /// <summary>
+    /// Points of the load/bodyweight comparison. The chart is gone -- it answered a question
+    /// ("is my top set going up?") that the coach already answers per exercise, on the screen
+    /// where the trainee is about to do that exercise. The READING survives as a sentence,
+    /// because it is the one thing nobody works out for themselves: on this machine, load
+    /// falling while bodyweight falls is maintained strength, not lost strength (docs/adr/0004).
+    /// </summary>
+    private sealed record Trend(
+        IReadOnlyList<(DateOnly On, double Load, double? Bw)> Points, bool HasBodyweight)
     {
-        public static readonly Chart Empty = new([], "", "", 0, 0, 0, 0, false);
+        public static readonly Trend Empty = new([], false);
     }
 
     private bool _loaded;
@@ -137,7 +171,7 @@ else
     /// this figure and the one the coach quotes are now the same figure.
     /// </summary>
     private double _setsPerMuscle;
-    private Chart _chart = Chart.Empty;
+    private WeeklyProgress _progress = WeeklyProgress.Nothing;
     private string _trendNote = "";
 
     protected override async Task OnInitializedAsync()
@@ -152,6 +186,8 @@ else
     {
         var history = await Logbook.GetSessionHistoryAsync();
         var trend = await Logbook.GetBodyweightTrendAsync();
+
+        _progress = await BuildProgressAsync(history);
 
         _sessions = history
             .Where(h => h.Sets.Count > 0)
@@ -168,10 +204,52 @@ else
 
         _totalSets = _sessions.Sum(r => r.Sets);
         _setsPerMuscle = WeeklySetsPerMuscle(history);
-        _chart = BuildChart(history, trend);
-        _trendNote = Describe(_chart);
+        _trendNote = Describe(BuildTrend(history, trend));
         _loaded = true;
     }
+
+    /// <summary>
+    /// The week against whatever the trainee's program is actually for.
+    ///
+    /// Everything the decision needs already exists: the ledger counts sets per muscle the same
+    /// way the coach does, the aim says what they are training for, and the program says what it
+    /// planned. This assembles them and hands the answer to <see cref="WeeklyProgressReport"/>,
+    /// which owns the choice of yardstick so the history tab and the program tab cannot end up
+    /// making different claims about the same week.
+    /// </summary>
+    private async Task<WeeklyProgress> BuildProgressAsync(IReadOnlyList<SessionWithSetsDto> history)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Now);
+
+        var histories = await Logbook.GetHistoriesAsync();
+        var settings = await Logbook.GetSettingsAsync();
+        var goal = await Logbook.GetGoalAsync();
+        var phase = await Logbook.GetPhaseAsync(today);
+        var experience = await Logbook.GetExperienceAsync();
+        var program = await Logbook.GetActiveProgramAsync();
+
+        var logged = history
+            .Where(h => h.Sets.Count > 0)
+            .Select(h => new LoggedSession(
+                h.Session.ProgramSessionId,
+                DateOnly.FromDateTime(
+                    DateTimeOffset.FromUnixTimeMilliseconds(h.Session.StartedAt).LocalDateTime),
+                h.Sets.Count))
+            .ToList();
+
+        return WeeklyProgressReport.For(
+            ProgramEmphasisRules.ParseAim(settings.Aim, goal.Primary),
+            new VolumeLedger(histories, Catalog.ById),
+            VolumeTarget.For(experience, phase.Balance),
+            program,
+            logged,
+            Catalog,
+            today);
+    }
+
+    /// <summary>Percentages, invariant-cultured, because a comma decimal is not valid CSS.</summary>
+    private static string Pct(double value) =>
+        value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>The muscles a session actually worked, biggest share first.</summary>
     private string TrainedIn(IReadOnlyList<SetLogDto> sets)
@@ -229,12 +307,8 @@ else
         return perMuscle.Values.Average() / weeks;
     }
 
-    /// <summary>
-    /// Top working set per day against bodyweight. Both series are normalized to their own
-    /// range, so the SHAPES are comparable even though the units are not -- which is the point:
-    /// load falling while bodyweight falls is a very different story from load falling alone.
-    /// </summary>
-    private static Chart BuildChart(IReadOnlyList<SessionWithSetsDto> history, BodyweightTrend trend)
+    /// <summary>Top working set per day, paired with the nearest weigh-in.</summary>
+    private static Trend BuildTrend(IReadOnlyList<SessionWithSetsDto> history, BodyweightTrend trend)
     {
         var byDay = history
             .SelectMany(h => h.Sets)
@@ -245,42 +319,14 @@ else
             .OrderBy(p => p.On)
             .ToList();
 
-        if (byDay.Count < 2) return Chart.Empty;
+        if (byDay.Count < 2) return Trend.Empty;
 
         var readings = trend.HasAny ? trend : null;
         var points = byDay
             .Select(p => (p.On, p.Load, Bw: BodyweightNear(readings, p.On)))
             .ToList();
 
-        var loadMin = points.Min(p => p.Load);
-        var loadMax = points.Max(p => p.Load);
-        var bwValues = points.Where(p => p.Bw is not null).Select(p => p.Bw!.Value).ToList();
-        var hasBw = bwValues.Count > 1;
-
-        var bwMin = hasBw ? bwValues.Min() : 0;
-        var bwMax = hasBw ? bwValues.Max() : 0;
-
-        string Path(Func<(DateOnly On, double Load, double? Bw), double?> pick, double lo, double hi)
-        {
-            var span = hi - lo;
-            var parts = new List<string>();
-            for (var i = 0; i < points.Count; i++)
-            {
-                var v = pick(points[i]);
-                if (v is null) continue;
-                var x = points.Count == 1 ? 0 : 320.0 * i / (points.Count - 1);
-                // 10..110 leaves breathing room; flat series sit in the middle rather than
-                // pinned to an edge, which would read as "at the bottom of the range".
-                var y = span <= 0 ? 60 : 110 - 100 * (v.Value - lo) / span;
-                parts.Add($"{x.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)},{y.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)}");
-            }
-            return string.Join(" ", parts);
-        }
-
-        return new Chart(points,
-            Path(p => p.Load, loadMin, loadMax),
-            hasBw ? Path(p => p.Bw, bwMin, bwMax) : "",
-            loadMin, loadMax, bwMin, bwMax, hasBw);
+        return new Trend(points, points.Count(p => p.Bw is not null) > 1);
     }
 
     /// <summary>Nearest weigh-in within a week; bodyweight is not recorded every training day.</summary>
@@ -300,7 +346,7 @@ else
     /// The reading that matters, in plain language. docs/adr/0004: load falling while
     /// bodyweight falls is maintained strength, not regression.
     /// </summary>
-    private static string Describe(Chart chart)
+    private static string Describe(Trend chart)
     {
         if (chart.Points.Count < 2) return "";
 

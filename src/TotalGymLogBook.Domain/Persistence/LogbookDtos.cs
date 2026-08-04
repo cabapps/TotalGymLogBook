@@ -69,6 +69,17 @@ public sealed record SessionDto
     [JsonPropertyName("machineId")] public string MachineId { get; init; } = "";
     [JsonPropertyName("bodyweightRawLb")] public double? BodyweightRawLb { get; init; }
     [JsonPropertyName("bodyweightSmoothedLb")] public double? BodyweightSmoothedLb { get; init; }
+
+    /// <summary>
+    /// The program session this workout was started from, if any.
+    ///
+    /// Stamped by the shell at session creation and used two ways: the rotation is DERIVED from
+    /// it rather than tracked by a stored cursor, and it is what lets the history chart say which
+    /// part of a program has actually been done this week.
+    /// </summary>
+    [JsonPropertyName("programId")] public string? ProgramId { get; init; }
+    [JsonPropertyName("programSessionId")] public string? ProgramSessionId { get; init; }
+
     [JsonPropertyName("deletedAt")] public long? DeletedAt { get; init; }
 }
 

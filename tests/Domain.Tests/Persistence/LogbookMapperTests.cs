@@ -272,6 +272,40 @@ public class LogbookMapperTests
         Assert.Equal(56.7, history.Sets[0].ComputedLb);
     }
 
+    [Fact]
+    public void CarriesTheProgramStampOnASession()
+    {
+        // The shell writes these when a workout is started from a plan, and two features read
+        // them: the rotation is derived from them rather than from a stored cursor, and the
+        // history chart uses them to say which part of a program has actually been done. A DTO
+        // that quietly drops them makes both look like the trainee did nothing.
+        const string json = """
+        [{
+          "session": {"id":"s1","startedAt":1772409600000,"status":"complete",
+                      "machineId":"m1","programId":"p1","programSessionId":"push"},
+          "sets": []
+        }]
+        """;
+
+        var history = Assert.Single(LogbookMapper.ParseSessionHistory(json));
+
+        Assert.Equal("p1", history.Session.ProgramId);
+        Assert.Equal("push", history.Session.ProgramSessionId);
+    }
+
+    [Fact]
+    public void AFreestyleSessionHasNoProgramStamp()
+    {
+        const string json = """
+        [{"session":{"id":"s1","startedAt":1772409600000,"status":"complete","machineId":"m1"},
+          "sets":[]}]
+        """;
+
+        var history = Assert.Single(LogbookMapper.ParseSessionHistory(json));
+
+        Assert.Null(history.Session.ProgramSessionId);
+    }
+
     /// <summary>
     /// The end-to-end shape check: stored JSON in, a coaching recommendation out, with no
     /// hand-built domain objects anywhere in between.
