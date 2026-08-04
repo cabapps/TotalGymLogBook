@@ -203,7 +203,7 @@
             { "exerciseId": "squat", "sets": 3 },
             { "exerciseId": "lat-pulldown", "sets": 3 },
             { "exerciseId": "chest-press", "sets": 3 },
-            { "exerciseId": "crunch", "sets": 4 }
+            { "exerciseId": "crunch", "sets": 3 }
           ]
         },
         {
@@ -223,7 +223,8 @@
             { "exerciseId": "single-leg-squat", "sets": 3 },
             { "exerciseId": "chin-up", "sets": 3 },
             { "exerciseId": "wing-hamstring-curl", "sets": 3 },
-            { "exerciseId": "pullover", "sets": 3 }
+            { "exerciseId": "pullover", "sets": 3 },
+            { "exerciseId": "cable-crunch", "sets": 3 }
           ]
         }
       ]
