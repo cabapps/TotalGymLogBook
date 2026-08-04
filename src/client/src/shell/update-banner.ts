@@ -11,6 +11,16 @@
 
 import { UPDATE_READY_EVENT, applyUpdate, isUpdateReady } from '../updates.js';
 
+/**
+ * How long the handover gets before the banner stops claiming to be working on it.
+ *
+ * A worker that takes over does it in well under a second, phone included. Anything past this is
+ * a worker that is never going to answer -- one built before the SKIP_WAITING protocol existed,
+ * or a browser that has decided otherwise -- and the trainee is owed something they can act on
+ * rather than an ellipsis and a dead button.
+ */
+const HANDOVER_TIMEOUT_MS = 8000;
+
 import { ios } from './theme.js';
 
 const styles = new CSSStyleSheet();
@@ -45,6 +55,8 @@ styles.replaceSync(`
 
 export class UpdateBanner extends HTMLElement {
   #root: ShadowRoot;
+  /** Pending handover deadline. `| undefined` rather than `?`: exactOptionalPropertyTypes. */
+  #stall: number | undefined;
 
   constructor() {
     super();
@@ -63,6 +75,7 @@ export class UpdateBanner extends HTMLElement {
 
   disconnectedCallback(): void {
     window.removeEventListener(UPDATE_READY_EVENT, this.#onReady);
+    if (this.#stall !== undefined) clearTimeout(this.#stall);
   }
 
   #onReady = (): void => {
@@ -89,7 +102,28 @@ export class UpdateBanner extends HTMLElement {
       this.#root.getElementById('message')!.textContent = 'Updating…';
       (this.#root.getElementById('update') as HTMLButtonElement).disabled = true;
       applyUpdate();
+
+      // Nothing here can force a worker to hand over. If it does not, this is the difference
+      // between an app that looks broken and one that tells you the way out.
+      this.#stall = window.setTimeout(() => this.#stalled(), HANDOVER_TIMEOUT_MS);
     });
+  }
+
+  /**
+   * The update did not take. A waiting worker takes control once every page using the old one is
+   * gone, so closing the app is the one thing that reliably finishes it -- and on a home-screen
+   * PWA, swiping it out of the app switcher is exactly that.
+   */
+  #stalled(): void {
+    this.#stall = undefined;
+
+    const message = this.#root.getElementById('message');
+    const update = this.#root.getElementById('update') as HTMLButtonElement | null;
+    if (!message || !update) return;
+
+    message.textContent = 'Close the app completely and open it again to finish updating.';
+    update.disabled = false;
+    update.textContent = 'Try again';
   }
 }
 

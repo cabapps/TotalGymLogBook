@@ -193,7 +193,24 @@ The lesson generalises: a file-existence smoke test passes happily on a complete
 deployable, and a local server that serves everything is not simulating a host that withholds
 things. Assert on *content*, on *behavior in a browser*, and against *the real deployment*.
 
-### Keep the dev/prod split
+### Keep the dev/prod split — but both workers speak the update protocol
 
 Blazor's no-op `service-worker.js` for development, `service-worker.published.js` for production.
 An active SW during development will cost an afternoon to a stale-cache bug that isn't real.
+
+**The no-op worker still needs the `SKIP_WAITING` listener.** The build stamps it with a manifest
+version that changes whenever any static asset does, so every rebuild produces byte-different
+worker source; the browser installs it, parks it behind the running one, and the app correctly
+offers an update. Without the listener that offer cannot be honored — the message lands nowhere,
+the worker waits forever, `controllerchange` never fires, and the banner sits on "Updating…" for
+the rest of the session.
+
+Caching is what the dev worker must not do. Answering a message is not caching, and a production
+mechanism that is dead on the machine you develop on is a mechanism nobody can see working.
+`test/service-worker.test.ts` asserts both workers answer, and that the dev one still caches
+nothing.
+
+**And the banner gives up out loud.** Nothing in a page can compel a worker to hand over, so
+after eight seconds without `controllerchange` the prompt stops saying "Updating…" and says to
+close the app and reopen it — which is what actually drains a waiting worker. That covers the
+workers this protocol cannot reach: any build installed before the handshake existed.
