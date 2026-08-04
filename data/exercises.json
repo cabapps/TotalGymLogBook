@@ -2142,7 +2142,7 @@
       "name": "Reverse Crunch",
       "category": "Core",
       "kind": "strength",
-      "usesPulley": true,
+      "usesPulley": false,
       "peakTension": "shortened",
       "setup": {
         "position": "face-up",
@@ -2150,10 +2150,10 @@
         "grip": "handles by your head"
       },
       "pattern": "crunch",
-      "typicalLevel": 0.8,
+      "typicalLevel": 0.5,
       "bodyFraction": 0.9,
       "attachment": null,
-      "cue": "Hold the handles above your head, knees bent, and curl your hips up off the board. The legs stay passive.",
+      "cue": "Hold the handles above your head to stay put, knees bent, and curl your hips up off the board. The legs stay passive and you are not pulling with your arms.",
       "muscles": [
         {
           "muscle": "Core",

@@ -128,14 +128,25 @@ function describeSetup(exercise: Exercise): string {
 
   if (exercise.setup.grip !== 'nothing') parts.push(takeHold(exercise.setup.grip));
 
-  // "Pressing straight off the board" was only ever true of the presses. It is wrong for a
-  // squat, a plank, a pull-up and a crunch, and on the crunch it directly contradicts the cue,
-  // which tells the trainee to unhook the cable and curl. What every cable-less movement on this
-  // machine has in common is the thing worth saying instead.
+  // Three cases, not two.
+  //
+  // "Pressing straight off the board" was only ever true of the presses -- wrong for a squat, a
+  // plank, a pull-up and a crunch, and on the crunch it contradicted the cue outright. What
+  // every cable-less movement on this machine has in common is the thing worth saying instead.
+  //
+  // And a trainee can be holding the handles without working against them: on a reverse crunch
+  // the arms only stop you sliding down the rail while the hips do the work. Saying "no cable"
+  // there would contradict the handles they are being told to hold, and saying "pulling against
+  // the cable" would have them fighting the anchor. The distinction is also what decides whether
+  // the load is halved (docs/adr/0004), so it is worth one clause to make it explicit.
+  const anchorsOnly = !exercise.usesPulley && /handle|cable/.test(exercise.setup.grip);
+
   parts.push(
     exercise.usesPulley
       ? 'pulling against the cable'
-      : 'no cable — just your own weight up the rail',
+      : anchorsOnly
+        ? 'holding on rather than pulling — the cable is only an anchor here'
+        : 'no cable — just your own weight up the rail',
   );
 
   return `<b>Set up:</b> ${parts.join(', ')}.`;

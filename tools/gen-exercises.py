@@ -512,9 +512,13 @@ EX = [
       "A handle in each hand, crunch up and across so one shoulder travels towards the opposite "
       "hip. The dip bars anchor you just as well if you have them.",
       [("Core", D)]),
-    E("reverse-crunch", "Reverse Crunch", "Core", "strength", True, 0.9, None,
-      "Hold the handles above your head, knees bent, and curl your hips up off the board. "
-      "The legs stay passive.",
+    # NOT a pulley movement, unlike every other crunch done this way round. The handles are what
+    # stops the trainee sliding down the rail; the hips and legs going up it are the resistance,
+    # and nothing halves that. Holding a cable and working against one are different things, and
+    # only the second one is worth half the load (docs/adr/0004).
+    E("reverse-crunch", "Reverse Crunch", "Core", "strength", False, 0.9, None,
+      "Hold the handles above your head to stay put, knees bent, and curl your hips up off the "
+      "board. The legs stay passive and you are not pulling with your arms.",
       [("Core", D)]),
     E("bicycle-crunch", "Bicycle Crunch", "Core", "strength", True, 0.75, None,
       "Handles by your head, alternate elbow to opposite knee, extending the other leg as you go.",
