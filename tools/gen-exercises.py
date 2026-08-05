@@ -812,6 +812,27 @@ def main():
     ]
     assert not unbolted, f"setups using the wing must require it: {sorted(unbolted)}"
 
+    # AND THE WING DECIDES WHICH END THE HEAD IS AT.
+    #
+    # It bolts on at the TOP, by the tower, always. So whichever limb reaches it is the limb at
+    # the tower end: hands on the wing puts the head there, feet in the wing puts the head at the
+    # floor. That is arithmetic about the machine, not a judgment about a movement -- and it is
+    # the one this table got wrong twice, on the crunch and then on the wing hamstring curl, both
+    # times by leaving a trainee reaching for a bar that was behind their feet.
+    for e in EX:
+        if e.att != WING:
+            continue
+        setup = setup_of(e)
+        if "wing" not in setup["grip"]:
+            continue
+
+        feet = setup["grip"].startswith("feet")
+        expected = "floor" if feet else "tower"
+        assert setup["facing"] == expected, (
+            f"{e.id}: {'feet in' if feet else 'hands on'} the wing means the head is at the "
+            f"{expected}, not the {setup['facing']}"
+        )
+
     stray_unilateral = UNILATERAL - seen
     assert not stray_unilateral, f"unilateral flag for unknown exercises: {sorted(stray_unilateral)}"
 
