@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { ExerciseCatalog } from '../src/exercises.js';
-import { demoCaption, demoSvg } from '../src/demo.js';
+import { demoCaption, demoSvg, figureFor } from '../src/demo.js';
 
 const dataDir = join(__dirname, '..', '..', '..', 'data');
 const catalog = ExerciseCatalog.parse(readFileSync(join(dataDir, 'exercises.json'), 'utf8'));
@@ -139,5 +139,92 @@ describe('joints', () => {
     )!;
 
     expect(Number(match[1])).toBe(Number(match[2]));
+  });
+});
+
+/**
+ * The geometry, measured rather than eyeballed.
+ *
+ * Every mistake this drawing has made has been in the figure's coordinates, and every one of them
+ * survived review because a stick figure looks plausible from any angle unless you check it
+ * against something. These check it against the setup the movement already declares -- the same
+ * field the written instructions and the session ordering read, so the drawing cannot disagree
+ * with the sentence beside it.
+ */
+describe('figure geometry', () => {
+  const seated = catalog.all.filter(
+    (e) => e.setup.position === 'seated' || e.setup.position === 'kneeling',
+  );
+  const lying = catalog.all.filter(
+    (e) => e.setup.position !== 'seated' && e.setup.position !== 'kneeling',
+  );
+
+  it('has movements in both postures to check', () => {
+    expect(seated.length).toBeGreaterThan(5);
+    expect(lying.length).toBeGreaterThan(5);
+  });
+
+  it('sits everyone with their legs in front of them', () => {
+    // The bug that shipped three times. A chest press is done sitting with your back to the
+    // tower, so the legs run DOWN the board -- and the drawing had them up the rail, under a
+    // figure facing the wrong way entirely.
+    for (const exercise of seated) {
+      const f = figureFor(exercise);
+      expect(Math.sign(f.foot[0] - f.hip[0]), exercise.id).toBe(f.facing);
+    }
+  });
+
+  it('puts a seated trainee\'s hands in front of them too', () => {
+    for (const exercise of seated) {
+      const f = figureFor(exercise);
+      expect(Math.sign(f.hand[0] - f.shoulder[0]), exercise.id).toBe(f.facing);
+    }
+  });
+
+  it('faces a seated trainee the way the setup says', () => {
+    const facing = (id: string) => figureFor(catalog.get(id)).facing;
+
+    // Chest press: back to the tower, so facing down the rail, which is positive x.
+    expect(facing('chest-press')).toBe(1);
+    // Seated row: facing the tower, which is where the cable is.
+    expect(facing('seated-row')).toBe(-1);
+  });
+
+  it('lays everyone down head-first toward the end the setup names', () => {
+    for (const exercise of lying) {
+      const f = figureFor(exercise);
+      expect(Math.sign(f.head[0]), exercise.id).toBe(f.facing);
+      // ...and the feet at the other end, which is what makes it a body rather than a heap.
+      expect(Math.sign(f.foot[0]), exercise.id).toBe(-f.facing);
+    }
+  });
+
+  it('keeps the head above the hips in every posture', () => {
+    // y is height above the board, so "above" is more negative.
+    for (const exercise of catalog.all) {
+      const f = figureFor(exercise);
+      expect(f.head[1], exercise.id).toBeLessThan(f.hip[1]);
+    }
+  });
+
+  it('gives everyone shoulders between the neck and the arm', () => {
+    for (const exercise of catalog.all) {
+      const f = figureFor(exercise);
+      const spine = Math.hypot(f.neck[0] - f.hip[0], f.neck[1] - f.hip[1]);
+      const girdle = Math.hypot(f.shoulder[0] - f.neck[0], f.shoulder[1] - f.neck[1]);
+
+      // A real segment, and a short one -- shoulders, not a second spine.
+      expect(girdle, exercise.id).toBeGreaterThan(1);
+      expect(girdle, exercise.id).toBeLessThan(spine / 2);
+    }
+  });
+
+  it('draws one spine, not two', () => {
+    // A crunch used to get a second torso line drawn from the hip so it could be animated. The
+    // upper body pivots at the hip as one piece now.
+    const spines = (demoSvg(catalog.get('crunch')).match(/class="figure"/g) ?? []).length;
+    const press = (demoSvg(catalog.get('chest-press')).match(/class="figure"/g) ?? []).length;
+
+    expect(spines).toBe(press);
   });
 });

@@ -159,12 +159,7 @@ function kneeFor(pattern: string): Bend {
  * A rotation cannot detach: whatever the angle, the segment still starts at the joint. The same
  * property is what makes the second segment safe to hang off the first.
  */
-function limb(
-  joint: [number, number],
-  to: [number, number],
-  moving: boolean,
-  bend: Bend,
-): string {
+function limb(joint: Point, to: Point, moving: boolean, bend: Bend): string {
   const dx = to[0] - joint[0];
   const dy = to[1] - joint[1];
 
@@ -187,61 +182,111 @@ function limb(
           </g>`;
 }
 
+export type Point = readonly [number, number];
+
 /**
- * The figure, drawn lying, sitting, kneeling or face down.
+ * Where every part of the figure is, in board-local coordinates: x runs along the rail, NEGATIVE
+ * TOWARD THE TOWER, y is height above the board.
  *
- * Head first, because which end the head is at is the single thing a trainee most needs to get
- * right before they start -- and it is the thing the app itself was wrong about for a fortnight.
- *
- * Board-local coordinates: x runs along the rail, negative toward the tower, y is height above
- * the board.
+ * Separated from the drawing so it can be asserted rather than eyeballed. Every mistake this
+ * drawing has made has been here -- limbs on the wrong side of a joint, a figure facing the wrong
+ * way down the rail -- and every one of them survived review because a stick figure looks
+ * plausible from any angle if you are not measuring it. The tests measure it now, across the
+ * whole catalog, against the setup each movement already declares.
  */
-function figureFor(exercise: Exercise, pose: Pose): string {
+export interface Figure {
+  readonly head: Point;
+  readonly neck: Point;
+  readonly shoulder: Point;
+  readonly hip: Point;
+  /** Where the working hand ends up. */
+  readonly hand: Point;
+  /** Where the foot ends up. */
+  readonly foot: Point;
+  /** +1 when the trainee faces down the rail (away from the tower), -1 toward it. */
+  readonly facing: number;
+}
+
+export function figureFor(exercise: Exercise): Figure {
   const { position, facing } = exercise.setup;
 
-  // Which way the head points along the rail, and therefore which way the figure faces.
+  // Which way the trainee faces along the rail. Negative x is the tower.
   const hs = facing === 'tower' ? -1 : 1;
+
+  if (position === 'seated' || position === 'kneeling') {
+    // SITTING UPRIGHT, LEGS AND ARMS BOTH IN FRONT.
+    //
+    // This is the bug that shipped three times: legs were drawn on the far side of the hip from
+    // the arms, so a chest press -- sitting with your back to the tower, legs down the board --
+    // came out as a figure facing the tower with its legs up the rail. Nobody sits with their
+    // legs behind them. Both limbs go the way the trainee faces, and that is now asserted.
+    return {
+      hip: [0, -6],
+      neck: [-4 * hs, -26],
+      shoulder: [-1 * hs, -23],
+      head: [-6 * hs, -31],
+      hand: [18 * hs, -18],
+      foot: [20 * hs, -2],
+      facing: hs,
+    };
+  }
+
+  if (position === 'face-down') {
+    // Prone, head at the end the setup names, arms reaching along the board past the head.
+    return {
+      hip: [-9 * hs, -8],
+      neck: [11 * hs, -9],
+      shoulder: [7 * hs, -8],
+      head: [16 * hs, -11],
+      hand: [15 * hs, -1],
+      foot: [-22 * hs, -4],
+      facing: hs,
+    };
+  }
+
+  // Face up, and side-lying, which reads the same from this angle.
+  return {
+    hip: [-9 * hs, -8],
+    neck: [11 * hs, -10],
+    shoulder: [7 * hs, -9],
+    head: [16 * hs, -12],
+    hand: [14 * hs, -26],
+    foot: [-24 * hs, -7],
+    facing: hs,
+  };
+}
+
+/**
+ * The figure, drawn from its geometry.
+ *
+ * The upper body hangs off the hip in its own group, which is what lets a crunch rotate all of
+ * it -- spine, shoulders, head and arms -- about the hip as one piece. Drawing a second torso
+ * line for the curl, which is what this used to do, gave the figure two spines.
+ */
+function drawFigure(exercise: Exercise, pose: Pose): string {
+  const f = figureFor(exercise);
   const arms = pose.limb === 'arms' || pose.limb === 'forearms';
   const elbow = elbowFor(exercise.pattern);
   const knee = kneeFor(exercise.pattern);
 
-  if (position === 'seated' || position === 'kneeling') {
-    const hip: [number, number] = [-2 * hs, -7];
-    const shoulder: [number, number] = [4 * hs, -25];
+  // Everything above the hip, in hip-relative coordinates.
+  const at = (p: Point): Point => [p[0] - f.hip[0], p[1] - f.hip[1]];
+  const neck = at(f.neck);
+  const shoulder = at(f.shoulder);
+  const head = at(f.head);
 
-    return `
-      <g>
-        <circle class="head" cx="${6 * hs}" cy="-31" r="4" />
-        <line class="figure" x1="${hip[0]}" y1="${hip[1]}" x2="${shoulder[0]}" y2="${shoulder[1]}" />
-        ${limb(hip, [-18 * hs, -4], pose.limb === 'legs', knee)}
-        ${limb(shoulder, [18 * hs, -20], arms, elbow)}
-      </g>`;
-  }
-
-  if (position === 'face-down') {
-    const shoulder: [number, number] = [9 * hs, -9];
-    const hip: [number, number] = [-8 * hs, -8];
-
-    return `
-      <g>
-        <circle class="head" cx="${15 * hs}" cy="-11" r="4" />
-        <line class="figure" x1="${shoulder[0]}" y1="${shoulder[1]}" x2="${hip[0]}" y2="${hip[1]}" />
-        ${limb(shoulder, [14 * hs, 0], arms, elbow)}
-        ${limb(hip, [-20 * hs, -3], pose.limb === 'legs' || pose.limb === 'torso', knee)}
-      </g>`;
-  }
-
-  // Face up, and side-lying, which reads the same from this angle.
-  const shoulder: [number, number] = [9 * hs, -10];
-  const hip: [number, number] = [-8 * hs, -8];
+  const upper = `
+    <line class="figure" x1="0" y1="0" x2="${neck[0]}" y2="${neck[1]}" />
+    <line class="figure" x1="${neck[0]}" y1="${neck[1]}" x2="${shoulder[0]}" y2="${shoulder[1]}" />
+    <circle class="head" cx="${head[0]}" cy="${head[1]}" r="4" />
+    ${limb(shoulder, at(f.hand), arms, elbow)}`;
 
   return `
     <g>
-      <circle class="head" cx="${15 * hs}" cy="-12" r="4" />
-      <line class="figure" x1="${shoulder[0]}" y1="${shoulder[1]}" x2="${hip[0]}" y2="${hip[1]}" />
-      ${limb(shoulder, [12 * hs, -24], arms, elbow)}
-      ${limb(hip, [-22 * hs, -10], pose.limb === 'legs', knee)}
-      ${pose.limb === 'torso' ? limb(hip, [10 * hs, -20], true, knee) : ''}
+      ${limb(f.hip, f.foot, pose.limb === 'legs', knee)}
+      <g transform="translate(${f.hip[0]} ${f.hip[1]})">
+        <g class="${pose.limb === 'torso' ? 'limb' : ''}">${upper}</g>
+      </g>
     </g>`;
 }
 
@@ -291,7 +336,7 @@ export function demoSvg(exercise: Exercise): string {
       <g id="board" transform="translate(${rest.x} ${rest.y})">
         <g class="anim">
           <rect class="board" x="-22" y="-6" width="44" height="8" rx="3" />
-          ${figureFor(exercise, pose)}
+          ${drawFigure(exercise, pose)}
         </g>
       </g>
     </svg>`;
