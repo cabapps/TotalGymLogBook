@@ -176,8 +176,6 @@ export interface CustomExerciseRecord extends SyncFields {
   peakTension?: 'lengthened' | 'even' | 'shortened';
   /** How the trainee sets it up. Absent falls back to the machine's default posture. */
   setup?: { position: string; facing: string; grip: string };
-  /** Which joint does the work, for the demo drawing. Absent draws a press. */
-  pattern?: string;
   /** Where on the rail it is normally done, 0-1. Absent assumes mid-rail. */
   typicalLevel?: number;
   bodyFraction: number;

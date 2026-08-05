@@ -67,7 +67,6 @@ function toExercise(record: CustomExerciseRecord): Exercise {
     kind: record.kind,
     usesPulley: record.usesPulley,
     peakTension: record.peakTension ?? 'even',
-    pattern: record.pattern ?? 'press',
     typicalLevel: record.typicalLevel ?? 0.5,
     // A movement added before the setup question existed falls back to the machine's default
     // posture, which is also where the session ordering will assume the trainee is.

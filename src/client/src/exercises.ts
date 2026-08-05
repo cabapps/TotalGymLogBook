@@ -88,11 +88,6 @@ export interface Exercise {
   readonly peakTension: PeakTension;
   readonly setup: ExerciseSetup;
   /**
-   * Which joint does the work. Drives the demo animation and nothing else -- it never touches a
-   * load or a set count.
-   */
-  readonly pattern: string;
-  /**
    * Roughly where on the rail this is done, as a fraction of it.
    *
    * Decides which movements can be alternated: a superset only saves time if both run at the

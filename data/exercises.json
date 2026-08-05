@@ -41,9 +41,6 @@
     "              movements can be alternated as a superset -- a pair only saves time if both",
     "              run at the SAME notch. Derived from muscle group and the pulley, not measured,",
     "              and overridden by the trainee's own logged levels once they have any.",
-    "pattern     : which joint does the work, so the app can draw the movement. Derived from the",
-    "              name where the name says what the movement is, overridden where it does not.",
-    "              Presentation only -- it never touches a load or a set count.",
     "peakTension : where in the range the muscle is most loaded -- 'lengthened', 'even', or",
     "              'shortened'. Loaded work at long muscle lengths grows a muscle more than the",
     "              same sets through a shortened range, and a cable machine holds tension at the",
@@ -194,7 +191,6 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "pattern": "press",
       "typicalLevel": 0.61,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -226,7 +222,6 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "pattern": "fly",
       "typicalLevel": 0.61,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -254,7 +249,6 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "pattern": "fly",
       "typicalLevel": 0.61,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -282,7 +276,6 @@
         "facing": "floor",
         "grip": "single handle"
       },
-      "pattern": "press",
       "typicalLevel": 0.61,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -314,7 +307,6 @@
         "facing": "floor",
         "grip": "handles, close"
       },
-      "pattern": "press",
       "typicalLevel": 0.61,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -346,7 +338,6 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "pattern": "fly",
       "typicalLevel": 0.61,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -374,7 +365,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "pulldown",
       "typicalLevel": 0.88,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -406,7 +396,6 @@
         "facing": "floor",
         "grip": "press-up bars"
       },
-      "pattern": "press",
       "typicalLevel": 0.38,
       "bodyFraction": 1.0,
       "attachment": "Press-up bars",
@@ -438,7 +427,6 @@
         "facing": "floor",
         "grip": "shaper bars"
       },
-      "pattern": "press",
       "typicalLevel": 0.61,
       "bodyFraction": 0.85,
       "attachment": "Shaper bars",
@@ -470,7 +458,6 @@
         "facing": "tower",
         "grip": "dip bars"
       },
-      "pattern": "press",
       "typicalLevel": 0.38,
       "bodyFraction": 1.0,
       "attachment": "Dip bars",
@@ -502,7 +489,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "pulldown",
       "typicalLevel": 0.88,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -530,7 +516,6 @@
         "facing": "tower",
         "grip": "handles, wide"
       },
-      "pattern": "pulldown",
       "typicalLevel": 0.88,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -562,7 +547,6 @@
         "facing": "tower",
         "grip": "handles, palms up"
       },
-      "pattern": "pulldown",
       "typicalLevel": 0.88,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -590,7 +574,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "pulldown",
       "typicalLevel": 0.88,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -618,7 +601,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "row",
       "typicalLevel": 0.88,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -650,7 +632,6 @@
         "facing": "tower",
         "grip": "handles, wide"
       },
-      "pattern": "row",
       "typicalLevel": 0.88,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -678,7 +659,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "row",
       "typicalLevel": 0.88,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -706,7 +686,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "row",
       "typicalLevel": 0.88,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -734,7 +713,6 @@
         "facing": "tower",
         "grip": "single handle"
       },
-      "pattern": "row",
       "typicalLevel": 0.88,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -766,7 +744,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "fly",
       "typicalLevel": 0.88,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -794,7 +771,6 @@
         "facing": "tower",
         "grip": "wing bars"
       },
-      "pattern": "pulldown",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
@@ -822,7 +798,6 @@
         "facing": "tower",
         "grip": "wing bars, palms toward you"
       },
-      "pattern": "pulldown",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
@@ -850,7 +825,6 @@
         "facing": "tower",
         "grip": "wing bars, wide"
       },
-      "pattern": "pulldown",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
@@ -882,7 +856,6 @@
         "facing": "tower",
         "grip": "shaper bars"
       },
-      "pattern": "row",
       "typicalLevel": 0.88,
       "bodyFraction": 0.85,
       "attachment": "Shaper bars",
@@ -910,7 +883,6 @@
         "facing": "tower",
         "grip": "rope"
       },
-      "pattern": "row",
       "typicalLevel": 0.88,
       "bodyFraction": 0.85,
       "attachment": "Triceps rope",
@@ -938,7 +910,6 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "pattern": "press",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -966,7 +937,6 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "pattern": "raise",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -990,7 +960,6 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "pattern": "raise",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1014,7 +983,6 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "pattern": "raise",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1038,7 +1006,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "row",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1070,7 +1037,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "row",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1098,7 +1064,6 @@
         "facing": "tower",
         "grip": "single handle"
       },
-      "pattern": "raise",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1122,7 +1087,6 @@
         "facing": "tower",
         "grip": "single handle"
       },
-      "pattern": "raise",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1147,7 +1111,6 @@
         "grip": "handles",
         "alsoFacing": "floor"
       },
-      "pattern": "curl",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1172,7 +1135,6 @@
         "grip": "handles, palms in",
         "alsoFacing": "floor"
       },
-      "pattern": "curl",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1197,7 +1159,6 @@
         "grip": "handles, palms down",
         "alsoFacing": "floor"
       },
-      "pattern": "curl",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1222,7 +1183,6 @@
         "grip": "handles, wide",
         "alsoFacing": "floor"
       },
-      "pattern": "curl",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1246,7 +1206,6 @@
         "facing": "tower",
         "grip": "single handle"
       },
-      "pattern": "curl",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1271,7 +1230,6 @@
         "grip": "single handle",
         "alsoFacing": "floor"
       },
-      "pattern": "curl",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1299,7 +1257,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "curl",
       "typicalLevel": 0.45,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -1324,7 +1281,6 @@
         "grip": "rope",
         "alsoFacing": "floor"
       },
-      "pattern": "curl",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": "Triceps rope",
@@ -1349,7 +1305,6 @@
         "grip": "shaper bars",
         "alsoFacing": "floor"
       },
-      "pattern": "curl",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": "Shaper bars",
@@ -1373,7 +1328,6 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "pattern": "extend",
       "typicalLevel": 0.4,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1397,7 +1351,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "extend",
       "typicalLevel": 0.4,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1421,7 +1374,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "extend",
       "typicalLevel": 0.4,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -1445,7 +1397,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "extend",
       "typicalLevel": 0.4,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -1469,7 +1420,6 @@
         "facing": "floor",
         "grip": "single handle"
       },
-      "pattern": "extend",
       "typicalLevel": 0.4,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -1493,7 +1443,6 @@
         "facing": "floor",
         "grip": "press-up bars"
       },
-      "pattern": "press",
       "typicalLevel": 0.25,
       "bodyFraction": 1.0,
       "attachment": "Press-up bars",
@@ -1525,7 +1474,6 @@
         "facing": "tower",
         "grip": "dip bars"
       },
-      "pattern": "press",
       "typicalLevel": 0.25,
       "bodyFraction": 1.0,
       "attachment": "Dip bars",
@@ -1557,7 +1505,6 @@
         "facing": "tower",
         "grip": "rope"
       },
-      "pattern": "extend",
       "typicalLevel": 0.4,
       "bodyFraction": 0.85,
       "attachment": "Triceps rope",
@@ -1581,7 +1528,6 @@
         "facing": "tower",
         "grip": "rope"
       },
-      "pattern": "extend",
       "typicalLevel": 0.4,
       "bodyFraction": 1.0,
       "attachment": "Triceps rope",
@@ -1605,7 +1551,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "squat",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1637,7 +1582,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "squat",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1669,7 +1613,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "row",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1697,7 +1640,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "squat",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1729,7 +1671,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "squat",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1757,7 +1698,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "squat",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1789,7 +1729,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "hinge",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1817,7 +1756,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "calf",
       "typicalLevel": 0.6,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1841,7 +1779,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "calf",
       "typicalLevel": 0.6,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1865,7 +1802,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "calf",
       "typicalLevel": 0.6,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1889,7 +1825,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "raise",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1917,7 +1852,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "raise",
       "typicalLevel": 0.35,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -1945,7 +1879,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "raise",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -1969,7 +1902,6 @@
         "facing": "floor",
         "grip": "ankle straps"
       },
-      "pattern": "curl",
       "typicalLevel": 0.72,
       "bodyFraction": 1.0,
       "attachment": "Ankle straps",
@@ -1997,7 +1929,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "curl",
       "typicalLevel": 0.45,
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
@@ -2025,7 +1956,6 @@
         "facing": "floor",
         "grip": "ankle straps"
       },
-      "pattern": "extend",
       "typicalLevel": 0.88,
       "bodyFraction": 0.85,
       "attachment": "Ankle straps",
@@ -2049,7 +1979,6 @@
         "facing": "floor",
         "grip": "ankle strap"
       },
-      "pattern": "hinge",
       "typicalLevel": 0.88,
       "bodyFraction": 1.0,
       "attachment": "Ankle straps",
@@ -2077,7 +2006,6 @@
         "facing": "floor",
         "grip": "feet under the wing bars"
       },
-      "pattern": "crunch",
       "typicalLevel": 0.5,
       "bodyFraction": 0.75,
       "attachment": "Wing attachment",
@@ -2101,7 +2029,6 @@
         "facing": "tower",
         "grip": "handles by your head"
       },
-      "pattern": "crunch",
       "typicalLevel": 0.8,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -2125,7 +2052,6 @@
         "facing": "tower",
         "grip": "handles by your head"
       },
-      "pattern": "crunch",
       "typicalLevel": 0.8,
       "bodyFraction": 0.75,
       "attachment": null,
@@ -2149,7 +2075,6 @@
         "facing": "tower",
         "grip": "handles by your head"
       },
-      "pattern": "crunch",
       "typicalLevel": 0.5,
       "bodyFraction": 0.9,
       "attachment": null,
@@ -2173,7 +2098,6 @@
         "facing": "tower",
         "grip": "handles by your head"
       },
-      "pattern": "crunch",
       "typicalLevel": 0.8,
       "bodyFraction": 0.75,
       "attachment": null,
@@ -2197,7 +2121,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "crunch",
       "typicalLevel": 0.5,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2225,7 +2148,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "crunch",
       "typicalLevel": 0.5,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2253,7 +2175,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "hold",
       "typicalLevel": 0.5,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2281,7 +2202,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "hold",
       "typicalLevel": 0.5,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2305,7 +2225,6 @@
         "facing": "tower",
         "grip": "wing bars"
       },
-      "pattern": "raise",
       "typicalLevel": 0.5,
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
@@ -2329,7 +2248,6 @@
         "facing": "tower",
         "grip": "AbCrunch pads"
       },
-      "pattern": "curl",
       "typicalLevel": 0.5,
       "bodyFraction": 1.0,
       "attachment": "AbCrunch",
@@ -2353,7 +2271,6 @@
         "facing": "tower",
         "grip": "AbCrunch pads"
       },
-      "pattern": "crunch",
       "typicalLevel": 0.5,
       "bodyFraction": 1.0,
       "attachment": "AbCrunch",
@@ -2377,7 +2294,6 @@
         "facing": "tower",
         "grip": "feet in the leg pull bar"
       },
-      "pattern": "crunch",
       "typicalLevel": 0.8,
       "bodyFraction": 0.9,
       "attachment": "Leg pull accessory",
@@ -2405,7 +2321,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "raise",
       "typicalLevel": 0.8,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -2429,7 +2344,6 @@
         "facing": "tower",
         "grip": "single handle"
       },
-      "pattern": "press",
       "typicalLevel": 0.8,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -2457,7 +2371,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "press",
       "typicalLevel": 0.88,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2490,7 +2403,6 @@
         "grip": "handles",
         "alsoFacing": "floor"
       },
-      "pattern": "curl",
       "typicalLevel": 0.88,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -2518,7 +2430,6 @@
         "facing": "floor",
         "grip": "handles"
       },
-      "pattern": "fly",
       "typicalLevel": 0.61,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -2550,7 +2461,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "crunch",
       "typicalLevel": 0.5,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2582,7 +2492,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "squat",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -2614,7 +2523,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "squat",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -2646,7 +2554,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "squat",
       "typicalLevel": 0.6,
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
@@ -2678,7 +2585,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "squat",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
@@ -2710,7 +2616,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "raise",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
@@ -2742,7 +2647,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "squat",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
@@ -2774,7 +2678,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "hold",
       "typicalLevel": 0.72,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2798,7 +2701,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "hold",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2822,7 +2724,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "hold",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2846,7 +2747,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "hold",
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2870,7 +2770,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "hold",
       "typicalLevel": 0.35,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -2894,7 +2793,6 @@
         "facing": "tower",
         "grip": "nothing"
       },
-      "pattern": "hold",
       "typicalLevel": 0.6,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
@@ -2918,7 +2816,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "hold",
       "typicalLevel": 0.61,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2942,7 +2839,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "hold",
       "typicalLevel": 0.88,
       "bodyFraction": 1.0,
       "attachment": null,
@@ -2966,7 +2862,6 @@
         "facing": "tower",
         "grip": "handles"
       },
-      "pattern": "hold",
       "typicalLevel": 0.45,
       "bodyFraction": 0.85,
       "attachment": null,
@@ -2990,7 +2885,6 @@
         "facing": "floor",
         "grip": "nothing"
       },
-      "pattern": "hold",
       "typicalLevel": 0.5,
       "bodyFraction": 1.0,
       "attachment": null,
