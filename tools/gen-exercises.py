@@ -75,6 +75,7 @@ UNILATERAL = {
     "single-leg-squat", "split-squat", "single-leg-calf-raise",
     "side-lying-leg-lift", "hip-abduction", "hip-adduction", "glute-kickback",
     "external-rotation", "internal-rotation",
+    "sprinter-start", "pilates-scooter",
 }
 
 # What an exercise REQUIRES. A capability, not a product: two different accessories can satisfy
@@ -90,6 +91,11 @@ ABCRUNCH = "AbCrunch"
 PILATES = "Pilates kit"
 ROPE = "Triceps rope"
 SHAPER = "Shaper bars"
+
+# Attachments that bolt on at the BOTTOM of the rail. Feet reach these, so the head is at the
+# tower end -- the mirror of the wing, which is at the top and puts the head wherever the hands
+# are not. Both directions are asserted in main().
+BOTTOM_MOUNTED = {STAND, PILATES}
 
 # id, name, provides, ships-with-most-machines, added-in-registry-version, note
 A = collections.namedtuple("A", "id name provides common added note")
@@ -216,6 +222,16 @@ SETUP = {
     "board-burpee": ("face-up", "tower", "nothing"),
     "adductor-stretch": ("face-up", "tower", "nothing"),
     "calf-stretch": ("face-up", "tower", "nothing"),
+
+    # ---- lying face up, head toward the tower: feet on the Pilates bar
+    #
+    # The Pilates foot bar mounts at the BOTTOM of the rail, in the same place the squat stand
+    # does -- so feet on it puts the head at the tower end, exactly as a squat does. Asserted
+    # below with the stand, because it is the same fact about the machine.
+    "pilates-footwork": ("face-up", "tower", "nothing"),
+    "pilates-frog": ("face-up", "tower", "nothing"),
+    "pilates-leg-circle": ("face-up", "tower", "nothing"),
+    "pilates-scooter": ("face-up", "tower", "nothing"),
     # ---- lying face up, head toward the FLOOR: feet anchored in the wing
     #
     # Head at the bottom means the feet are at the top, where the wing bolts on -- and they have
@@ -230,10 +246,10 @@ SETUP = {
 
     "glute-stretch": ("face-up", "floor", "nothing"),
     "spinal-twist": ("face-up", "floor", "nothing"),
-    "pilates-footwork": ("face-up", "floor", "nothing"),
-    "pilates-frog": ("face-up", "floor", "nothing"),
-    "pilates-leg-circle": ("face-up", "floor", "nothing"),
-    "pilates-scooter": ("face-up", "floor", "nothing"),
+
+
+
+
 
     # ---- sitting, facing the tower: the cable pulls you toward it, so everything you PULL
     "seated-row": ("seated", "tower", "handles"),
@@ -800,8 +816,17 @@ def main():
     # The squat stand bolts on at the bottom of the rail. Feet on the stand therefore means head
     # at the tower end, always -- a physical fact about the machine rather than a judgment, so it
     # is asserted rather than left to whoever edits the table next.
-    wrong_way = [e.id for e in EX if e.att == STAND and setup_of(e)["facing"] != "tower"]
-    assert not wrong_way, f"squat-stand movements must face the tower: {sorted(wrong_way)}"
+    # Two attachments bolt on at the BOTTOM of the rail: the squat stand and the Pilates foot
+    # bar. Feet on either one therefore puts the head at the tower end -- the same way round as
+    # the cable work, not the opposite way. A fact about the machine, so it is asserted rather
+    # than left to whoever edits the table next.
+    wrong_way = [
+        e.id for e in EX
+        if e.att in BOTTOM_MOUNTED and setup_of(e)["facing"] != "tower"
+    ]
+    assert not wrong_way, (
+        f"movements using a bottom-mounted attachment must face the tower: {sorted(wrong_way)}"
+    )
 
     # Same class of fact from the other end of the rail: the wing bolts on at the top, so a
     # movement whose setup has the trainee holding or hooking it REQUIRES it. Getting this wrong

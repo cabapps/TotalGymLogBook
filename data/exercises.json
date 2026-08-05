@@ -2615,7 +2615,7 @@
         "grip": "nothing"
       },
       "typicalLevel": 0.55,
-      "unilateral": false,
+      "unilateral": true,
       "bodyFraction": 1.0,
       "attachment": "Squat stand",
       "cue": "One foot loaded on the stand, drive it out explosively and return under control.",
@@ -2643,7 +2643,7 @@
       "peakTension": "even",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "typicalLevel": 0.6,
@@ -2675,7 +2675,7 @@
       "peakTension": "lengthened",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "typicalLevel": 0.55,
@@ -2707,7 +2707,7 @@
       "peakTension": "even",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "typicalLevel": 0.55,
@@ -2739,11 +2739,11 @@
       "peakTension": "even",
       "setup": {
         "position": "face-up",
-        "facing": "floor",
+        "facing": "tower",
         "grip": "nothing"
       },
       "typicalLevel": 0.55,
-      "unilateral": false,
+      "unilateral": true,
       "bodyFraction": 1.0,
       "attachment": "Pilates kit",
       "cue": "One foot on the bar and one leg free, push the board away with the working leg only.",
