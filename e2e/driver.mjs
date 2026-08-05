@@ -91,6 +91,26 @@ async function ensureServer() {
   return true;
 }
 
+/**
+ * Switches tabs the way a trainee does.
+ *
+ * The bottom tab bar moved the coach and the settings off the logging screen. Everything still
+ * exists in the DOM while a tab is hidden -- that is the point of hiding panes rather than
+ * rebuilding them -- but Playwright will not click or read what is not visible, which is exactly
+ * the constraint the user is under. Counting options is fine from any tab; clicking is not.
+ */
+async function showTabOn(target, id) {
+  await target.locator(`tg-tab-bar #tab-${id}`).click();
+  await target.waitForFunction(
+    (tab) => {
+      const shell = document.querySelector('tg-app-shell');
+      return shell?.shadowRoot?.getElementById(`pane-${tab}`)?.hidden === false;
+    },
+    id,
+    { timeout: 10_000 },
+  );
+}
+
 async function main() {
   const startedByUs = await ensureServer();
   const executablePath = findChromium();
@@ -306,6 +326,8 @@ async function main() {
 
   // ---- Derived tier: Blazor reads what the shell wrote ----
   console.log('\nDerived tier (Blazor reads the logbook):');
+  await showTabOn(page, 'coach');
+
   let blazorOk = true;
   try {
     await page.waitForSelector('#empty-state, #rec-load', { timeout: 60_000 });
@@ -323,22 +345,17 @@ async function main() {
   const placement = await page.evaluate(() => {
     const shell = document.querySelector('tg-app-shell');
     const root = document.getElementById('blazor-root');
-    const finish = shell?.shadowRoot?.getElementById('finish');
-    const safety = shell?.shadowRoot?.querySelector('tg-data-safety');
-    const top = (el) => el?.getBoundingClientRect().top ?? NaN;
 
     return {
       slotted: root?.assignedSlot?.getAttribute('name') ?? null,
       insideShell: shell?.contains(root) ?? false,
-      afterFinish: top(root) > top(finish),
-      beforeSafety: top(root) < top(safety),
+      onScreen: (root?.getBoundingClientRect().height ?? 0) > 0,
     };
   });
 
   check('derived tier is projected into the shell', placement.insideShell && placement.slotted === 'derived',
     `slot=${placement.slotted}`);
-  check('coach renders under the workout, above the data card',
-    placement.afterFinish && placement.beforeSafety);
+  check('coach renders in its own tab', placement.onScreen);
 
   const recLoad = await page.locator('#rec-load').innerText().catch(() => '');
   const recWhy = await page.locator('#rec-why').innerText().catch(() => '');
@@ -369,7 +386,9 @@ async function main() {
   check('coach names the selected exercise', /Chest Press/i.test(named), named.trim());
 
   // Option labels carry the required attachment ("Squat (Squat stand)"), so select by value.
+  await showTabOn(page, 'workout');
   await page.selectOption('tg-set-logger #exercise', { value: 'squat' });
+  await showTabOn(page, 'coach');
   await page.waitForFunction(
     () => /squat/i.test(document.getElementById('focus-exercise')?.textContent ?? ''),
     null,
@@ -383,7 +402,9 @@ async function main() {
   check('advises from that exercise history, not another', /squat/i.test(squatState),
     squatState.replace(/\s+/g, ' ').slice(0, 60) + '…');
 
+  await showTabOn(page, 'workout');
   await page.selectOption('tg-set-logger #exercise', { value: 'chest-press' });
+  await showTabOn(page, 'coach');
   await page.waitForSelector('#rec-load', { timeout: 20_000 });
   check('switching back restores the recommendation', true);
 
@@ -400,6 +421,7 @@ async function main() {
   // something is logged against a plan, so this drives the whole loop: pick a program, log the
   // planned movement, watch it tick off, and confirm the rotation advanced.
   console.log('\nPrograms:');
+  await showTabOn(page, 'workout');
   await page.locator('tg-program-panel #change').click().catch(() => {});
   await page.waitForSelector('tg-program-panel #use-0', { timeout: 15_000 });
   check('offers a program for every way of training',
@@ -468,6 +490,7 @@ async function main() {
   await page.screenshot({ path: join(SHOTS, '13-program.png'), fullPage: true });
 
   // The derived tier's half: is this program any good?
+  await showTabOn(page, 'coach');
   await page.locator('.tg-nav a', { hasText: 'Program' }).click();
   await page.waitForSelector('#program-verdict', { timeout: 30_000 });
 
@@ -475,8 +498,17 @@ async function main() {
   check('critiques the program by weekly volume', verdict.length > 30,
     verdict.replace(/\s+/g, ' ').slice(0, 70) + '…');
 
-  const bars = await page.locator('#program-volume li').count();
+  const bars = await page.locator('#program-volume .bar-row').count();
   check('charts planned volume for every muscle group', bars >= 10, `${bars} muscles`);
+
+  // The note claimed a marker at four sets that nothing ever drew.
+  const goalLine = await page.locator('#program-volume .goal-line').count();
+  check('marks where the effective dose falls', goalLine === 1);
+
+  // Both charts read the same way round, so a bar's position means the same thing on either.
+  const planOrder = await page.locator('#program-volume .bar-label').allInnerTexts();
+  check('orders muscles biggest first', planOrder[0] === 'Quads' && planOrder[1] === 'Back',
+    planOrder.slice(0, 3).join(', '));
 
   const sessionsListed = await page.locator('#program-sessions li').count();
   check('lists the sessions', sessionsListed === 3, `${sessionsListed} sessions`);
@@ -490,7 +522,7 @@ async function main() {
   // numbers come from the shell's own copy of the accounting, and they have to change on the
   // same tap that changes the plan.
   console.log('\nProgram editor:');
-  await page.locator('.tg-nav a', { hasText: 'Log' }).click().catch(() => {});
+  await showTabOn(page, 'workout');
   await page.waitForSelector('tg-program-panel #edit', { timeout: 30_000 });
   await page.locator('tg-program-panel #edit').click();
   await page.waitForSelector('tg-program-editor #volume', { timeout: 15_000 });
@@ -565,6 +597,7 @@ async function main() {
 
   // ---- History ----
   console.log('\nHistory:');
+  await showTabOn(page, 'coach');
   await page.locator('.tg-nav a', { hasText: 'History' }).click();
   await page.waitForSelector('#history-summary, #history-empty', { timeout: 30_000 });
 
@@ -615,6 +648,9 @@ async function main() {
   await safariPage.selectOption('#notches', { label: '14 levels' });
   await safariPage.click('#start');
   await safariPage.waitForSelector('tg-set-logger #log', { timeout: 30_000 });
+
+  // ...and the coach lives behind its own tab, so go there before waiting on it.
+  await safariPage.locator('tg-tab-bar #tab-coach').click();
 
   let safariBlazor = true;
   try {
@@ -801,6 +837,7 @@ async function main() {
   const groups = await phone.locator('tg-set-logger #exercise optgroup').count();
   check('the picker is grouped by body part', groups >= 6, `${groups} groups`);
 
+  await showTabOn(phone, 'settings');
   await phone.locator('tg-equipment summary').click();
   const boxes = phone.locator('tg-equipment input[type=checkbox]');
   const boxCount = await boxes.count();

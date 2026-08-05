@@ -25,6 +25,7 @@ import type { Equipment } from './equipment.js';
 import type { ProgramPanel } from './program-panel.js';
 import type { ProgramEditor } from './program-editor.js';
 import type { ExerciseEditor } from './exercise-editor.js';
+import type { Tab, TabBar } from './tab-bar.js';
 import { smoothedLb, toReadings } from '../bodyweight.js';
 import {
   emphasisFor,
@@ -93,8 +94,23 @@ import './program-editor.js';
 import './exercise-editor.js';
 import './equipment.js';
 import './data-safety.js';
+import './tab-bar.js';
 
 const DEFAULT_REST_SECONDS = 90;
+
+/**
+ * The three destinations, and the title each one puts on the screen.
+ *
+ * Settings exists because equipment and custom movements are configured once and then never
+ * again, and they were sitting between the trainee and the Finish button. The coach moved with
+ * them: it already carries its own Coach/Program/History control, so it was a second row of
+ * navigation buried halfway down a scrolling page.
+ */
+const TABS: readonly (Tab & { title: string })[] = [
+  { id: 'workout', label: 'Workout', title: 'Log a set' },
+  { id: 'coach', label: 'Coach', title: 'Coach' },
+  { id: 'settings', label: 'Settings', title: 'Settings' },
+];
 
 const styles = new CSSStyleSheet();
 styles.replaceSync(`
@@ -139,6 +155,14 @@ styles.replaceSync(`
     max-width: 34rem; margin: 0 auto;
     padding: .25rem var(--gutter) calc(3rem + env(safe-area-inset-bottom));
   }
+  /*
+    Room for the tab bar. 49pt of bar plus the home indicator plus a margin, so the last card on
+    a tab is not sitting under it -- and the bar is translucent, so "nearly under it" still reads
+    as covered.
+  */
+  :host(:has(tg-tab-bar)) .screen {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  }
 
   h1 {
     font-size: var(--text-large-title); font-weight: 700; letter-spacing: -0.022em;
@@ -178,6 +202,8 @@ export class AppShell extends HTMLElement {
   #session: SessionRecord | undefined;
   /** Watches the large title so the nav bar can take it over on scroll. */
   #titleWatch?: IntersectionObserver;
+  /** Which tab is showing. Session state: reopening the app lands on the workout. */
+  #tab = TABS[0]!.id;
 
   constructor() {
     super();
@@ -298,6 +324,53 @@ export class AppShell extends HTMLElement {
   }
 
   /**
+   * Wires the tab bar to the panes.
+   *
+   * The bar lives OUTSIDE .screen, so it is fixed to the viewport rather than to the scrolling
+   * column, and .screen carries bottom padding to match its height -- otherwise the last thing
+   * on every tab sits underneath it.
+   */
+  #mountTabs(): void {
+    const bar = document.createElement('tg-tab-bar') as TabBar;
+    bar.id = 'tabs';
+    this.#root.append(bar);
+    bar.configure(TABS, this.#tab);
+
+    bar.addEventListener('tab-selected', (event) => {
+      this.#showTab((event as CustomEvent<{ id: string }>).detail.id);
+    });
+
+    this.#showTab(this.#tab);
+  }
+
+  /** Shows one pane and retitles the screen. Nothing is rebuilt; see #renderWorkout. */
+  #showTab(id: string): void {
+    const tab = TABS.find((t) => t.id === id) ?? TABS[0]!;
+    this.#tab = tab.id;
+
+    for (const candidate of TABS) {
+      const pane = this.#root.getElementById(`pane-${candidate.id}`);
+      if (pane) pane.hidden = candidate.id !== tab.id;
+    }
+
+    const large = this.#root.getElementById('large-title');
+    const compact = this.#root.querySelector('.navbar-title');
+    if (large) large.textContent = tab.title;
+    if (compact) compact.textContent = tab.title;
+
+    // The subtitle belongs to the workout: bodyweight and notches are what you check before a
+    // set, and repeating them over the settings would be noise.
+    const sub = this.#root.querySelector<HTMLElement>('.sub');
+    if (sub) sub.hidden = tab.id !== TABS[0]!.id;
+
+    (this.#root.getElementById('tabs') as TabBar | null)?.select(tab.id);
+
+    // A new screen starts at the top. Switching tabs and landing halfway down is the single most
+    // reliable way for a web app to feel like a web app.
+    window.scrollTo({ top: 0 });
+  }
+
+  /**
    * Condenses the nav bar once the large title has scrolled under it.
    *
    * rootMargin is measured from the bar rather than hardcoded, because the bar's height is the
@@ -415,32 +488,41 @@ export class AppShell extends HTMLElement {
 
   #renderWorkout(): void {
     this.#root.innerHTML = this.#chrome(
-      'Log a set',
+      TABS[0]!.title,
       `<span id="bwLabel">${this.#bodyweightLb.toFixed(1)} lb</span> &middot; ${this.#profile!.levelCount} notches`,
       `
-      <tg-rest-timer id="timer" hidden></tg-rest-timer>
-      <tg-weigh-in id="weight"></tg-weigh-in>
-      <tg-program-panel id="program"></tg-program-panel>
-      <tg-program-editor id="builder"></tg-program-editor>
-      <tg-set-logger id="logger"></tg-set-logger>
-      <tg-session-list id="list"></tg-session-list>
+      <!--
+        Three panes, all rendered, two of them hidden. Rebuilding on every tab change would be
+        simpler and wrong: the set logger holds a rep count that is not in IndexedDB until Log
+        set is tapped, and a trainee who checks their equipment mid-set would come back to zero.
+      -->
+      <section id="pane-workout">
+        <tg-rest-timer id="timer" hidden></tg-rest-timer>
+        <tg-weigh-in id="weight"></tg-weigh-in>
+        <tg-program-panel id="program"></tg-program-panel>
+        <tg-program-editor id="builder"></tg-program-editor>
+        <tg-set-logger id="logger"></tg-set-logger>
+        <tg-session-list id="list"></tg-session-list>
 
-      <button class="ghost" id="finish">Finish workout</button>
+        <button class="ghost" id="finish">Finish workout</button>
+      </section>
 
-      <tg-equipment id="equipment"></tg-equipment>
-      <tg-exercise-editor id="editor"></tg-exercise-editor>
+      <!-- Blazor's #blazor-root is projected here (see index.html). The slot exists only on this
+           screen: an unslotted light child is not rendered, which is exactly what we want during
+           onboarding and the resume prompt. -->
+      <section id="pane-coach" hidden>
+        <slot name="derived"></slot>
+      </section>
 
-      <!-- Blazor's #blazor-root is projected here (see index.html). The coach and history are
-           the payoff for logging, so they sit directly under the workout rather than below the
-           data card, where nobody scrolled to find them. The slot exists only on this screen:
-           an unslotted light child is not rendered, which is exactly the behavior we want
-           during onboarding and the resume prompt. -->
-      <slot name="derived"></slot>
-
-      <tg-data-safety></tg-data-safety>
+      <section id="pane-settings" hidden>
+        <tg-equipment id="equipment"></tg-equipment>
+        <tg-exercise-editor id="editor"></tg-exercise-editor>
+        <tg-data-safety></tg-data-safety>
+      </section>
     `,
     );
     this.#watchTitle();
+    this.#mountTabs();
 
     const logger = this.#root.getElementById('logger') as SetLogger;
     const list = this.#root.getElementById('list') as SessionList;

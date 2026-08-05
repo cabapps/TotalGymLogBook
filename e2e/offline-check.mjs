@@ -98,6 +98,11 @@ const check = (label, ok, detail = '') => {
   console.log(`  ${ok ? '\x1b[32mPASS\x1b[0m' : '\x1b[31mFAIL\x1b[0m'}  ${label}${detail ? '  ' + detail : ''}`);
 };
 
+/** The coach lives behind its own tab now, so go there before waiting on Blazor. */
+async function showCoach(page) {
+  await page.locator('tg-tab-bar #tab-coach').click();
+}
+
 async function main() {
   const out = mkdtempSync(join(tmpdir(), 'tglb-offline-'));
   console.log(`publishing to ${out} ...`);
@@ -162,6 +167,7 @@ async function main() {
   // (a missing importmap), which looked like an offline problem but was not.
   let blazorOnline = true;
   try {
+    await showCoach(page);
     await page.waitForSelector('#empty-state, #rec-load', { timeout: 60_000 });
   } catch {
     blazorOnline = false;
@@ -204,6 +210,7 @@ async function main() {
   // Blazor is the real test of precaching -- it is 2 MB of wasm across ~40 files.
   let blazorOffline = true;
   try {
+    await showCoach(page);
     await page.waitForSelector('#empty-state, #rec-load', { timeout: 60_000 });
   } catch {
     blazorOffline = false;

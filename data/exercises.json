@@ -790,7 +790,7 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "face-up",
+        "position": "face-down",
         "facing": "tower",
         "grip": "wing bars"
       },
@@ -798,7 +798,7 @@
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
-      "cue": "Grip the wing bars overhead and pull your chest towards them. The incline sets how hard it is.",
+      "cue": "Palms away, pull until your head comes up past the wing. The incline sets how hard it is.",
       "muscles": [
         {
           "muscle": "Back",
@@ -818,7 +818,7 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "face-up",
+        "position": "face-down",
         "facing": "tower",
         "grip": "wing bars, palms toward you"
       },
@@ -826,7 +826,7 @@
       "typicalLevel": 0.55,
       "bodyFraction": 1.0,
       "attachment": "Wing attachment",
-      "cue": "Pull-up with your palms facing you, which brings the biceps in properly.",
+      "cue": "Palms toward you, pull until your chin reaches the wing. Shorter finish than a pull-up, and the biceps come in properly.",
       "muscles": [
         {
           "muscle": "Back",
@@ -846,7 +846,7 @@
       "usesPulley": false,
       "peakTension": "lengthened",
       "setup": {
-        "position": "face-up",
+        "position": "face-down",
         "facing": "tower",
         "grip": "wing bars, wide"
       },

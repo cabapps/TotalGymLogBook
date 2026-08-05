@@ -105,3 +105,39 @@ describe('exercise demo', () => {
     expect(demoSvg(catalog.get('squat'))).toContain('aria-label');
   });
 });
+
+describe('joints', () => {
+  it('gives every limb a knee or an elbow', () => {
+    // Two segments per limb, and the far one hangs off a translate to the midpoint -- that is
+    // what makes the joint a joint rather than a kink drawn into a single line.
+    const svg = demoSvg(catalog.get('chest-press'));
+
+    expect(svg).toContain('class="joint"');
+    expect(svg).toContain('--bend-from');
+  });
+
+  it('bends the elbow the opposite way for a curl and a press', () => {
+    // The whole point of drawing joints: these two trace nearly the same arc, and what the elbow
+    // does is the only thing that distinguishes them.
+    const bend = (id: string) => {
+      const match = /--bend-from: (-?\d+)deg; --bend-to: (-?\d+)deg/.exec(demoSvg(catalog.get(id)))!;
+      return { from: Number(match[1]), to: Number(match[2]) };
+    };
+
+    const press = bend('chest-press');
+    const curl = bend('biceps-curl');
+
+    expect(press.to).toBeLessThan(press.from);
+    expect(curl.to).toBeGreaterThan(curl.from);
+  });
+
+  it('keeps the knee still on a calf raise', () => {
+    // The caption says a moving knee means the knees are helping. The drawing must not contradict
+    // it by showing exactly that.
+    const match = /--bend-from: (-?\d+)deg; --bend-to: (-?\d+)deg/.exec(
+      demoSvg(catalog.get('calf-raise')),
+    )!;
+
+    expect(Number(match[1])).toBe(Number(match[2]));
+  });
+});

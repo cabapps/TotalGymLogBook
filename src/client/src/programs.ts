@@ -7,6 +7,7 @@
  * TotalGymLogBook.Domain, where it can reuse the volume machinery.
  */
 
+import { toIsoDate } from './db/schema.js';
 import type { PlannedExercise, ProgramRecord, ProgramSession, SessionRecord } from './db/schema.js';
 import type { ExerciseCatalog } from './exercises.js';
 import type { ProgramEmphasis } from './emphasis.js';
@@ -241,6 +242,32 @@ export function rampedSets(
   }
 
   return wanted;
+}
+
+/**
+ * How far back the ramp looks.
+ *
+ * Long enough that a fortnight off does not reset a trainee to one set, short enough that a
+ * volume they abandoned a year ago is not still being asked of them.
+ */
+export const RAMP_WINDOW_MS = 60 * 24 * 60 * 60 * 1000;
+
+/**
+ * The slice of history today's plan is built from -- and it STOPS YESTERDAY.
+ *
+ * Today's sets used to count, which meant the plan grew while the trainee was working through
+ * it: log the third set of squats, bestDailySets rises to three, the ramp allows four, and the
+ * total to do goes up while they are standing there doing it. A target that recedes as you
+ * approach it is not a target.
+ *
+ * Ending the window yesterday makes today's plan a function of the days BEFORE today, so it
+ * reads the same on the first set as on the last, and the same again after a reload mid-workout
+ * -- without storing a cursor anywhere. Tomorrow it recomputes with today included, which is
+ * when the ramp is supposed to move.
+ */
+export function rampWindow(now: number): { from: string; to: string } {
+  const day = 24 * 60 * 60 * 1000;
+  return { from: toIsoDate(now - RAMP_WINDOW_MS), to: toIsoDate(now - day) };
 }
 
 /**
