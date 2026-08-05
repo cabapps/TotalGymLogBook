@@ -55,6 +55,7 @@ const {
   restSecondsFor,
   supersetPairs,
   totalTransitionCost,
+  workingSets,
 } = await import(join(stage, 'plan.mjs'));
 const { ExerciseCatalog } = await import(join(stage, 'catalog.mjs'));
 
@@ -89,6 +90,25 @@ const heaviness = (id) => {
   );
 };
 
+/**
+ * Muscles the template actually TRAINS -- something in it drives them directly.
+ *
+ * A muscle that only ever appears as somebody else's secondary is not programmed, it is picked
+ * up. Nobody writes a push/pull/legs split to train adductors, and half a set of them falling out
+ * of a wide-stance squat should not read as a program that trains adductors badly. Same line
+ * ProgramAnalyzer draws between untrained and under-dosed, and the same one topUp already used to
+ * decide what it could even fix.
+ */
+function trainedDirectly(template) {
+  const direct = new Set();
+  for (const planned of template.sessions.flatMap((s) => s.exercises)) {
+    const exercise = catalog.get(planned.exerciseId);
+    if (exercise.kind !== 'strength') continue;
+    for (const m of exercise.muscles.filter((m) => m.fraction >= 1)) direct.add(m.muscle);
+  }
+  return direct;
+}
+
 function volumes(template) {
   const total = {};
   for (const session of template.sessions) {
@@ -103,7 +123,61 @@ function volumes(template) {
   return total;
 }
 
-/** Trim until every session fits the budget: sets first, then the least useful movement. */
+/**
+ * Value per unit of session time.
+ *
+ * Not heaviness alone. A single-leg squat is as big a movement as a squat and takes twice as long
+ * -- one planned set is two sets on the board -- so for a session that has run out of time it is
+ * half the trade. Ranking by heaviness alone is what deleted the squat from a legs day and kept
+ * the split squat: the same muscles for double the minutes.
+ */
+const valuePerMinute = (id) =>
+  heaviness(id) / (catalog.get(id).unilateral ? 2 : 1);
+
+
+/**
+ * Trades the most expensive one-limb movement for a two-limb movement with the same prime movers.
+ *
+ * Returns true when something was swapped. Only ever swaps when the result actually fits better,
+ * so a session where the unilateral movement IS the point keeps it and loses something else.
+ */
+function swapUnilateral(session, rest, BUDGET) {
+  const primeMovers = (id) =>
+    new Set(catalog.get(id).muscles.filter((m) => m.fraction >= 1).map((m) => m.muscle));
+
+  const sameJob = (a, b) => {
+    const [x, y] = [primeMovers(a), primeMovers(b)];
+    return x.size === y.size && [...x].every((m) => y.has(m));
+  };
+
+  const candidates = session.exercises.filter((e) => catalog.get(e.exerciseId).unilateral);
+
+  for (const planned of candidates) {
+    const replacement = stock.find(
+      (e) =>
+        !e.unilateral &&
+        sameJob(planned.exerciseId, e.id) &&
+        !session.exercises.some((x) => x.exerciseId === e.id),
+    );
+    if (!replacement) continue;
+
+    const was = planned.exerciseId;
+    planned.exerciseId = replacement.id;
+    const trial = orderSession(session.exercises, catalog);
+
+    if (estimateMinutes(trial, catalog, rest) <= BUDGET) {
+      session.exercises = trial;
+      return true;
+    }
+
+    // No better: put it back and let the caller drop something instead.
+    planned.exerciseId = was;
+  }
+
+  return false;
+}
+
+/** Trim until every session fits the budget: sets first, then the worst value for the time. */
 function trim(template, rest, BUDGET) {
   for (const session of template.sessions) {
     session.exercises = orderSession(session.exercises, catalog);
@@ -113,20 +187,36 @@ function trim(template, rest, BUDGET) {
 
       const trimmable = session.exercises
         .filter((e) => e.sets > MIN_SETS)
-        .sort((a, b) => b.sets - a.sets || heaviness(a.exerciseId) - heaviness(b.exerciseId));
+        .sort((a, b) => b.sets - a.sets || valuePerMinute(a.exerciseId) - valuePerMinute(b.exerciseId));
 
       if (trimmable.length > 0) {
         trimmable[0].sets -= 1;
         continue;
       }
 
-      // Nothing left to shave: drop the least useful movement and re-tidy, because removing one
-      // changes which of the rest can be paired.
-      const worst = [...session.exercises].sort(
-        (a, b) => heaviness(a.exerciseId) - heaviness(b.exerciseId),
+      // Before losing a movement, try trading a one-limb movement for a two-limb one that trains
+      // the same thing. A split squat and a narrow-stance squat buy the same muscles; one of them
+      // costs twice the minutes because every set is done twice. Swapping buys back half a
+      // movement's time without the session losing anything it was for.
+      const swapped = swapUnilateral(session, rest, BUDGET);
+      if (swapped) continue;
+
+      // Nothing left to shave: drop the worst value for the time and re-tidy, because removing
+      // one changes which of the rest can be paired.
+      //
+      // Never the first movement. The session is ordered with what it is built around at the
+      // front, and a legs day that has lost its squat is not a shorter legs day -- it is a
+      // different session, which is not a thing a fitting pass gets to decide.
+      const [anchor, ...rest_] = session.exercises;
+      if (rest_.length === 0) {
+        throw new Error(`${template.id}/${session.name} will not fit even on its own`);
+      }
+
+      const worst = [...rest_].sort(
+        (a, b) => valuePerMinute(a.exerciseId) - valuePerMinute(b.exerciseId),
       )[0];
       session.exercises = orderSession(
-        session.exercises.filter((e) => e !== worst),
+        [anchor, ...rest_.filter((e) => e !== worst)],
         catalog,
       );
     }
@@ -137,12 +227,14 @@ function trim(template, rest, BUDGET) {
 function topUp(template, rest, BUDGET) {
   for (let guard = 0; guard < 40; guard++) {
     const volume = volumes(template);
+    const direct = trainedDirectly(template);
     const short = Object.entries(volume)
-      .filter(([, sets]) => sets > 0 && sets < DOSE)
+      .filter(([muscle, sets]) => direct.has(muscle) && sets < DOSE)
       .sort((a, b) => a[1] - b[1])[0];
     if (!short) return;
 
     const [muscle] = short;
+    const before = volume;
     const trains = (id) =>
       catalog.get(id).muscles.some((m) => m.muscle === muscle && m.fraction >= 1);
 
@@ -161,6 +253,41 @@ function topUp(template, rest, BUDGET) {
     }
     if (fixed) continue;
 
+    // Still short with no slack: TRADE. Take a set from the worst value for the time in a session
+    // that trains this muscle, and give it to the muscle that is under the dose. Without this the
+    // passes can only add and remove, never reallocate, so a session sitting exactly on the budget
+    // stays one set short of the dose forever with slack sitting in a movement that has plenty.
+    for (const session of template.sessions) {
+      const hit = session.exercises.find((e) => trains(e.exerciseId));
+      if (!hit) continue;
+
+      const donors = session.exercises
+        .filter((e) => e !== hit && e.sets > 2)
+        .sort((a, b) => valuePerMinute(a.exerciseId) - valuePerMinute(b.exerciseId));
+
+      for (const donor of donors) {
+        donor.sets -= 1;
+        hit.sets += 1;
+
+        // Robbing one muscle to pay another is not a fix. Only keep the trade if nothing that
+        // was at the dose has fallen under it.
+        const after = volumes(template);
+        const broke = [...trainedDirectly(template)].some(
+          (m) => (before[m] ?? 0) >= DOSE && (after[m] ?? 0) < DOSE,
+        );
+
+        if (!broke && estimateMinutes(session.exercises, catalog, rest) <= BUDGET) {
+          fixed = true;
+          break;
+        }
+
+        donor.sets += 1;
+        hit.sets -= 1;
+      }
+      if (fixed) break;
+    }
+    if (fixed) continue;
+
     // Otherwise add the movement that fits some session's existing setup most cheaply.
     let best;
     for (const session of template.sessions) {
@@ -171,6 +298,8 @@ function topUp(template, rest, BUDGET) {
           [...session.exercises, { exerciseId: candidate.id, sets: MIN_SETS }],
           catalog,
         );
+        // A unilateral candidate buys the same volume for twice the minutes, so it is only worth
+        // adding when nothing bilateral fits.
         const minutes = estimateMinutes(trial, catalog, rest);
         if (minutes <= BUDGET && (!best || minutes < best.minutes)) best = { session, trial, minutes };
       }
@@ -225,8 +354,9 @@ for (const template of doc.templates) {
     }
   }
 
+  const direct = trainedDirectly(template);
   const under = Object.entries(volumes(template))
-    .filter(([, sets]) => sets > 0 && sets < DOSE)
+    .filter(([muscle, sets]) => direct.has(muscle) && sets < DOSE)
     .map(([muscle]) => muscle);
 
   if (VOLUME_JUDGED.has(template.emphasis) && under.length > 0) {

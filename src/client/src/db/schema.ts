@@ -90,6 +90,15 @@ export interface SetLogRecord extends SyncFields {
   reps: number;
   level: number;
 
+  /**
+   * Which side this set trained, for one-limb-at-a-time movements.
+   *
+   * Absent on a bilateral movement, and absent on unilateral sets logged before the app asked.
+   * Absent does NOT mean "both": an old single-leg squat set trained one leg and nobody recorded
+   * which, so the ledger splits it half to each rather than inventing a side or counting it twice.
+   */
+  side?: 'left' | 'right';
+
   // --- computation inputs, frozen at log time ---
   bodyweightRawLb: number;
   bodyweightSmoothedLb: number;
@@ -176,6 +185,8 @@ export interface CustomExerciseRecord extends SyncFields {
   peakTension?: 'lengthened' | 'even' | 'shortened';
   /** How the trainee sets it up. Absent falls back to the machine's default posture. */
   setup?: { position: string; facing: string; grip: string };
+  /** True when one set trains one side. Absent means a movement that trains both. */
+  unilateral?: boolean;
   /** Where on the rail it is normally done, 0-1. Absent assumes mid-rail. */
   typicalLevel?: number;
   bodyFraction: number;

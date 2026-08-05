@@ -29,6 +29,17 @@ public sealed record TensionMix(double Lengthened, double Even, double Shortened
 /// <summary>Planned weekly volume for one muscle, against the target.</summary>
 public sealed record PlannedMuscleVolume(MuscleGroup Muscle, double WeeklySets, double MinimumSets)
 {
+    /// <summary>
+    /// True when something in the program drives this muscle DIRECTLY.
+    ///
+    /// The distinction the set count alone cannot make. Adductors turn up at 1.5 sets in a
+    /// push/pull/legs split because a wide-stance squat involves them a little -- but nobody
+    /// writes a PPL to train adductors, and calling that a program that trains them badly is
+    /// criticizing it for something it never claimed. Half a set falling out of somebody else's
+    /// movement is picked up, not programmed.
+    /// </summary>
+    public bool Direct { get; init; }
+
     public bool BelowMinimum => WeeklySets < MinimumSets;
     public bool Untrained => WeeklySets <= 0;
 }
@@ -100,6 +111,28 @@ public sealed class ProgramAnalyzer
     /// the same reason the ledger has no ceiling: nothing here can observe recovery
     /// (docs/adr/0010).
     /// </summary>
+    /// <summary>Muscles some movement in the program drives directly. See PlannedMuscleVolume.Direct.</summary>
+    public IReadOnlySet<MuscleGroup> DirectlyTrained(TrainingProgram program, ExerciseCatalog catalog)
+    {
+        ArgumentNullException.ThrowIfNull(program);
+        ArgumentNullException.ThrowIfNull(catalog);
+
+        var direct = new HashSet<MuscleGroup>();
+
+        foreach (var planned in program.Sessions.SelectMany(s => s.Exercises))
+        {
+            var exercise = catalog.TryGet(planned.ExerciseId);
+            if (exercise is null || !exercise.CountsAsVolume) continue;
+
+            foreach (var m in exercise.Muscles.Where(m => m.Fraction >= MuscleInvolvement.Direct))
+            {
+                direct.Add(m.Muscle);
+            }
+        }
+
+        return direct;
+    }
+
     /// <summary>Planned sets split by where in the range they load the muscle.</summary>
     public TensionMix Tension(TrainingProgram program, ExerciseCatalog catalog)
     {
@@ -134,9 +167,14 @@ public sealed class ProgramAnalyzer
 
         var planned = WeeklySets(program, catalog);
 
+        var direct = DirectlyTrained(program, catalog);
+
         var volumes = Enum.GetValues<MuscleGroup>()
             .Select(m => new PlannedMuscleVolume(
-                m, planned.GetValueOrDefault(m), target.MinimumEffectiveSets))
+                m, planned.GetValueOrDefault(m), target.MinimumEffectiveSets)
+            {
+                Direct = direct.Contains(m),
+            })
             .OrderBy(v => v.WeeklySets)
             .ToList();
 
@@ -162,7 +200,7 @@ public sealed class ProgramAnalyzer
         var warnings = !judgeByVolume
             ? []
             : volumes
-            .Where(v => !v.Untrained && v.BelowMinimum)
+            .Where(v => v.Direct && v.BelowMinimum)
             .Select(v => $"{Capitalize(v.Muscle.Label())} {v.Muscle.IsAre()} at "
                          + $"{MuscleGroups.Sets(v.WeeklySets)} a rotation, under the "
                          + $"{target.MinimumEffectiveSets:0} where growth starts.")

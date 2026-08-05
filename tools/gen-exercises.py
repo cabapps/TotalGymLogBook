@@ -54,6 +54,29 @@ SHORTENED = {
     "knee-tuck", "pike", "abcrunch-curl-up", "abcrunch-oblique-twist",
 }
 
+# ONE LIMB AT A TIME.
+#
+# A set of these trains one side. It matters in three places and every one of them is wrong
+# without it:
+#
+#   Volume. Three sets of single-leg squats per leg is three sets for each quad, not six. Counting
+#   the logged sets straight would tell a trainee their quads are at twice the dose they are.
+#
+#   Balance. Sides drift, and the only way to see it is to count them apart. A trainee who always
+#   starts on the right and runs out of time has been quietly building an imbalance.
+#
+#   Time. Every planned set is really two, so a session of unilateral work takes twice as long as
+#   the set count suggests -- which is what the session budget has to know about.
+#
+# Explicit rather than derived from the name, because this decides what a logged set MEANS. The
+# assertion below catches anything new called "single-", which is the case a name can settle.
+UNILATERAL = {
+    "single-arm-chest-press", "single-arm-row", "single-arm-curl", "concentration-curl",
+    "single-leg-squat", "split-squat", "single-leg-calf-raise",
+    "side-lying-leg-lift", "hip-abduction", "hip-adduction", "glute-kickback",
+    "external-rotation", "internal-rotation",
+}
+
 # What an exercise REQUIRES. A capability, not a product: two different accessories can satisfy
 # the same requirement, which is the whole reason this is a separate vocabulary from the
 # accessory list below. See ACCESSORIES.
@@ -203,6 +226,7 @@ SETUP = {
     # The other direction is a separate exercise, not a variation: head at the tower, cables in
     # the hands, crunching against them. See cable-crunch.
     "crunch": ("face-up", "floor", "feet under the wing bars"),
+    "wing-hamstring-curl": ("face-up", "floor", "feet under the wing bars"),
 
     "glute-stretch": ("face-up", "floor", "nothing"),
     "spinal-twist": ("face-up", "floor", "nothing"),
@@ -270,7 +294,6 @@ SETUP = {
 
     # ---- face down on the board
     "hamstring-curl": ("face-down", "floor", "ankle straps"),
-    "wing-hamstring-curl": ("face-down", "tower", "nothing"),
     "leg-pull": ("face-down", "tower", "feet in the leg pull bar"),
     "decline-push-up": ("face-down", "floor", "press-up bars"),
     "knee-tuck": ("face-down", "floor", "nothing"),
@@ -500,7 +523,7 @@ EX = [
     # the load is roughly double. Kept separate because changing the cable version's physics
     # would put a step change in the middle of anyone's logged history for it.
     E("wing-hamstring-curl", "Wing Hamstring Curl", "Legs", "strength", False, 1.0, WING,
-      "Face down with your heels hooked on the wing, bend your knees to pull the board up the rail.",
+      "Heels hooked in the wing above you, bend your knees to pull the board up the rail.",
       [("Hamstrings", D), ("Glutes", I)]),
     E("leg-extension", "Leg Extension", "Legs", "strength", True, 0.85, ANKLE,
       "Seated with the straps on your ankles, straighten your knees against the cable.",
@@ -669,6 +692,9 @@ COMMENT = [
     "              alsoFacing names a second direction the movement works at, where one exists --",
     "              a curl is fine either way round. That is not a footnote: it lets a curl sit in",
     "              a block of pressing without anybody turning around.",
+    "unilateral  : true when a set trains ONE side. Three sets of single-leg squats per leg is",
+    "              three sets for each quad, not six -- so a logged set carries which side it was,",
+    "              volume is counted per side, and one planned set costs two sets of time.",
     "typicalLevel: roughly where on the rail this is done, as a fraction of it. Decides which",
     "              movements can be alternated as a superset -- a pair only saves time if both",
     "              run at the SAME notch. Derived from muscle group and the pulley, not measured,",
@@ -786,6 +812,16 @@ def main():
     ]
     assert not unbolted, f"setups using the wing must require it: {sorted(unbolted)}"
 
+    stray_unilateral = UNILATERAL - seen
+    assert not stray_unilateral, f"unilateral flag for unknown exercises: {sorted(stray_unilateral)}"
+
+    # A name that says "single" settles the question, and a new one added without thinking about
+    # sides would otherwise be counted as two sets of work for one side's worth of training.
+    unmarked = [
+        e.id for e in EX if "single" in e.name.lower() and e.id not in UNILATERAL
+    ]
+    assert not unmarked, f"'single' movements must be marked unilateral: {sorted(unmarked)}"
+
     stray_setup = set(SETUP) - seen
     assert not stray_setup, f"setup for unknown exercises: {sorted(stray_setup)}"
 
@@ -822,6 +858,7 @@ def main():
                 "peakTension": peak(e.id),
                 "setup": setup_of(e),
                 "typicalLevel": typical_level(e),
+                "unilateral": e.id in UNILATERAL,
                 "bodyFraction": e.bf,
                 "attachment": e.att,
                 "cue": e.cue,

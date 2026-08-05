@@ -378,7 +378,13 @@ public sealed class ProgramTemplateTests
         // Everything a shipped template DOES train must clear the effective dose. A template
         // the app criticizes on the day it ships is a bug in the data, and this caught exactly
         // that -- calves at two sets in Full Body, calves and core at three in PPL.
-        foreach (var (muscle, sets) in weekly.Where(kv => kv.Value > 0))
+        //
+        // Directly trained, not merely involved: adductors show up at 1.5 sets in PPL because a
+        // wide-stance squat uses them a bit, and holding a split to a dose for a muscle it never
+        // set out to train is criticizing it for something it does not claim.
+        var direct = new ProgramAnalyzer().DirectlyTrained(ToProgram(template), Catalog);
+
+        foreach (var (muscle, sets) in weekly.Where(kv => direct.Contains(kv.Key)))
         {
             Assert.True(
                 sets >= VolumeTarget.MinimumEffectiveDose,

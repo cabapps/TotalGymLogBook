@@ -43,12 +43,94 @@ public class VolumeLedgerTests
         ]
     };
 
+    private static readonly Exercise SingleLegSquat = new()
+    {
+        Id = "single-leg-squat",
+        Name = "Single-Leg Squat",
+        Unilateral = true,
+        Muscles = [MuscleInvolvement.Primary(MuscleGroup.Quadriceps)]
+    };
+
     private static readonly Dictionary<string, Exercise> Catalog = new()
     {
         [ChestPress.Id] = ChestPress,
         [SeatedRow.Id] = SeatedRow,
-        [Squat.Id] = Squat
+        [Squat.Id] = Squat,
+        [SingleLegSquat.Id] = SingleLegSquat
     };
+
+    private static ExerciseHistory SidedSets(
+        Exercise e, int left, int right, int daysAgo = 1)
+    {
+        var on = Today.AddDays(-daysAgo);
+        var sets = Enumerable.Range(0, left)
+            .Select(_ => new SetRecord(on, 10, 50, 8, Side: BodySide.Left))
+            .Concat(Enumerable.Range(0, right)
+                .Select(_ => new SetRecord(on, 10, 50, 8, Side: BodySide.Right)));
+
+        return new ExerciseHistory(e.Id, sets.ToList());
+    }
+
+    // ---------------------------------------------------------------- one limb at a time
+
+    [Fact]
+    public void ThreeSetsPerLegIsThreeSetsForEachQuad()
+    {
+        // Not six. Six is what the logbook holds and what the trainee did on the board, but each
+        // quad got three -- and three is the figure comparable to three two-legged squats, which
+        // is what the effective dose is a number about.
+        var ledger = new VolumeLedger([SidedSets(SingleLegSquat, left: 3, right: 3)], Catalog);
+
+        Assert.Equal(3.0, ledger.WeeklySets(Today)[MuscleGroup.Quadriceps]);
+    }
+
+    [Fact]
+    public void KeepsTheTwoSidesApart()
+    {
+        var ledger = new VolumeLedger([SidedSets(SingleLegSquat, left: 4, right: 2)], Catalog);
+        var sides = ledger.WeeklySides(Today)[MuscleGroup.Quadriceps];
+
+        Assert.Equal(4, sides.Left);
+        Assert.Equal(2, sides.Right);
+        Assert.Equal(3, sides.Average);
+        Assert.True(sides.Lopsided);
+    }
+
+    [Fact]
+    public void ABilateralSetFeedsBothSides()
+    {
+        // Which is what makes the average comparable across the two kinds of movement: three
+        // two-legged squats is three for each leg, exactly as three per leg is.
+        var ledger = new VolumeLedger([Sets(Squat, 3, daysAgo: 1)], Catalog);
+        var sides = ledger.WeeklySides(Today)[MuscleGroup.Quadriceps];
+
+        Assert.Equal(3, sides.Left);
+        Assert.Equal(3, sides.Right);
+        Assert.False(sides.Lopsided);
+    }
+
+    [Fact]
+    public void AUnilateralSetWithNoRecordedSideIsSplit()
+    {
+        // Sets logged before the app asked. Half to each keeps the total honest without inventing
+        // an imbalance that never happened -- and without counting one leg's work as two.
+        var ledger = new VolumeLedger([Sets(SingleLegSquat, 6, daysAgo: 1)], Catalog);
+        var sides = ledger.WeeklySides(Today)[MuscleGroup.Quadriceps];
+
+        Assert.Equal(3, sides.Left);
+        Assert.Equal(3, sides.Right);
+        Assert.Equal(3, ledger.WeeklySets(Today)[MuscleGroup.Quadriceps]);
+    }
+
+    [Fact]
+    public void ASideDifferenceUnderAFullSetIsNotAnImbalance()
+    {
+        // Half-counted sets round; a chart that cried lopsided every week would teach people to
+        // ignore it.
+        var ledger = new VolumeLedger([SidedSets(SingleLegSquat, left: 3, right: 3)], Catalog);
+
+        Assert.False(ledger.WeeklySides(Today)[MuscleGroup.Quadriceps].Lopsided);
+    }
 
     private static ExerciseHistory Sets(Exercise e, int sets, int daysAgo)
     {

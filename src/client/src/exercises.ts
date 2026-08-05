@@ -94,6 +94,13 @@ export interface Exercise {
    * same notch. Derived from muscle group and the pulley, and overridden by the trainee's own
    * logged levels once they have any.
    */
+  /**
+   * True when one set trains ONE side.
+   *
+   * A logged set of these carries which side it was, volume is counted per side rather than
+   * pooled, and one planned set costs two sets of time -- see workingSets.
+   */
+  readonly unilateral: boolean;
   readonly typicalLevel: number;
   /** Share of bodyweight riding the glideboard. Estimated, not measured. */
   readonly bodyFraction: number;

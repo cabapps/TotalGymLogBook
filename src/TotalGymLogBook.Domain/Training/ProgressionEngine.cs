@@ -9,6 +9,12 @@ namespace TotalGymLogBook.Domain.Training;
 /// the same notch pressed directly off the board is 56.7 lb. Recommending against the wrong
 /// ladder tells the trainee to double their load.
 /// </summary>
+public enum BodySide
+{
+    Left,
+    Right
+}
+
 public sealed record SetRecord(
     DateOnly On,
     int Reps,
@@ -17,7 +23,12 @@ public sealed record SetRecord(
     double VestLb = 0,
     double BarLb = 0,
     double PulleyFactor = 1.0,
-    double BodyFraction = 1.0)
+    double BodyFraction = 1.0,
+    /// <summary>
+    /// Which side this set trained, for one-limb movements. Null on a two-limb movement, and
+    /// null on unilateral sets logged before the app asked -- which is not the same as "both".
+    /// </summary>
+    BodySide? Side = null)
 {
     public bool UsesPulley => PulleyFactor < 1.0;
 }

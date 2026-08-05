@@ -51,6 +51,19 @@ else
                         </span>
                         <span class="bar-value">@bar.Detail</span>
                     </div>
+
+                    @* Only where the sides have drifted apart -- see WeeklyProgressReport.SplitOf. *@
+                    @foreach (var side in bar.Sides)
+                    {
+                        <div class="bar-row side">
+                            <span class="bar-label">@side.Label</span>
+                            <span class="track">
+                                <span class="fill @(side.Short ? "short" : "")"
+                                      style="width: @Pct(_progress.WidthPercent(side))%"></span>
+                            </span>
+                            <span class="bar-value">@side.Detail</span>
+                        </div>
+                    }
                 }
                 @if (_progress.HasTarget)
                 {

@@ -339,6 +339,24 @@ export function supersetPairs(
  * An estimate, and it says so wherever it is shown. Its job is to tell someone with half an hour
  * whether this session fits, and it is accurate enough for that.
  */
+/**
+ * How many working sets a planned entry actually costs.
+ *
+ * A plan says "3 sets" of a single-leg squat and means three PER LEG, which is six times on the
+ * board. That is the honest number for anything counting time or capacity -- a session of
+ * unilateral work takes twice as long as its set count suggests, and a budget that missed it
+ * would keep writing sessions nobody can finish.
+ *
+ * Volume is the other way round and deliberately so: three sets per leg is three sets for each
+ * quad, not six, so the ledger counts per side and this multiplier has no business there.
+ */
+export function workingSets(
+  item: { readonly exerciseId: string; readonly sets: number },
+  catalog: ExerciseCatalog,
+): number {
+  return catalog.tryGet(item.exerciseId)?.unilateral ? item.sets * 2 : item.sets;
+}
+
 export function estimateMinutes(
   planned: readonly PlannedExercise[],
   catalog: ExerciseCatalog,
@@ -353,15 +371,19 @@ export function estimateMinutes(
   let seconds = 0;
 
   for (const [index, item] of planned.entries()) {
-    seconds += item.sets * SET_SECONDS;
+    const sets = workingSets(item, catalog);
+    seconds += sets * SET_SECONDS;
 
     // Rest after every set except the last of the session; near enough at this resolution.
-    if (!paired.has(index)) seconds += item.sets * restSeconds;
+    if (!paired.has(index)) seconds += sets * restSeconds;
   }
 
   // A pair rests once per round rather than twice, and the round is both movements' work.
   for (const pair of pairs) {
-    const rounds = Math.max(planned[pair.first]!.sets, planned[pair.second]!.sets);
+    const rounds = Math.max(
+      workingSets(planned[pair.first]!, catalog),
+      workingSets(planned[pair.second]!, catalog),
+    );
     seconds += rounds * (restSeconds + PAIR_SWITCH_SECONDS);
   }
 

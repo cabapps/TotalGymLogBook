@@ -29,6 +29,9 @@ public sealed record SetLogDto
     [JsonPropertyName("reps")] public int Reps { get; init; }
     [JsonPropertyName("level")] public int Level { get; init; }
 
+    /// <summary>'left' or 'right' for one-limb movements; absent otherwise. See BodySide.</summary>
+    [JsonPropertyName("side")] public string? Side { get; init; }
+
     [JsonPropertyName("bodyweightRawLb")] public double BodyweightRawLb { get; init; }
     [JsonPropertyName("bodyweightSmoothedLb")] public double BodyweightSmoothedLb { get; init; }
     [JsonPropertyName("angleDeg")] public double AngleDeg { get; init; }

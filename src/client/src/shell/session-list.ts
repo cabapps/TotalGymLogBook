@@ -11,6 +11,7 @@
 
 import * as db from '../db/repository.js';
 import type { ExerciseCatalog } from '../exercises.js';
+import { setWeight } from '../programs.js';
 import { onChange } from '../db/events.js';
 import type { SetLogRecord } from '../db/schema.js';
 
@@ -136,10 +137,15 @@ export class SessionList extends HTMLElement {
       const exercise = catalog.tryGet(set.exerciseId);
       if (!exercise || exercise.kind !== 'strength') continue;
 
+      // Halved for one-limb work, because the figure this line quotes is per side -- see
+      // setWeight. Six single-leg squat sets is three for each quad, and saying six here while
+      // the coach says three would make one of them wrong.
+      const weight = setWeight(exercise);
+
       for (const involvement of exercise.muscles) {
         perMuscle.set(
           involvement.muscle,
-          (perMuscle.get(involvement.muscle) ?? 0) + involvement.fraction,
+          (perMuscle.get(involvement.muscle) ?? 0) + involvement.fraction * weight,
         );
       }
     }
@@ -165,7 +171,9 @@ export class SessionList extends HTMLElement {
         <div class="name">
           ${name}
           <div class="detail">
-            Level ${set.level}${added > 0 ? ` &middot; +${added} lb` : ''}
+            Level ${set.level}${added > 0 ? ` &middot; +${added} lb` : ''}${
+              set.side ? ` &middot; ${set.side}` : ''
+            }
           </div>
         </div>
         <div class="reps">${set.reps}</div>

@@ -154,6 +154,23 @@ public sealed record Exercise
     /// </summary>
     public bool IsLengthenedLoaded => PeakTension == PeakTension.Lengthened;
 
+    /// <summary>
+    /// True when one set trains ONE side.
+    ///
+    /// Three sets of single-leg squats per leg is three sets for each quad, not six. Counting the
+    /// logged sets straight would tell a trainee their quads are at twice the dose they are, so
+    /// the ledger weights these at half and keeps the two sides apart underneath.
+    /// </summary>
+    public bool Unilateral { get; init; }
+
+    /// <summary>
+    /// How much one logged set counts toward a muscle's headline volume.
+    ///
+    /// Half for one-limb work, because the headline is the average of the two sides. Mirrors
+    /// setWeight in src/client/src/programs.ts.
+    /// </summary>
+    public double SetWeight => Unilateral ? 0.5 : 1.0;
+
     /// <summary>Fraction of the body actually riding the glideboard.</summary>
     public double BodyFraction { get; init; } = 1.0;
 
