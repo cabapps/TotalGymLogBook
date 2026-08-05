@@ -8,8 +8,11 @@ import { IDBFactory } from 'fake-indexeddb';
 import { ExerciseCatalog } from '../src/exercises.js';
 import {
   ProgramLibrary,
+  bestDailySets,
   nextExercise,
   nextSession,
+  rampWindow,
+  rampedSets,
   sessionPosition,
   sessionProgress,
 } from '../src/programs.js';
@@ -395,5 +398,33 @@ describe('v1 to v2 upgrade', () => {
       'bodyweight', 'customExercises', 'machines', 'programs', 'sessions', 'setLogs', 'settings',
     ]);
     fresh.close();
+  });
+});
+
+describe('the ramp window', () => {
+  it('stops yesterday, so working through a plan cannot change it', () => {
+    // The bug this pins: today's sets used to count toward bestDailySets, so logging the third
+    // set of squats raised the best to three, the ramp allowed four, and the total to do went
+    // up while the trainee was standing there doing it.
+    const window = rampWindow(Date.parse('2026-03-15T18:00:00'));
+
+    expect(window.to).toBe('2026-03-14');
+    expect(window.from).toBe('2026-01-14');
+  });
+
+  it('leaves today out of what today is built from', () => {
+    const history = [
+      { exerciseId: 'squat', on: '2026-03-14' },
+      { exerciseId: 'squat', on: '2026-03-14' },
+    ];
+    const planned = [{ exerciseId: 'squat', sets: 5 }];
+
+    // Two sets yesterday earns three today. Four sets logged TODAY would once have pushed this
+    // to five mid-workout; the window they now come from does not contain them at all.
+    expect(rampedSets(planned, bestDailySets(history))[0]!.sets).toBe(3);
+
+    const withToday = [...history, ...Array.from({ length: 4 }, () => ({ exerciseId: 'squat', on: '2026-03-15' }))];
+    expect(bestDailySets(history).get('squat')).toBe(2);
+    expect(bestDailySets(withToday).get('squat')).toBe(4);
   });
 });

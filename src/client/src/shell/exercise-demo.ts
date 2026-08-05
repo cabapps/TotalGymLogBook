@@ -27,9 +27,10 @@ styles.replaceSync(`
   .head { fill: var(--fg); stroke: none; }
   .accessory { stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
 
-  /* One clock for both, so the limb and the board cannot drift out of phase. */
+  /* One clock for all three, so the board, the limb and the joint cannot drift out of phase. */
   .anim { animation: work 3s ease-in-out infinite alternate; }
   .limb { animation: swing 3s ease-in-out infinite alternate; }
+  .joint { animation: bend 3s ease-in-out infinite alternate; }
 
   @keyframes work { from { transform: translate(0, 0); } to { transform: var(--travel); } }
 
@@ -40,10 +41,22 @@ styles.replaceSync(`
   */
   @keyframes swing { from { transform: rotate(0deg); } to { transform: rotate(var(--swing)); } }
 
+  /*
+    The elbow or knee, which is the thing a trainee is looking for: a straight stick cannot say
+    which joint is supposed to bend, and a curl and a press trace nearly the same arc without it.
+    Its own origin is already the joint, so this rotation is relative to the segment above it and
+    composes with the swing rather than fighting it.
+  */
+  @keyframes bend {
+    from { transform: rotate(var(--bend-from, 0deg)); }
+    to { transform: rotate(var(--bend-to, 0deg)); }
+  }
+
   /* A demo that moves without being asked is worse than none for anyone who set this. */
   @media (prefers-reduced-motion: reduce) {
     .anim { animation: none; transform: var(--travel); }
     .limb { animation: none; transform: rotate(var(--swing)); }
+    .joint { animation: none; transform: rotate(var(--bend-to, 0deg)); }
   }
 `);
 

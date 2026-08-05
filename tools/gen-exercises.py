@@ -158,9 +158,15 @@ SETUP = {
     "oblique-crunch": ("face-up", "tower", "handles by your head"),
     "reverse-crunch": ("face-up", "tower", "handles by your head"),
     "bicycle-crunch": ("face-up", "tower", "handles by your head"),
-    "pull-up": ("face-up", "tower", "wing bars"),
-    "chin-up": ("face-up", "tower", "wing bars, palms toward you"),
-    "wide-grip-pull-up": ("face-up", "tower", "wing bars, wide"),
+    # ---- lying face DOWN, head toward the tower: pulling yourself up to the wing
+    #
+    # Face down, not face up. The wing bolts on at the top of the tower and a trainee on their
+    # back cannot get a working line on it -- they end up pulling the bars towards their chest,
+    # which is a pulldown, not a pull-up. Prone with the head at the tower is the position that
+    # makes it the movement it is named after.
+    "pull-up": ("face-down", "tower", "wing bars"),
+    "chin-up": ("face-down", "tower", "wing bars, palms toward you"),
+    "wide-grip-pull-up": ("face-down", "tower", "wing bars, wide"),
     "hanging-knee-raise": ("face-up", "tower", "wing bars"),
     "abcrunch-curl-up": ("face-up", "tower", "AbCrunch pads"),
     "abcrunch-oblique-twist": ("face-up", "tower", "AbCrunch pads"),
@@ -343,11 +349,15 @@ EX = [
     E("reverse-fly", "Reverse Fly", "Back", "strength", True, 0.85, None,
       "Arms out in front, sweep them wide and back. Small movement, rear shoulders and upper back.",
       [("Shoulders", D), ("Back", D)]),
+    # Same position, same bar, two different finishes -- and the finish is the whole difference,
+    # which is why the cues say where each one ENDS. Overhand and going past the bar is the
+    # harder, more back-dominant one; underhand and stopping at the chin brings the biceps in.
     E("pull-up", "Pull-Up", "Back", "strength", False, 1.0, WING,
-      "Grip the wing bars overhead and pull your chest towards them. The incline sets how hard it is.",
+      "Palms away, pull until your head comes up past the wing. The incline sets how hard it is.",
       [("Back", D), ("Biceps", I)]),
     E("chin-up", "Chin-Up", "Back", "strength", False, 1.0, WING,
-      "Pull-up with your palms facing you, which brings the biceps in properly.",
+      "Palms toward you, pull until your chin reaches the wing. Shorter finish than a pull-up, "
+      "and the biceps come in properly.",
       [("Back", D), ("Biceps", D)]),
     E("wide-grip-pull-up", "Wide-Grip Pull-Up", "Back", "strength", False, 1.0, WING,
       "Hands at the far ends of the wing, pull up leading with your elbows out to the sides.",

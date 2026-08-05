@@ -20,6 +20,7 @@ import {
   nextExercise,
   nextSession,
   observedLevels,
+  rampWindow,
   rampedSets,
   sessionPosition,
   sessionProgress,
@@ -36,13 +37,6 @@ import {
 import type { PlannedExercise, ProgramRecord, ProgramSession } from '../db/schema.js';
 import type { ProgramEmphasis, TrainingAim } from '../emphasis.js';
 
-/**
- * How far back the ramp looks.
- *
- * Long enough that a fortnight off does not reset a trainee to one set, short enough that a
- * volume they abandoned a year ago is not still being asked of them.
- */
-const RAMP_WINDOW_MS = 60 * 24 * 60 * 60 * 1000;
 import { toIsoDate } from '../db/schema.js';
 
 import { ios } from './theme.js';
@@ -209,8 +203,11 @@ export class ProgramPanel extends HTMLElement {
       const sets = await db.getSetsBetween(today, today);
 
       // The plan starts at one set per movement and grows with what the trainee has actually
-      // been doing -- the template's numbers are the ceiling, not the opening ask.
-      const history = await db.getSetsBetween(toIsoDate(Date.now() - RAMP_WINDOW_MS), today);
+      // been doing -- the template's numbers are the ceiling, not the opening ask. The window
+      // stops YESTERDAY, so working through today's plan cannot change today's plan; see
+      // rampWindow.
+      const window = rampWindow(Date.now());
+      const history = await db.getSetsBetween(window.from, window.to);
 
       // ...and no further than the trainee actually gets through. A plan they abandon two
       // movements short every week is a plan that is wrong about them, not a trainee who is

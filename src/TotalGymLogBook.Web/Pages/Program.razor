@@ -56,23 +56,34 @@ else
         <p class="note small" id="program-untrained">@_critique.Untrained</p>
     }
 
+    @* The same chart the history tab draws, against the same line -- one is what this program
+       would give you, the other is what the week actually did. *@
     <h2>Sets a rotation</h2>
-    <ul class="volume" id="program-volume">
-        @foreach (var v in _critique.Volumes.OrderByDescending(v => v.WeeklySets))
-        {
-            <li class="@(v.BelowMinimum ? "short" : "")">
-                <span class="muscle">@v.Muscle.Label()</span>
-                <span class="bar"><span style="width:@Width(v)%"></span></span>
-                <span class="sets">@v.WeeklySets.ToString("0.#")</span>
-            </li>
-        }
-    </ul>
-    <p class="note small">
-        One rotation through @_program.Sessions.Count session@(_program.Sessions.Count == 1 ? "" : "s"),
-        counted the same way as your logged volume &mdash; a movement's secondary muscles get
-        half a set each. The bar marks @VolumeTarget.MinimumEffectiveDose.ToString("0") sets,
-        where growth starts.
-    </p>
+    <div class="chart-wrap" id="program-volume">
+        <div class="bars" style="--target: @Pct(_volume.TargetPercent / 100)">
+            @foreach (var bar in _volume.Bars)
+            {
+                <div class="bar-row">
+                    <span class="bar-label">@bar.Label</span>
+                    <span class="track">
+                        <span class="fill @(bar.Short ? "short" : "")"
+                              style="width: @Pct(_volume.WidthPercent(bar))%"></span>
+                    </span>
+                    <span class="bar-value">@bar.Detail</span>
+                </div>
+            }
+            <span class="goal-line" aria-hidden="true"></span>
+        </div>
+        <div class="legend">
+            <span class="k goal"></span>
+            <text>the goal: @_volume.TargetLabel a rotation, where growth starts</text>
+        </div>
+        <p class="note small">
+            One rotation through @_program.Sessions.Count session@(_program.Sessions.Count == 1 ? "" : "s"),
+            counted the same way as your logged volume &mdash; a movement's secondary muscles get
+            half a set each.
+        </p>
+    </div>
 
     <h2>Sessions</h2>
     <ol class="sessions" id="program-sessions">
@@ -98,16 +109,6 @@ else
     ul.warnings { list-style: none; margin: 0 0 .5rem; padding: 0;
                   font-size: var(--text-footnote); color: var(--muted); }
     ul.warnings li { padding: .25rem 0; }
-    ul.volume { list-style: none; margin: 0; padding: 0; font-size: var(--text-footnote); }
-    ul.volume li { display: flex; align-items: center; gap: .5rem; padding: .28rem 0; }
-    ul.volume .muscle { flex: 0 0 5.5rem; text-transform: capitalize; }
-    ul.volume .bar { flex: 1; height: .375rem; border-radius: 999px;
-                     background: var(--fill-strong); overflow: hidden; }
-    ul.volume .bar span { display: block; height: 100%; background: var(--accent);
-                          border-radius: 999px; }
-    ul.volume li.short .bar span { background: var(--system-orange); }
-    ul.volume .sets { flex: 0 0 2rem; text-align: right; color: var(--muted);
-                      font-variant-numeric: tabular-nums; }
     ol.sessions { list-style: none; margin: 0; padding: 0; }
     ol.sessions li { padding: .55rem 0; border-top: var(--hairline) solid var(--separator);
                      font-size: var(--text-subhead); }
@@ -120,6 +121,7 @@ else
     private bool _loaded;
     private TrainingProgram? _program;
     private ProgramCritique _critique = new([], [], "", "");
+    private WeeklyProgress _volume = WeeklyProgress.Nothing;
 
     protected override async Task OnInitializedAsync()
     {
@@ -151,20 +153,18 @@ else
             var emphasis = ProgramEmphasisRules.For(
                 ProgramEmphasisRules.ParseAim(settings.Aim, goal.Primary), phase.Balance);
 
-            _critique = Analyzer.Critique(
-                _program, Catalog, VolumeTarget.For(experience, phase.Balance), emphasis);
+            var target = VolumeTarget.For(experience, phase.Balance);
+
+            _critique = Analyzer.Critique(_program, Catalog, target, emphasis);
+            _volume = WeeklyProgressReport.ForPlan(_critique.Volumes, target);
         }
 
         _loaded = true;
     }
 
-    /// <summary>
-    /// Bar width relative to the effective dose, capped. Scaling to the largest value instead
-    /// would make a program with one very heavily trained muscle look like everything else was
-    /// neglected, which is a different claim from the one being made.
-    /// </summary>
-    private static double Width(PlannedMuscleVolume v) =>
-        Math.Min(100, 100 * v.WeeklySets / (VolumeTarget.MinimumEffectiveDose * 2));
+    /// <summary>Percentages, invariant-cultured, because a comma decimal is not valid CSS.</summary>
+    private static string Pct(double value) =>
+        value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
 
     public void Dispose() => Logbook.Changed -= OnChanged;
 }

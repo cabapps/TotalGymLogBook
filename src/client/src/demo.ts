@@ -103,20 +103,87 @@ function swingFor(pattern: string): number {
 }
 
 /**
- * A limb that pivots at its joint.
+ * How the middle joint behaves, in degrees: bent by `from` at rest, `to` at the far end.
  *
- * TWO NESTED GROUPS, and the reason is the bug this replaced. The outer group translates to the
- * joint; the inner one rotates about its own origin, which is now that joint. Animating a limb
- * inside the board's own animated group made it inherit the board's travel AND add its own, so
- * arms and legs slid off the figure entirely -- a leg walking away from a squatting stick man.
+ * A straight stick for an arm cannot show what a trainee most needs to see -- which joint is
+ * supposed to bend. A curl and a press move the same limb through a similar arc, and the only
+ * thing that distinguishes them is what the elbow does. So the elbow and the knee are drawn,
+ * and they open and close with the movement.
  *
- * A rotation cannot detach: whatever the angle, the segment still starts at the joint.
+ * Sign is in the limb's own rotated frame: positive folds the far segment toward the figure.
  */
-function limb(joint: [number, number], to: [number, number], moving: boolean): string {
-  const segment = `<line class="figure" x1="0" y1="0" x2="${to[0] - joint[0]}" y2="${to[1] - joint[1]}" />`;
+interface Bend {
+  readonly from: number;
+  readonly to: number;
+}
+
+/** Elbow behaviour per pattern. Legs get the knee equivalent below. */
+function elbowFor(pattern: string): Bend {
+  switch (pattern) {
+    // Pressing straightens the arm: bent at the start, locked out at the end.
+    case 'press': return { from: 70, to: 8 };
+    case 'extend': return { from: 75, to: 5 };
+    // Pulling closes it.
+    case 'pulldown': return { from: 10, to: 70 };
+    case 'row': return { from: 8, to: 75 };
+    case 'curl': return { from: 10, to: 95 };
+    // A fly and a raise hold a fixed soft bend the whole way -- that IS the technique, and an
+    // elbow that opens and shuts through either one is the most common way to do them wrong.
+    case 'fly': return { from: 22, to: 22 };
+    case 'raise': return { from: 18, to: 18 };
+    default: return { from: 15, to: 15 };
+  }
+}
+
+/** Knee behaviour per pattern. */
+function kneeFor(pattern: string): Bend {
+  switch (pattern) {
+    // The board is at the bottom of the rail with the knees folded, and the rep straightens them.
+    case 'squat': return { from: 85, to: 12 };
+    case 'hinge': return { from: 40, to: 10 };
+    // Ankles only. A knee that bends here is the error the caption warns about.
+    case 'calf': return { from: 12, to: 12 };
+    case 'crunch': return { from: 55, to: 55 };
+    default: return { from: 20, to: 20 };
+  }
+}
+
+/**
+ * A limb that pivots at its joint, with a second segment that pivots at knee or elbow.
+ *
+ * NESTED GROUPS, and the reason is the bug this replaced. Each group translates to a joint; the
+ * group inside it rotates about its own origin, which is now that joint. Animating a limb inside
+ * the board's own animated group made it inherit the board's travel AND add its own, so arms and
+ * legs slid off the figure entirely -- a leg walking away from a squatting stick man.
+ *
+ * A rotation cannot detach: whatever the angle, the segment still starts at the joint. The same
+ * property is what makes the second segment safe to hang off the first.
+ */
+function limb(
+  joint: [number, number],
+  to: [number, number],
+  moving: boolean,
+  bend: Bend,
+): string {
+  const dx = to[0] - joint[0];
+  const dy = to[1] - joint[1];
+
+  // The joint sits at the halfway point. Anatomically that is about right for both an arm and a
+  // leg, and it saves carrying a third coordinate through every pose.
+  const upper = `<line class="figure" x1="0" y1="0" x2="${(dx / 2).toFixed(1)}" y2="${(dy / 2).toFixed(1)}" />`;
+  const lower = `<line class="figure" x1="0" y1="0" x2="${(dx / 2).toFixed(1)}" y2="${(dy / 2).toFixed(1)}" />`;
+
+  // A still limb takes the resting angle as an ATTRIBUTE, an animated one as CSS. Never both: a
+  // CSS transform replaces the attribute rather than composing with it.
+  const flex = moving
+    ? `<g class="joint" style="--bend-from: ${bend.from}deg; --bend-to: ${bend.to}deg">${lower}</g>`
+    : `<g transform="rotate(${bend.from})">${lower}</g>`;
 
   return `<g transform="translate(${joint[0]} ${joint[1]})">
-            <g class="${moving ? 'limb' : ''}">${segment}</g>
+            <g class="${moving ? 'limb' : ''}">
+              ${upper}
+              <g transform="translate(${(dx / 2).toFixed(1)} ${(dy / 2).toFixed(1)})">${flex}</g>
+            </g>
           </g>`;
 }
 
@@ -135,6 +202,8 @@ function figureFor(exercise: Exercise, pose: Pose): string {
   // Which way the head points along the rail, and therefore which way the figure faces.
   const hs = facing === 'tower' ? -1 : 1;
   const arms = pose.limb === 'arms' || pose.limb === 'forearms';
+  const elbow = elbowFor(exercise.pattern);
+  const knee = kneeFor(exercise.pattern);
 
   if (position === 'seated' || position === 'kneeling') {
     const hip: [number, number] = [-2 * hs, -7];
@@ -144,8 +213,8 @@ function figureFor(exercise: Exercise, pose: Pose): string {
       <g>
         <circle class="head" cx="${6 * hs}" cy="-31" r="4" />
         <line class="figure" x1="${hip[0]}" y1="${hip[1]}" x2="${shoulder[0]}" y2="${shoulder[1]}" />
-        ${limb(hip, [-18 * hs, -4], pose.limb === 'legs')}
-        ${limb(shoulder, [18 * hs, -20], arms)}
+        ${limb(hip, [-18 * hs, -4], pose.limb === 'legs', knee)}
+        ${limb(shoulder, [18 * hs, -20], arms, elbow)}
       </g>`;
   }
 
@@ -157,8 +226,8 @@ function figureFor(exercise: Exercise, pose: Pose): string {
       <g>
         <circle class="head" cx="${15 * hs}" cy="-11" r="4" />
         <line class="figure" x1="${shoulder[0]}" y1="${shoulder[1]}" x2="${hip[0]}" y2="${hip[1]}" />
-        ${limb(shoulder, [14 * hs, 0], arms)}
-        ${limb(hip, [-20 * hs, -3], pose.limb === 'legs' || pose.limb === 'torso')}
+        ${limb(shoulder, [14 * hs, 0], arms, elbow)}
+        ${limb(hip, [-20 * hs, -3], pose.limb === 'legs' || pose.limb === 'torso', knee)}
       </g>`;
   }
 
@@ -170,9 +239,9 @@ function figureFor(exercise: Exercise, pose: Pose): string {
     <g>
       <circle class="head" cx="${15 * hs}" cy="-12" r="4" />
       <line class="figure" x1="${shoulder[0]}" y1="${shoulder[1]}" x2="${hip[0]}" y2="${hip[1]}" />
-      ${limb(shoulder, [12 * hs, -24], arms)}
-      ${limb(hip, [-22 * hs, -10], pose.limb === 'legs')}
-      ${pose.limb === 'torso' ? limb(hip, [10 * hs, -20], true) : ''}
+      ${limb(shoulder, [12 * hs, -24], arms, elbow)}
+      ${limb(hip, [-22 * hs, -10], pose.limb === 'legs', knee)}
+      ${pose.limb === 'torso' ? limb(hip, [10 * hs, -20], true, knee) : ''}
     </g>`;
 }
 

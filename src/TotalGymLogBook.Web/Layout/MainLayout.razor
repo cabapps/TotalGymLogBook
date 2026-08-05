@@ -30,6 +30,41 @@
     }
     .tg-derived .note { color: var(--muted); font-size: var(--text-subhead); line-height: 1.45; }
 
+    /* The progress chart, shared by the history tab and the program tab.
+
+       In the LAYOUT because both pages draw it and a page's style block is removed with its
+       markup on navigation -- the same trap the headings above are here to avoid. It is also the
+       point: the two charts answer the same question about a logged week and a planned one, so
+       they have to look like the same chart. */
+    .chart-wrap {
+        background: var(--surface); border-radius: var(--radius-card);
+        padding: var(--card-pad-y) var(--gutter); margin: 0 0 1rem;
+    }
+    /* The bars and the goal line share one coordinate space: every bar is a share of its own
+       target, so the line can sit at a single --target fraction across all of them. */
+    .bars { position: relative; }
+    .bar-row { display: flex; align-items: center; gap: .5rem; padding: .28rem 0;
+               font-size: var(--text-footnote); }
+    .bar-label { flex: 0 0 5.5rem; }
+    .track { position: relative; flex: 1; height: .5rem; border-radius: 999px;
+             background: var(--fill-strong); overflow: hidden; }
+    .fill { display: block; height: 100%; border-radius: 999px; background: var(--accent); }
+    /* Short of the goal is a state to notice, not a failure. */
+    .fill.short { background: var(--system-orange); }
+    .bar-value { flex: 0 0 4.5rem; text-align: right; color: var(--muted);
+                 font-variant-numeric: tabular-nums; }
+    /* Spans the track column only. The insets are the row's own geometry: 5.5rem of label plus
+       a .5rem gap in front, a .5rem gap and 4.5rem of value behind. --target is a fraction, not
+       a percentage, because calc cannot divide one percentage by another. */
+    .goal-line { position: absolute; top: 0; bottom: 0; pointer-events: none;
+                 left: calc(6rem + (100% - 11rem) * var(--target));
+                 border-left: 2px dashed var(--fg); opacity: .45; }
+    .legend { font-size: var(--text-caption); color: var(--muted); margin-top: .5rem;
+              display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
+    .legend .k { display: inline-block; width: .8rem; height: 0; border-top: 2px dashed var(--fg);
+                 opacity: .45; }
+    .tg-derived .note.small { font-size: var(--text-footnote); margin-top: .35rem; }
+
     /* A segmented control: one gray trough, equal segments, and a white "thumb" that lands on
        the selected one. It is the standard iOS way to switch between peer views of the same
        data, which is exactly what Coach / Program / History are.

@@ -191,6 +191,40 @@ public class WeeklyProgressTests
         Assert.True(progress.WidthPercent(started) >= 1.5);
     }
 
+    // ---------------------------------------------------------------- a plan against the dose
+
+    [Fact]
+    public void A_plan_is_charted_the_same_way_round_as_a_week()
+    {
+        // The program tab and the history tab answer the same question about a planned week and
+        // a logged one. Different orderings would make a bar's position mean two things.
+        var plan = WeeklyProgressReport.ForPlan(
+        [
+            new PlannedMuscleVolume(MuscleGroup.Biceps, 6, 4),
+            new PlannedMuscleVolume(MuscleGroup.Quadriceps, 2, 4),
+            new PlannedMuscleVolume(MuscleGroup.Back, 4, 4),
+        ], Target);
+
+        Assert.Equal(["Quads", "Back", "Biceps"], plan.Bars.Select(b => b.Label));
+        Assert.True(plan.HasTarget);
+
+        // And the axis behaves the same way too: biceps at six against a dose of four stretches
+        // it to 1.5, which pulls the line in from the edge to two thirds across.
+        Assert.Equal(1.5, plan.AxisMax);
+        Assert.Equal(100 / 1.5, plan.TargetPercent, 6);
+    }
+
+    [Fact]
+    public void A_planned_muscle_at_zero_keeps_its_bar()
+    {
+        // Unlike a logged week. A plan is a complete statement of what you will do, so a muscle
+        // at zero is the plan saying something; in history it is only an absence.
+        var plan = WeeklyProgressReport.ForPlan(
+            [new PlannedMuscleVolume(MuscleGroup.Calves, 0, 4)], Target);
+
+        Assert.Equal("Calves", Assert.Single(plan.Bars).Label);
+    }
+
     // ---------------------------------------------------------------- against the program
 
     [Fact]

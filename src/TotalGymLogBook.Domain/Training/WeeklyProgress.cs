@@ -227,6 +227,38 @@ public static class WeeklyProgressReport
             "a full rotation");
     }
 
+    /// <summary>
+    /// A PLAN against the dose, in the same shape as a logged week.
+    ///
+    /// The program tab and the history tab are answering the same question about two different
+    /// things -- what this program would give you, and what this week actually did -- so they get
+    /// the same bars in the same order with the line in the same place. They used to differ in
+    /// both, and the program tab's note claimed a marker it never drew.
+    ///
+    /// Unlike a logged week, a muscle at zero keeps its bar. A plan is a complete statement of
+    /// what you will do, so nothing in it is a gap in the record; history is a record where
+    /// absence is ambiguous, which is why an untrained muscle is left out there.
+    /// </summary>
+    public static WeeklyProgress ForPlan(
+        IReadOnlyList<PlannedMuscleVolume> volumes, VolumeTarget target)
+    {
+        ArgumentNullException.ThrowIfNull(volumes);
+        ArgumentNullException.ThrowIfNull(target);
+
+        var bars = volumes
+            .OrderByDescending(v => v.Muscle.RelativeMass())
+            .ThenBy(v => v.Muscle.ToString(), StringComparer.Ordinal)
+            .Select(v => new ProgressBar(
+                Capitalize(v.Muscle.Label()),
+                v.WeeklySets,
+                target.MinimumEffectiveSets,
+                $"{v.WeeklySets:0.#} of {target.MinimumEffectiveSets:0}"))
+            .ToList();
+
+        return new WeeklyProgress(
+            ProgressYardstick.EffectiveDose, bars, "", $"{target.MinimumEffectiveSets:0} sets");
+    }
+
     /// <summary>Sets per muscle with no line, for a program-less trainee not chasing growth.</summary>
     public static WeeklyProgress VolumeWithoutTarget(VolumeLedger ledger, DateOnly asOf)
     {

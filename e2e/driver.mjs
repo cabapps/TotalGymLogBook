@@ -475,8 +475,17 @@ async function main() {
   check('critiques the program by weekly volume', verdict.length > 30,
     verdict.replace(/\s+/g, ' ').slice(0, 70) + '…');
 
-  const bars = await page.locator('#program-volume li').count();
+  const bars = await page.locator('#program-volume .bar-row').count();
   check('charts planned volume for every muscle group', bars >= 10, `${bars} muscles`);
+
+  // The note claimed a marker at four sets that nothing ever drew.
+  const goalLine = await page.locator('#program-volume .goal-line').count();
+  check('marks where the effective dose falls', goalLine === 1);
+
+  // Both charts read the same way round, so a bar's position means the same thing on either.
+  const planOrder = await page.locator('#program-volume .bar-label').allInnerTexts();
+  check('orders muscles biggest first', planOrder[0] === 'Quads' && planOrder[1] === 'Back',
+    planOrder.slice(0, 3).join(', '));
 
   const sessionsListed = await page.locator('#program-sessions li').count();
   check('lists the sessions', sessionsListed === 3, `${sessionsListed} sessions`);
