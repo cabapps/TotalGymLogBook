@@ -89,7 +89,15 @@ public static class LogbookMapper
         // Carried through so the coach can rebuild the ladder for the RIGHT exercise. Older
         // rows written before these were snapshotted default to 1.0, which is the direct case.
         PulleyFactor: dto.PulleyFactor == 0 ? 1.0 : dto.PulleyFactor,
-        BodyFraction: dto.BodyFraction == 0 ? 1.0 : dto.BodyFraction);
+        BodyFraction: dto.BodyFraction == 0 ? 1.0 : dto.BodyFraction,
+        Side: dto.Side switch
+        {
+            "left" => BodySide.Left,
+            "right" => BodySide.Right,
+            // Anything else, including absent, is a set nobody recorded a side for. The ledger
+            // splits those rather than guessing -- see VolumeLedger.
+            _ => null,
+        });
 
     public static ExerciseHistory ToExerciseHistory(string exerciseId, IEnumerable<SetLogDto> sets) =>
         new(exerciseId, sets.Where(IsLive).OrderBy(s => s.Ts).Select(ToSetRecord).ToList());

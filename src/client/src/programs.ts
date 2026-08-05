@@ -180,6 +180,20 @@ export function plannedWeeklySets(
 }
 
 /**
+ * How much one LOGGED set counts toward a muscle's headline volume.
+ *
+ * A unilateral set trains one side, and the headline is the average of the two sides -- so it is
+ * half. That is what makes three sets per leg read as three rather than six: three is what each
+ * quad got, and it is the number comparable to three sets of a two-legged squat.
+ *
+ * Only the headline collapses this way. The per-side breakdown needs the side each set was
+ * logged against, which is the one thing this cannot recover.
+ */
+export function setWeight(exercise: { readonly unilateral: boolean }): number {
+  return exercise.unilateral ? 0.5 : 1;
+}
+
+/**
  * Sets per muscle per week below which growth is not meaningfully driven.
  *
  * Mirrors VolumeTarget.MinimumEffectiveDose. A floor, not a target, and deliberately reachable
@@ -215,7 +229,16 @@ export function rampedSets(
   best: ReadonlyMap<string, number>,
   /** Total sets there is room for at the trainee's own pace. Unlimited when unknown. */
   roomForSets = Number.POSITIVE_INFINITY,
+  /**
+   * Needed only to know which movements are one-limb-at-a-time. A planned set of those is two
+   * sets on the board, so a plan trimmed by the written number would let a leg session run to
+   * twice the time there is room for.
+   */
+  catalog?: ExerciseCatalog,
 ): PlannedExercise[] {
+  const costPerSet = (exerciseId: string) =>
+    catalog?.tryGet(exerciseId)?.unilateral ? 2 : 1;
+
   const wanted = planned.map((exercise) => ({
     ...exercise,
     sets: Math.max(1, Math.min(exercise.sets, (best.get(exercise.exerciseId) ?? 0) + 1)),
@@ -231,14 +254,15 @@ export function rampedSets(
   // Trimmed from the END, because the session is ordered with the movements worth doing fresh
   // at the front (docs/adr/0007). Losing the last movement is the cheapest loss available, and
   // it is the one that was happening anyway.
-  let total = wanted.reduce((sum, e) => sum + e.sets, 0);
+  let total = wanted.reduce((sum, e) => sum + e.sets * costPerSet(e.exerciseId), 0);
 
   for (let i = wanted.length - 1; i >= 0 && total > roomForSets; i--) {
-    const spare = Math.min(wanted[i]!.sets - 1, total - roomForSets);
+    const cost = costPerSet(wanted[i]!.exerciseId);
+    const spare = Math.min(wanted[i]!.sets - 1, Math.ceil((total - roomForSets) / cost));
     if (spare <= 0) continue;
 
     wanted[i]!.sets -= spare;
-    total -= spare;
+    total -= spare * cost;
   }
 
   return wanted;

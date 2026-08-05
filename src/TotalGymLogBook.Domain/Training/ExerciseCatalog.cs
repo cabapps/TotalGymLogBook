@@ -176,6 +176,7 @@ public sealed class ExerciseCatalog
             : ExerciseKind.Strength,
         UsesPulley = dto.UsesPulley,
         PeakTension = ParseTension(dto.PeakTension),
+        Unilateral = dto.Unilateral,
         BodyFraction = dto.BodyFraction,
         Attachment = dto.Attachment,
         Muscles = dto.Muscles
@@ -226,6 +227,10 @@ internal sealed record CatalogDocument
         public string Kind { get; init; } = "strength";
         public bool UsesPulley { get; init; }
         public string? PeakTension { get; init; }
+
+        [JsonPropertyName("unilateral")]
+        public bool Unilateral { get; init; }
+
         public double BodyFraction { get; init; } = 1.0;
         public string? Attachment { get; init; }
         public IReadOnlyList<MuscleDto> Muscles { get; init; } = [];

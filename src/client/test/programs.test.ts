@@ -302,7 +302,7 @@ describe('custom exercises', () => {
     usesPulley: true,
     peakTension: 'even' as const,
     setup: { position: 'seated', facing: 'tower', grip: 'handles' },
-    pattern: 'crunch',
+    unilateral: false,
     typicalLevel: 0.5,
     bodyFraction: 0.85,
     attachment: null,

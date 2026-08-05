@@ -28,6 +28,15 @@ public sealed record ProgressBar(string Label, double Done, double Target, strin
     public double Fraction => Target <= 0 ? 0 : Done / Target;
 
     public bool Short => Target > 0 && Done < Target;
+
+    /// <summary>
+    /// The same week split by side, for muscles that got one-limb work.
+    ///
+    /// Empty for anyone training bilaterally, which is most weeks for most people -- two extra
+    /// rows under every muscle saying the same number twice would bury the chart. It appears when
+    /// there is something to see, which is what the trainee asked the chart for.
+    /// </summary>
+    public IReadOnlyList<ProgressBar> Sides { get; init; } = [];
 }
 
 /// <summary>
@@ -147,7 +156,10 @@ public static class WeeklyProgressReport
                 Capitalize(v.Muscle.Label()),
                 v.WeeklySets,
                 target.MinimumEffectiveSets,
-                $"{v.WeeklySets:0.#} of {target.MinimumEffectiveSets:0}"))
+                $"{v.WeeklySets:0.#} of {target.MinimumEffectiveSets:0}")
+            {
+                Sides = SplitOf(v, target),
+            })
             .ToList();
 
         if (bars.Count == 0)
@@ -169,6 +181,26 @@ public static class WeeklyProgressReport
                 : $"{atDose} of {bars.Count} muscle groups you train are at the "
                   + $"{target.MinimumEffectiveSets:0} sets where growth starts.",
             $"{target.MinimumEffectiveSets:0} sets");
+    }
+
+    /// <summary>
+    /// The left/right rows under a muscle, and only when they say something.
+    ///
+    /// Shown when the two sides differ by a full set or more. Below that it is the rounding of
+    /// half-counted sets rather than a real imbalance, and a chart that cries lopsided every week
+    /// teaches people to ignore it.
+    /// </summary>
+    private static IReadOnlyList<ProgressBar> SplitOf(MuscleVolume v, VolumeTarget target)
+    {
+        if (!v.Sides.Lopsided) return [];
+
+        return
+        [
+            new ProgressBar("Left", v.Sides.Left, target.MinimumEffectiveSets,
+                $"{v.Sides.Left:0.#}"),
+            new ProgressBar("Right", v.Sides.Right, target.MinimumEffectiveSets,
+                $"{v.Sides.Right:0.#}"),
+        ];
     }
 
     /// <summary>

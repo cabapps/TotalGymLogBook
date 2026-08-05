@@ -53,6 +53,11 @@
     .fill.short { background: var(--system-orange); }
     .bar-value { flex: 0 0 4.5rem; text-align: right; color: var(--muted);
                  font-variant-numeric: tabular-nums; }
+    /* A side row is a detail of the muscle above it, so it is indented and thinner -- the
+       hierarchy has to be visible or it reads as three separate muscles. */
+    .bar-row.side { padding: .12rem 0; font-size: var(--text-caption); }
+    .bar-row.side .bar-label { padding-left: .9rem; color: var(--muted); }
+    .bar-row.side .track { height: .25rem; }
     /* Spans the track column only. The insets are the row's own geometry: 5.5rem of label plus
        a .5rem gap in front, a .5rem gap and 4.5rem of value behind. --target is a fraction, not
        a percentage, because calc cannot divide one percentage by another. */

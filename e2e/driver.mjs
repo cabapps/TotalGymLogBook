@@ -779,6 +779,43 @@ async function main() {
 
   check('no page errors during rep assist', phoneErrors.length === 0, phoneErrors.slice(0, 2).join(' | '));
 
+  // ---- One limb at a time ----
+  //
+  // A single-leg squat set trains one leg, and which leg has to reach the logbook or the ledger
+  // is guessing about it forever. The control appears only where it means something, and it
+  // offers the side that is behind so alternating costs no taps.
+  console.log('\nPer-limb sets:');
+  await showTabOn(phone, 'workout');
+  await phone.locator('tg-set-logger #exercise').selectOption({ value: 'chest-press' });
+  const sidesOnBilateral = await phone.locator('tg-set-logger .sides').count();
+  check('no side control on a two-limb movement', sidesOnBilateral === 0);
+
+  await phone.locator('tg-set-logger #exercise').selectOption({ value: 'single-leg-squat' });
+  await phone.waitForSelector('tg-set-logger .sides', { timeout: 10_000 });
+  check('a one-limb movement asks which side', true);
+
+  const firstSide = await phone.locator('tg-set-logger #side-left').getAttribute('aria-pressed');
+  check('starts on the left', firstSide === 'true');
+
+  await phone.locator('tg-set-logger #plus').click();
+  await phone.locator('tg-set-logger #log').click();
+  await waitForTextOn(phone, phone.locator('tg-set-logger #side-right'), /Right/);
+
+  const nextSide = await phone
+    .locator('tg-set-logger #side-right')
+    .getAttribute('aria-pressed');
+  check('offers the other side once one is done', nextSide === 'true');
+
+  const loggedSide = await phone.locator('tg-session-list li .detail').first().innerText();
+  check('the logged set records which side', /left/i.test(loggedSide), loggedSide.trim());
+
+  // Volume is per side: one set of a single-leg squat is half a set of quads, because the
+  // headline figure is what EACH leg got.
+  const perSide = await phone.locator('tg-session-list #session-muscles').innerText();
+  check('one-limb work counts per side, not pooled', perSide.length > 0, perSide.trim());
+
+  await phone.locator('tg-set-logger #exercise').selectOption({ value: 'chest-press' });
+
   // ---- Equipment ----
   //
   // A hundred exercises is a long list to scroll past things you cannot do. The filter is a

@@ -12,6 +12,7 @@
 import { computeResistance, type RailProfile } from '../resistance.js';
 import type { Exercise, ExerciseCatalog } from '../exercises.js';
 import * as db from '../db/repository.js';
+import { toIsoDate } from '../db/schema.js';
 import { FORMULA_VERSION, PULLEY_FACTOR_CABLE, PULLEY_FACTOR_DIRECT } from '../resistance.js';
 import type { RepAssist } from './rep-assist.js';
 import { setFocus } from '../focus.js';
@@ -28,6 +29,8 @@ interface UiState {
   reps: number;
   vestLb: number;
   barLb: number;
+  /** Which side the next set trains. Only asked about for one-limb movements. */
+  side: 'left' | 'right';
 }
 
 const styles = new CSSStyleSheet();
@@ -53,6 +56,20 @@ styles.replaceSync(`
   .level-row { display: flex; align-items: baseline; justify-content: space-between; }
   .level-row .value { font-size: var(--text-subhead); color: var(--fg);
                       font-variant-numeric: tabular-nums; }
+
+  /* A two-segment control, the same trough-and-thumb as the tab strip in the derived tier. */
+  .sides { display: flex; gap: .125rem; padding: .125rem; margin-top: .3rem;
+           border-radius: .5625rem; background: var(--fill); }
+  .sides button {
+    flex: 1; min-height: 2.125rem; border: 0; border-radius: .4375rem;
+    background: none; color: var(--fg);
+    font-size: var(--text-subhead); font-weight: 500;
+  }
+  .sides button[aria-pressed="true"] {
+    background: var(--segment-thumb); font-weight: 600;
+    box-shadow: 0 .1875rem .5rem rgb(0 0 0 / .12), 0 .0625rem .0625rem rgb(0 0 0 / .04);
+  }
+  .sides .tally { color: var(--muted); font-weight: 400; }
 
   .log { margin-top: 1.1rem; }
   .row { display: flex; gap: .75rem; }
@@ -160,10 +177,12 @@ export class SetLogger extends HTMLElement {
   #resolveSessionId?: () => Promise<string>;
   /** Undefined means unconfigured, which filters nothing. See ExerciseCatalog.available. */
   #owned: readonly string[] | undefined;
+  /** Today's logged sets, for the per-side tally. Refreshed whenever one lands. */
+  #today: readonly { exerciseId: string; side?: 'left' | 'right' }[] = [];
   // Reps start at ZERO, not at a guess. A prefilled 10 is a number the trainee has to notice
   // and correct, and the failure is silent: a set logged at 10 reps they did not do reads as
   // real data forever. Zero is obviously not a rep count, so it gets fixed before Log set.
-  #state: UiState = { exerciseId: '', level: 8, reps: 0, vestLb: 0, barLb: 0 };
+  #state: UiState = { exerciseId: '', level: 8, reps: 0, vestLb: 0, barLb: 0, side: 'left' };
 
   constructor() {
     super();
@@ -196,6 +215,10 @@ export class SetLogger extends HTMLElement {
     this.#state.level = Math.min(this.#state.level, opts.profile.levelCount);
 
     this.#render();
+    void this.#refreshToday().then(() => {
+      this.#suggestSide();
+      this.#renderSideControl();
+    });
   }
 
   /**
@@ -267,6 +290,71 @@ export class SetLogger extends HTMLElement {
       : '';
 
     return vest || bar ? `<div class="row">${vest}${bar}</div>` : '';
+  }
+
+  /**
+   * The left/right control, shown only for one-limb movements.
+   *
+   * A trainee doing two-legged squats should never see it. On the movements that do need it, the
+   * side is not optional and not a preference -- a single-leg squat set trained one leg, and a
+   * set with no side recorded is a set the ledger has to guess about forever.
+   */
+  #sideControl(): string {
+    if (!this.#exercise.unilateral) return '';
+
+    const side = (which: 'left' | 'right') => {
+      const done = this.#sidesToday[which];
+      return `<button id="side-${which}" aria-pressed="${this.#state.side === which}">
+                ${which === 'left' ? 'Left' : 'Right'}${done > 0 ? ` <span class="tally">${done}</span>` : ''}
+              </button>`;
+    };
+
+    return `<label>Side</label><div class="sides">${side('left')}${side('right')}</div>`;
+  }
+
+  /**
+   * Sets logged today for this movement, per side.
+   *
+   * Drives which side is preselected: whichever is behind. Alternating is what everybody does
+   * and what keeps the two sides level, so the app should not make the trainee say so every
+   * time -- and when they are level it offers the left, because that is where a round starts.
+   */
+  get #sidesToday(): { left: number; right: number } {
+    const tally = { left: 0, right: 0 };
+    for (const set of this.#today) {
+      if (set.exerciseId !== this.#state.exerciseId) continue;
+      if (set.side === 'left' || set.side === 'right') tally[set.side] += 1;
+    }
+    return tally;
+  }
+
+  /** Redraws the side control in place, leaving the rest of the logger alone. */
+  #renderSideControl(): void {
+    const host = this.#root.getElementById('side-control');
+    if (!host) return;
+
+    host.innerHTML = this.#sideControl();
+
+    for (const which of ['left', 'right'] as const) {
+      this.#root.getElementById(`side-${which}`)?.addEventListener('click', () => {
+        this.#state.side = which;
+        this.#renderSideControl();
+      });
+    }
+  }
+
+  /** Re-reads today's sets. Cheap -- one indexed day -- and only on events that can change it. */
+  async #refreshToday(): Promise<void> {
+    const today = toIsoDate(Date.now());
+    this.#today = await db.getSetsBetween(today, today);
+  }
+
+  /** Preselects the side that is behind, so alternating needs no taps at all. */
+  #suggestSide(): void {
+    if (!this.#exercise.unilateral) return;
+
+    const { left, right } = this.#sidesToday;
+    this.#state.side = right < left ? 'right' : 'left';
   }
 
   /** Keeps the selected exercise pointing at something that is actually in the list. */
@@ -373,6 +461,8 @@ export class SetLogger extends HTMLElement {
         </div>
         <tg-rep-assist id="assist"></tg-rep-assist>
 
+        <div id="side-control">${this.#sideControl()}</div>
+
         ${this.#addedLoadFields(s)}
 
         <button class="primary log" id="log">Log set</button>
@@ -385,6 +475,10 @@ export class SetLogger extends HTMLElement {
     on('exercise', 'change', () => {
       s.exerciseId = (this.#root.getElementById('exercise') as HTMLSelectElement).value;
       void this.#assist.setExercise(s.exerciseId);
+      // The side control belongs to the movement, so switching movements redraws it -- and picks
+      // up wherever the trainee left that movement's two sides.
+      this.#suggestSide();
+      this.#renderSideControl();
       this.#update();
     });
 
@@ -409,6 +503,8 @@ export class SetLogger extends HTMLElement {
         this.#update();
       });
     }
+    this.#renderSideControl();
+
     on('minus', 'click', () => this.#nudgeReps(-1));
     on('plus', 'click', () => this.#nudgeReps(1));
     on('log', 'click', () => void this.#logSet());
@@ -495,7 +591,19 @@ export class SetLogger extends HTMLElement {
         directLoadLb: 0,
         computedLb: Math.round(this.#computedLb() * 10) / 10,
         formulaVersion: FORMULA_VERSION,
+        // Recorded only where it means something. A side on a two-legged squat would be a field
+        // the ledger has to decide whether to believe.
+        ...(e.unilateral && { side: this.#state.side }),
       });
+
+      // The tally moved, so the next set is offered to whichever side is now behind.
+      //
+      // ONLY the side control is redrawn. Re-rendering the whole logger here also rebuilt
+      // <tg-rep-assist>, which threw away the "Stopped counting" line it had just written and
+      // the counter state behind it.
+      await this.#refreshToday();
+      this.#suggestSide();
+      this.#renderSideControl();
 
       // Finishing a set ends the count. Voice also stops LISTENING here: a hot microphone
       // through the rest period is the wrong default for something that has no reason to hear

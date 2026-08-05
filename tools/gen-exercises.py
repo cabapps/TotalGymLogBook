@@ -54,6 +54,30 @@ SHORTENED = {
     "knee-tuck", "pike", "abcrunch-curl-up", "abcrunch-oblique-twist",
 }
 
+# ONE LIMB AT A TIME.
+#
+# A set of these trains one side. It matters in three places and every one of them is wrong
+# without it:
+#
+#   Volume. Three sets of single-leg squats per leg is three sets for each quad, not six. Counting
+#   the logged sets straight would tell a trainee their quads are at twice the dose they are.
+#
+#   Balance. Sides drift, and the only way to see it is to count them apart. A trainee who always
+#   starts on the right and runs out of time has been quietly building an imbalance.
+#
+#   Time. Every planned set is really two, so a session of unilateral work takes twice as long as
+#   the set count suggests -- which is what the session budget has to know about.
+#
+# Explicit rather than derived from the name, because this decides what a logged set MEANS. The
+# assertion below catches anything new called "single-", which is the case a name can settle.
+UNILATERAL = {
+    "single-arm-chest-press", "single-arm-row", "single-arm-curl", "concentration-curl",
+    "single-leg-squat", "split-squat", "single-leg-calf-raise",
+    "side-lying-leg-lift", "hip-abduction", "hip-adduction", "glute-kickback",
+    "external-rotation", "internal-rotation",
+    "sprinter-start", "pilates-scooter",
+}
+
 # What an exercise REQUIRES. A capability, not a product: two different accessories can satisfy
 # the same requirement, which is the whole reason this is a separate vocabulary from the
 # accessory list below. See ACCESSORIES.
@@ -67,6 +91,11 @@ ABCRUNCH = "AbCrunch"
 PILATES = "Pilates kit"
 ROPE = "Triceps rope"
 SHAPER = "Shaper bars"
+
+# Attachments that bolt on at the BOTTOM of the rail. Feet reach these, so the head is at the
+# tower end -- the mirror of the wing, which is at the top and puts the head wherever the hands
+# are not. Both directions are asserted in main().
+BOTTOM_MOUNTED = {STAND, PILATES}
 
 # id, name, provides, ships-with-most-machines, added-in-registry-version, note
 A = collections.namedtuple("A", "id name provides common added note")
@@ -193,6 +222,16 @@ SETUP = {
     "board-burpee": ("face-up", "tower", "nothing"),
     "adductor-stretch": ("face-up", "tower", "nothing"),
     "calf-stretch": ("face-up", "tower", "nothing"),
+
+    # ---- lying face up, head toward the tower: feet on the Pilates bar
+    #
+    # The Pilates foot bar mounts at the BOTTOM of the rail, in the same place the squat stand
+    # does -- so feet on it puts the head at the tower end, exactly as a squat does. Asserted
+    # below with the stand, because it is the same fact about the machine.
+    "pilates-footwork": ("face-up", "tower", "nothing"),
+    "pilates-frog": ("face-up", "tower", "nothing"),
+    "pilates-leg-circle": ("face-up", "tower", "nothing"),
+    "pilates-scooter": ("face-up", "tower", "nothing"),
     # ---- lying face up, head toward the FLOOR: feet anchored in the wing
     #
     # Head at the bottom means the feet are at the top, where the wing bolts on -- and they have
@@ -203,13 +242,14 @@ SETUP = {
     # The other direction is a separate exercise, not a variation: head at the tower, cables in
     # the hands, crunching against them. See cable-crunch.
     "crunch": ("face-up", "floor", "feet under the wing bars"),
+    "wing-hamstring-curl": ("face-up", "floor", "feet under the wing bars"),
 
     "glute-stretch": ("face-up", "floor", "nothing"),
     "spinal-twist": ("face-up", "floor", "nothing"),
-    "pilates-footwork": ("face-up", "floor", "nothing"),
-    "pilates-frog": ("face-up", "floor", "nothing"),
-    "pilates-leg-circle": ("face-up", "floor", "nothing"),
-    "pilates-scooter": ("face-up", "floor", "nothing"),
+
+
+
+
 
     # ---- sitting, facing the tower: the cable pulls you toward it, so everything you PULL
     "seated-row": ("seated", "tower", "handles"),
@@ -270,7 +310,6 @@ SETUP = {
 
     # ---- face down on the board
     "hamstring-curl": ("face-down", "floor", "ankle straps"),
-    "wing-hamstring-curl": ("face-down", "tower", "nothing"),
     "leg-pull": ("face-down", "tower", "feet in the leg pull bar"),
     "decline-push-up": ("face-down", "floor", "press-up bars"),
     "knee-tuck": ("face-down", "floor", "nothing"),
@@ -500,7 +539,7 @@ EX = [
     # the load is roughly double. Kept separate because changing the cable version's physics
     # would put a step change in the middle of anyone's logged history for it.
     E("wing-hamstring-curl", "Wing Hamstring Curl", "Legs", "strength", False, 1.0, WING,
-      "Face down with your heels hooked on the wing, bend your knees to pull the board up the rail.",
+      "Heels hooked in the wing above you, bend your knees to pull the board up the rail.",
       [("Hamstrings", D), ("Glutes", I)]),
     E("leg-extension", "Leg Extension", "Legs", "strength", True, 0.85, ANKLE,
       "Seated with the straps on your ankles, straighten your knees against the cable.",
@@ -669,6 +708,9 @@ COMMENT = [
     "              alsoFacing names a second direction the movement works at, where one exists --",
     "              a curl is fine either way round. That is not a footnote: it lets a curl sit in",
     "              a block of pressing without anybody turning around.",
+    "unilateral  : true when a set trains ONE side. Three sets of single-leg squats per leg is",
+    "              three sets for each quad, not six -- so a logged set carries which side it was,",
+    "              volume is counted per side, and one planned set costs two sets of time.",
     "typicalLevel: roughly where on the rail this is done, as a fraction of it. Decides which",
     "              movements can be alternated as a superset -- a pair only saves time if both",
     "              run at the SAME notch. Derived from muscle group and the pulley, not measured,",
@@ -774,8 +816,17 @@ def main():
     # The squat stand bolts on at the bottom of the rail. Feet on the stand therefore means head
     # at the tower end, always -- a physical fact about the machine rather than a judgment, so it
     # is asserted rather than left to whoever edits the table next.
-    wrong_way = [e.id for e in EX if e.att == STAND and setup_of(e)["facing"] != "tower"]
-    assert not wrong_way, f"squat-stand movements must face the tower: {sorted(wrong_way)}"
+    # Two attachments bolt on at the BOTTOM of the rail: the squat stand and the Pilates foot
+    # bar. Feet on either one therefore puts the head at the tower end -- the same way round as
+    # the cable work, not the opposite way. A fact about the machine, so it is asserted rather
+    # than left to whoever edits the table next.
+    wrong_way = [
+        e.id for e in EX
+        if e.att in BOTTOM_MOUNTED and setup_of(e)["facing"] != "tower"
+    ]
+    assert not wrong_way, (
+        f"movements using a bottom-mounted attachment must face the tower: {sorted(wrong_way)}"
+    )
 
     # Same class of fact from the other end of the rail: the wing bolts on at the top, so a
     # movement whose setup has the trainee holding or hooking it REQUIRES it. Getting this wrong
@@ -785,6 +836,37 @@ def main():
         e.id for e in EX if "wing" in setup_of(e)["grip"] and e.att != WING
     ]
     assert not unbolted, f"setups using the wing must require it: {sorted(unbolted)}"
+
+    # AND THE WING DECIDES WHICH END THE HEAD IS AT.
+    #
+    # It bolts on at the TOP, by the tower, always. So whichever limb reaches it is the limb at
+    # the tower end: hands on the wing puts the head there, feet in the wing puts the head at the
+    # floor. That is arithmetic about the machine, not a judgment about a movement -- and it is
+    # the one this table got wrong twice, on the crunch and then on the wing hamstring curl, both
+    # times by leaving a trainee reaching for a bar that was behind their feet.
+    for e in EX:
+        if e.att != WING:
+            continue
+        setup = setup_of(e)
+        if "wing" not in setup["grip"]:
+            continue
+
+        feet = setup["grip"].startswith("feet")
+        expected = "floor" if feet else "tower"
+        assert setup["facing"] == expected, (
+            f"{e.id}: {'feet in' if feet else 'hands on'} the wing means the head is at the "
+            f"{expected}, not the {setup['facing']}"
+        )
+
+    stray_unilateral = UNILATERAL - seen
+    assert not stray_unilateral, f"unilateral flag for unknown exercises: {sorted(stray_unilateral)}"
+
+    # A name that says "single" settles the question, and a new one added without thinking about
+    # sides would otherwise be counted as two sets of work for one side's worth of training.
+    unmarked = [
+        e.id for e in EX if "single" in e.name.lower() and e.id not in UNILATERAL
+    ]
+    assert not unmarked, f"'single' movements must be marked unilateral: {sorted(unmarked)}"
 
     stray_setup = set(SETUP) - seen
     assert not stray_setup, f"setup for unknown exercises: {sorted(stray_setup)}"
@@ -822,6 +904,7 @@ def main():
                 "peakTension": peak(e.id),
                 "setup": setup_of(e),
                 "typicalLevel": typical_level(e),
+                "unilateral": e.id in UNILATERAL,
                 "bodyFraction": e.bf,
                 "attachment": e.att,
                 "cue": e.cue,

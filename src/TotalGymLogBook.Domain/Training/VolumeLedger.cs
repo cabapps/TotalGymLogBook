@@ -50,8 +50,41 @@ public sealed record VolumeTarget(double MinimumEffectiveSets, double Recommende
     }
 }
 
-public sealed record MuscleVolume(MuscleGroup Muscle, double WeeklySets, int? DaysSinceTrained)
+/// <summary>
+/// What each side got, for muscles that have limbs.
+///
+/// The two sides drift, and the only way anyone sees it is to count them apart. A trainee who
+/// always starts on the right and runs out of time has been building an imbalance for months,
+/// and a pooled total says nothing about it at all.
+/// </summary>
+public sealed record SideVolume(double Left, double Right)
 {
+    public static readonly SideVolume None = new(0, 0);
+
+    /// <summary>The headline: what each side got, on average. A bilateral set feeds both.</summary>
+    public double Average => (Left + Right) / 2;
+
+    /// <summary>True once one side is a full set ahead -- below that it is just rounding.</summary>
+    public bool Lopsided => Math.Abs(Left - Right) >= 1;
+
+    public SideVolume Plus(BodySide? side, double sets) => side switch
+    {
+        BodySide.Left => this with { Left = Left + sets },
+        BodySide.Right => this with { Right = Right + sets },
+        // A set with no side is either a two-limb movement, which trained both, or a one-limb set
+        // logged before the app asked. Both are honestly served by adding it to each: the first
+        // because it is true, the second because half a set each preserves the total without
+        // inventing which leg it was.
+        _ => new SideVolume(Left + sets, Right + sets),
+    };
+}
+
+public sealed record MuscleVolume(
+    MuscleGroup Muscle, double WeeklySets, int? DaysSinceTrained)
+{
+    /// <summary>How the week split across the two sides. Equal for anyone training bilaterally.</summary>
+    public SideVolume Sides { get; init; } = SideVolume.None;
+
     public bool BelowMinimum(VolumeTarget target) => WeeklySets < target.MinimumEffectiveSets;
     public bool BelowRecommended(VolumeTarget target) => WeeklySets < target.RecommendedSets;
 }
@@ -84,10 +117,22 @@ public sealed class VolumeLedger
 
     /// <summary>Sets per muscle over the trailing window, indirect work counted fractionally.</summary>
     public IReadOnlyDictionary<MuscleGroup, double> WeeklySets(
+        DateOnly asOf, int windowDays = DefaultWindowDays) =>
+        WeeklySides(asOf, windowDays).ToDictionary(kv => kv.Key, kv => kv.Value.Average);
+
+    /// <summary>
+    /// The same rollup, kept apart by side.
+    ///
+    /// This is the primitive and WeeklySets is the summary of it, because the two must not be
+    /// able to disagree. A bilateral set counts once to each side, a unilateral set counts to the
+    /// side it was logged against, and the headline is the average -- which is what makes three
+    /// sets per leg read as three, the figure comparable to three sets of a two-legged squat.
+    /// </summary>
+    public IReadOnlyDictionary<MuscleGroup, SideVolume> WeeklySides(
         DateOnly asOf, int windowDays = DefaultWindowDays)
     {
         var from = asOf.AddDays(-windowDays);
-        var totals = new Dictionary<MuscleGroup, double>();
+        var totals = new Dictionary<MuscleGroup, SideVolume>();
 
         foreach (var history in _histories)
         {
@@ -97,13 +142,19 @@ public sealed class VolumeLedger
             // a trainee their hamstrings are covered because they stretched them.
             if (!exercise.CountsAsVolume) continue;
 
-            var sets = history.Sets.Count(s => s.On > from && s.On <= asOf);
-            if (sets == 0) continue;
-
-            foreach (var involvement in exercise.Muscles)
+            foreach (var set in history.Sets.Where(s => s.On > from && s.On <= asOf))
             {
-                totals[involvement.Muscle] =
-                    totals.GetValueOrDefault(involvement.Muscle) + sets * involvement.Fraction;
+                // A unilateral set with no recorded side is half to each: it trained one limb and
+                // nobody wrote down which, so splitting it keeps the total honest without
+                // inventing a lopsided week that never happened.
+                var side = exercise.Unilateral ? set.Side : null;
+                var each = exercise.Unilateral && side is null ? 0.5 : 1.0;
+
+                foreach (var involvement in exercise.Muscles)
+                {
+                    var current = totals.GetValueOrDefault(involvement.Muscle, SideVolume.None);
+                    totals[involvement.Muscle] = current.Plus(side, involvement.Fraction * each);
+                }
             }
         }
 
@@ -132,10 +183,17 @@ public sealed class VolumeLedger
     /// <summary>Full picture across every muscle group, ordered by neglect.</summary>
     public IReadOnlyList<MuscleVolume> Summary(DateOnly asOf, int windowDays = DefaultWindowDays)
     {
-        var weekly = WeeklySets(asOf, windowDays);
+        var weekly = WeeklySides(asOf, windowDays);
 
         return Enum.GetValues<MuscleGroup>()
-            .Select(m => new MuscleVolume(m, weekly.GetValueOrDefault(m), DaysSinceTrained(m, asOf)))
+            .Select(m =>
+            {
+                var sides = weekly.GetValueOrDefault(m, SideVolume.None);
+                return new MuscleVolume(m, sides.Average, DaysSinceTrained(m, asOf))
+                {
+                    Sides = sides,
+                };
+            })
             .OrderBy(v => v.WeeklySets)
             .ToList();
     }
