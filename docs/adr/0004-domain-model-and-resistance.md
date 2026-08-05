@@ -151,18 +151,29 @@ set — otherwise a mid-workout weigh-in makes sets within one session incompara
 RailProfile { id, levelCount, angleDeg[], boardWeightLb, angleSource, verified }
 Machine     { id, modelName, railProfileId, calibratedAngles? }
 Exercise    { id, name, usesPulley, peakTension, setup{position,facing,grip}, bodyFraction,
-              attachment?, muscles[] }
+              typicalLevel, attachment?, muscles[] }
 Accessory   { id, name, provides[], common, added, note? }
 Equipment   { id, kind: 'vest'|'bar'|'plate', lb, ridesIncline, ownedQty }
 ```
 
-`pattern` names the joint that does the work. It exists so the app can **draw** the movement:
-every demo is generated from `setup` + `pattern` + `attachment` + `usesPulley`, so there is no
-artwork to license, nothing to keep in step with the catalog by hand, and no megabytes of video
-to fail offline. Total Gym's photography and illustration are theirs; a stick figure on a rail is
-ours. It shows which way to face, what moves and roughly how far — the caption says out loud that
-it is not a form guide, because a trainee who takes a schematic for a coach can hurt themselves
-being faithful to it.
+### The generated demo, and why it is gone
+
+`setup` once also drove a generated stick-figure animation, on the reasoning that a drawing
+derived from the catalog costs nothing to ship and cannot drift from the instructions beside it.
+It was withdrawn after four rounds of correction: limbs animating off the figure, the board
+travelling the wrong way, a leg moving on its own, and finally a seated trainee drawn with their
+legs behind them, which reversed the chest press.
+
+The reasoning was not wrong — the last version was correct and had assertions over all 103
+movements holding it that way. The problem is what it cost to get there. **A schematic is either
+right enough to trust or worse than nothing**, because a trainee who believes the picture over
+the sentence has been actively misled, and every round of review passed a drawing that looked
+plausible and was wrong. The written setup carries the same four fields in a sentence, it has
+been right longer, and nobody has to squint at it to check.
+
+The lesson is narrower than "do not generate drawings": it is that a derived artifact needs a
+cheap way to be *checked*, and for prose a human reading it once is that check, while for a
+diagram it is not.
 
 Seated, the direction follows the cable: you face the tower for what you **pull** and away for
 what you **push**, because the cable comes off the top of the tower. That is a rule of thumb, not
