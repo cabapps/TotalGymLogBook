@@ -43,6 +43,7 @@ Concrete rules, each of which the code enforces:
 | Apple's system colors, with real dark-mode counterparts | `--system-*` |
 | Feedback on touch (dim to 0.45), never on hover | `button:active` |
 | Large title that collapses into a translucent nav bar on scroll | `AppShell.#watchTitle` |
+| A bottom tab bar in the same material, panes hidden rather than rebuilt | `<tg-tab-bar>` |
 | SF Rounded for numbers that *are* the content | `--font-rounded`, `.metric` |
 
 Two of these are behavioral rather than cosmetic and would be worth keeping even if the app
@@ -62,6 +63,25 @@ way to look like a web form. Blue is interactive.
 That is why `--warn` is not `--system-orange`: system orange on a white card fails contrast as
 body text, so the token carries a darkened variant for text while `--surface-warn` carries the
 tint for backgrounds.
+
+### Three tabs, and what moved
+
+Equipment and "add your own exercise" are configured once and then never again, and they sat
+between the trainee and the Finish button on the one screen that has to stay fast
+([0003](0003-blazor-web-components-boundary.md)). They are Settings now.
+
+The derived tier moved with them, into a **Coach** tab. It already carried its own
+Coach/Program/History control, so inline it was a second row of navigation halfway down a
+scrolling page. The cost is real and worth stating: the next-set recommendation is a tap away
+from the logging screen instead of under it.
+
+**Panes are hidden, never rebuilt.** The set logger holds a rep count that is not in IndexedDB
+until Log set is tapped, so re-rendering to change tabs would throw away the set the trainee is
+in the middle of. Everything stays in the DOM; only `[hidden]` moves.
+
+That also changes what an e2e harness has to do: everything is still findable while a tab is
+hidden, but nothing in it is clickable. `showTabOn` in the driver navigates the way a trainee
+does, which is the constraint the trainee is under anyway.
 
 ## Consequences
 

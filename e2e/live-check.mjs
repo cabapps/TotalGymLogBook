@@ -144,6 +144,8 @@ if (shell) {
   // The bug that shipped green locally. This is the check that would have caught it.
   let blazor = true;
   try {
+    // The coach has its own tab; nothing in it is visible until you are on it.
+    await page.locator('tg-tab-bar #tab-coach').click().catch(() => undefined);
     await page.waitForSelector('#empty-state, #rec-load', { timeout: 90_000 });
   } catch { blazor = false; }
   check('Blazor loads and the coach renders', blazor);
