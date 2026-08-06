@@ -17,11 +17,14 @@
     <!-- 'default' rather than 'black-translucent': translucent pins the status bar text to
          white, which disappears against the light appearance. -->
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Logbook" />
+    <meta name="apple-mobile-web-app-title" content="Total Gym Logbook" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <link href="manifest.webmanifest" rel="manifest" />
-    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <!-- 180 is what a modern iPhone actually asks for. Without it Safari takes the 512 and
+         downscales, softening the strokes at the size they are hardest to read. -->
+    <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
     <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
 
     <!--
       DO NOT REMOVE. Populated at publish time with the fingerprint map for the .NET runtime

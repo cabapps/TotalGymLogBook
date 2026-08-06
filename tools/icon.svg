@@ -1,0 +1,40 @@
+<!--
+  The home-screen icon: the machine itself, drawn the way the app draws everything else.
+
+  Source of truth for every raster in wwwroot. Regenerate them with tools/gen-icons.mjs rather
+  than editing the PNGs, which cannot be reviewed in a diff.
+
+  Three rules an app icon has to obey and a diagram does not:
+
+    Opaque to the edges. iOS masks the icon to a squircle and fills any transparency with BLACK,
+    so a line drawing on a transparent background becomes a black tile on a dark home screen.
+
+    Nothing near the corners. The mask crops them, and the app switcher rounds them further.
+    Everything here sits inside a 12% inset.
+
+    Heavy strokes. This is read at about 60 pixels on a phone. The demo's hairlines disappear at
+    that size, so the same shapes are drawn at a weight that survives the shrink.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#007aff" />
+
+  <g fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round">
+    <!-- The tower, and the wing across the top of it. -->
+    <path d="M132 136 V 262" />
+    <path d="M96 136 H 186" />
+
+    <!-- The rail, running down to the floor foot. -->
+    <path d="M132 184 L 398 332" />
+    <path d="M336 390 H 440" />
+    <path d="M398 332 V 390" />
+  </g>
+
+  <!-- The glideboard, riding the rail.
+       Filled rather than outlined so it reads as the one solid object in the drawing, which is
+       what it is -- and carrying a background-colored stroke so it sits ON the rail instead of
+       merging into it. Without the gap the two shapes fuse into a lump at icon size. -->
+  <g transform="rotate(29.1 291 244)">
+    <rect x="221" y="216" width="140" height="56" rx="28"
+          fill="#ffffff" stroke="#007aff" stroke-width="14" />
+  </g>
+</svg>
