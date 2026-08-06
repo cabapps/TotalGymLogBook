@@ -8,7 +8,7 @@ import 'fake-indexeddb/auto';
 import { IDBFactory } from 'fake-indexeddb';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { exportBackup, importBackup } from '../src/db/backup.js';
+import { clearAllData, exportBackup, importBackup } from '../src/db/backup.js';
 import { resetConnection } from '../src/db/database.js';
 import { onChange, resetEvents } from '../src/db/events.js';
 import * as repo from '../src/db/repository.js';
@@ -415,5 +415,54 @@ describe('session lifecycle', () => {
     // With a set in it, it IS an unfinished workout and should be offered.
     await repo.logSet(setInput({ sessionId: session.id }));
     expect((await repo.findOrphanedSessions(6)).map((s) => s.id)).toContain(session.id);
+  });
+});
+
+describe('restoring onto a re-installed app', () => {
+  it('does not abort when a unique key is already taken', async () => {
+    // The path a trainee actually walks: export, delete the home-screen app, add it again,
+    // answer the three onboarding questions, restore. Onboarding writes TODAY's weight under a
+    // fresh id, and the backup then arrives with the same day under its old one.
+    //
+    // Bodyweight has a unique index on the calendar day, so IndexedDB refused the second write
+    // and aborted the whole transaction -- every session and every set silently not restored, at
+    // the one moment somebody most needs them back.
+    const on = toIsoDate(Date.now());
+    await repo.recordBodyweight(on, 180);
+    const session = await repo.startSession({ machineId: 'm1' });
+    await repo.logSet({
+      sessionId: session.id, exerciseId: 'chest-press', reps: 10, level: 8,
+      bodyweightRawLb: 180, bodyweightSmoothedLb: 180, angleDeg: 16, boardWeightLb: 19.8,
+      pulleyFactor: 1, bodyFraction: 1, vestLb: 0, barLb: 0, directLoadLb: 0,
+      computedLb: 50, formulaVersion: 1,
+    });
+
+    const backup = await exportBackup();
+
+    // Wipe, the way removing an installed app does, then re-onboard: same day, different id.
+    await clearAllData();
+    await repo.recordBodyweight(on, 175);
+
+    const result = await importBackup(backup, 'merge');
+
+    expect(result.inserted).toBeGreaterThan(0);
+    expect(await repo.getSessionSets(session.id)).toHaveLength(1);
+  });
+
+  it('keeps whichever weigh-in for the day was written later', async () => {
+    // Last write wins, the same rule the rest of the merge uses -- and only one row can survive,
+    // because the index says one row per day.
+    const on = toIsoDate(Date.now());
+    await repo.recordBodyweight(on, 180);
+    const backup = await exportBackup();
+
+    await clearAllData();
+    await repo.recordBodyweight(on, 175);
+
+    await importBackup(backup, 'merge');
+
+    const readings = await repo.getBodyweightReadings();
+    expect(readings.filter((r) => r.on === on)).toHaveLength(1);
+    expect(readings.find((r) => r.on === on)?.lb).toBe(175);
   });
 });
