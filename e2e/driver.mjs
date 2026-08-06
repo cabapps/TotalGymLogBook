@@ -171,7 +171,11 @@ async function main() {
   console.log('\nOnboarding (instant tier, no .NET yet):');
   await page.waitForSelector('#bw', { timeout: 20_000 });
 
-  const questions = await page.locator('tg-app-shell select, tg-app-shell input').count();
+  // Visible ones. The screen also carries a hidden file input for restoring a backup, which is
+  // a way back in for a returning trainee rather than a fourth thing to answer.
+  const questions = await page
+    .locator('tg-app-shell select:visible, tg-app-shell input:visible')
+    .count();
   check('asks exactly three questions', questions === 3, `${questions} inputs`);
 
   await page.fill('#bw', '180');
@@ -619,6 +623,87 @@ async function main() {
 
   // ---- Safari: no requestIdleCallback ----
   //
+  // ---- Getting back in after a re-install ----
+  //
+  // The one flow where a bug costs somebody their training history. Deleting a home-screen web
+  // app on iOS takes its storage with it, and changing the icon means every existing install has
+  // to be deleted and re-added -- so export/restore is the whole recovery path, and it has to
+  // work from the state a re-installed app actually starts in.
+  //
+  // It did not. Onboarding writes today's weight under a fresh id; the backup then arrives with
+  // the same day under its old one; bodyweight has a UNIQUE index on the day, so IndexedDB
+  // aborted the transaction and restored NOTHING, reporting only an index error.
+  console.log('\nRestoring after a re-install:');
+
+  const freshCtx = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const fresh = await freshCtx.newPage();
+
+  await fresh.goto(URL, { waitUntil: 'load' });
+  await fresh.locator('tg-app-shell #start').click();
+  await fresh.locator('tg-set-logger #log').click();
+  await fresh.waitForSelector('tg-session-list li', { timeout: 15_000 });
+
+  const dump = await fresh.evaluate(async () => {
+    const db = await new Promise((res) => {
+      const r = indexedDB.open('totalgymlogbook');
+      r.onsuccess = () => res(r.result);
+    });
+    const records = {};
+    for (const name of [...db.objectStoreNames]) {
+      records[name] = await new Promise((res) => {
+        const q = db.transaction(name, 'readonly').objectStore(name).getAll();
+        q.onsuccess = () => res(q.result);
+      });
+    }
+    db.close();
+    return JSON.stringify({
+      format: 1, app: 'totalgymlogbook', exportedAt: new Date().toISOString(),
+      dbVersion: 2, records,
+    });
+  });
+  check('a backup carries every store', Object.keys(JSON.parse(dump).records).length >= 6);
+
+  // Exactly what removing an installed app does.
+  await fresh.evaluate(() => new Promise((res) => {
+    const r = indexedDB.deleteDatabase('totalgymlogbook');
+    r.onsuccess = r.onerror = r.onblocked = () => res();
+  }));
+  await fresh.reload({ waitUntil: 'load' });
+
+  await fresh.waitForSelector('tg-app-shell #start', { timeout: 20_000 });
+  check('a wiped app starts at onboarding', true);
+
+  // Restore is offered THERE, so a returning trainee never invents a machine and a weigh-in on
+  // top of the ones they are about to restore.
+  await fresh.locator('tg-app-shell #backup-file').setInputFiles({
+    name: 'backup.json', mimeType: 'application/json', buffer: Buffer.from(dump),
+  });
+
+  let restored = true;
+  try {
+    await fresh.waitForSelector('tg-set-logger #exercise', { timeout: 20_000 });
+  } catch {
+    restored = false;
+  }
+  check('restoring from onboarding lands on the workout screen', restored);
+
+  const back = await fresh.evaluate(async () => {
+    const db = await new Promise((res) => {
+      const r = indexedDB.open('totalgymlogbook');
+      r.onsuccess = () => res(r.result);
+    });
+    const count = (name) => new Promise((res) => {
+      const q = db.transaction(name, 'readonly').objectStore(name).getAll();
+      q.onsuccess = () => res(q.result.length);
+    });
+    return { sets: await count('setLogs'), machines: await count('machines') };
+  });
+
+  check('the logged sets came back', back.sets === 1, `${back.sets} sets`);
+  check('and no duplicate machine was invented', back.machines === 1, `${back.machines} machines`);
+
+  await freshCtx.close();
+
   // Safari has NEVER shipped requestIdleCallback (still behind a preference in Technology
   // Preview), and index.html defers Blazor.start() through it. Written as
   // `requestIdleCallback?.(...)` that is a ReferenceError -- optional call guards a null VALUE,

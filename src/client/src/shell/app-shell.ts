@@ -12,6 +12,7 @@
  */
 
 import * as db from '../db/repository.js';
+import { importBackup } from '../db/backup.js';
 import { ExerciseCatalog } from '../exercises.js';
 import { RailProfileTable } from '../profiles.js';
 import { ProgramLibrary } from '../programs.js';
@@ -428,9 +429,22 @@ export class AppShell extends HTMLElement {
       </div>
 
       <button class="primary" id="start">Start logging</button>
+
+      <!--
+        The way back in for somebody who already had this app.
+        
+        Restoring used to mean answering these three questions first, because the only Restore
+        button lived in Settings and Settings is behind the workout screen. That invented a
+        machine and a weigh-in the trainee did not want, on top of the ones about to be restored.
+        Offering it here means a returning trainee never makes them.
+      -->
+      <button class="ghost" id="restore">Restore a backup</button>
+      <input type="file" id="backup-file" accept="application/json,.json" hidden />
+      <p class="sub" id="restore-result" hidden></p>
     `,
     );
     this.#watchTitle();
+    this.#wireRestore();
 
     this.#root.getElementById('start')!.addEventListener('click', async () => {
       const lb = Number((this.#root.getElementById('bw') as HTMLInputElement).value);
@@ -452,6 +466,40 @@ export class AppShell extends HTMLElement {
       await db.saveSettings({ aim, goalPrimary: goalFor(aim) });
 
       await this.#route();
+    });
+  }
+
+  /**
+   * Restoring from the onboarding screen.
+   *
+   * Deliberately routes rather than re-rendering: a restored backup brings a machine and a
+   * bodyweight with it, which is exactly what #route checks for, so the app lands on the workout
+   * screen with the trainee's own history already there.
+   */
+  #wireRestore(): void {
+    const file = this.#root.getElementById('backup-file') as HTMLInputElement | null;
+    const button = this.#root.getElementById('restore');
+    const result = this.#root.getElementById('restore-result');
+    if (!file || !button || !result) return;
+
+    button.addEventListener('click', () => file.click());
+
+    file.addEventListener('change', async () => {
+      const chosen = file.files?.[0];
+      if (!chosen) return;
+
+      try {
+        const imported = await importBackup(await chosen.text(), 'merge');
+        result.textContent = `Restored ${imported.inserted + imported.updated} records.`;
+        result.hidden = false;
+
+        await this.#route();
+      } catch (error) {
+        result.textContent = (error as Error).message;
+        result.hidden = false;
+      } finally {
+        file.value = '';
+      }
     });
   }
 

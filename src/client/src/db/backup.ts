@@ -106,6 +106,10 @@ export async function importBackup(input: string | Backup, mode: ImportMode = 'm
           ? new Map((await getAll<AnyRecord>(tx, name)).map((r) => [r.id, r]))
           : new Map<string, AnyRecord>();
 
+      // Rows already here that hold a UNIQUE index value, so an incoming row claiming the same
+      // value can be reconciled rather than aborting the whole restore. See uniqueKeysOf.
+      const owners = uniqueOwners(name, [...existing.values()]);
+
       for (const record of incoming) {
         if (!isSyncRecord(record)) {
           result.skipped++;
@@ -118,7 +122,32 @@ export async function importBackup(input: string | Backup, mode: ImportMode = 'm
           continue;
         }
 
+        // A DIFFERENT row already owns this record's unique key.
+        //
+        // One case, and it is the one every restore hits: bodyweight has a unique index on the
+        // calendar day. Re-onboarding after a wipe writes today's weight under a fresh id, and
+        // the backup then arrives with the same day under its old id. IndexedDB refuses the
+        // second write, the transaction aborts, and NOTHING is restored -- which is exactly the
+        // moment somebody most needs their data back.
+        //
+        // Resolved the same way as everything else here: last write wins. The older row goes.
+        const key = uniqueKeyOf(name, record);
+        const owner = key === undefined ? undefined : owners.get(key);
+
+        if (owner && owner.id !== record.id) {
+          if (owner.updatedAt >= record.updatedAt) {
+            result.skipped++;
+            continue;
+          }
+
+          store.delete(owner.id);
+          existing.delete(owner.id);
+          owners.delete(key!);
+        }
+
         await put(tx, name, record);
+        if (key !== undefined) owners.set(key, record);
+
         current ? result.updated++ : result.inserted++;
         touched.set(name, [...(touched.get(name) ?? []), record.id]);
       }
@@ -127,6 +156,32 @@ export async function importBackup(input: string | Backup, mode: ImportMode = 'm
 
   for (const [name, ids] of touched) publishChange(name, ids);
   return result;
+}
+
+/**
+ * The value a store's UNIQUE index would key this record by, if it has one.
+ *
+ * Read off STORES rather than hardcoded, so adding a unique index cannot quietly reintroduce the
+ * aborted-restore bug: the reconciliation covers whatever the schema declares.
+ */
+function uniqueKeyOf(name: StoreName, record: AnyRecord): string | undefined {
+  const index = STORES.find((s) => s.name === name)?.indexes.find((i) => i.unique);
+  if (!index || typeof index.keyPath !== 'string') return undefined;
+
+  const value = (record as unknown as Record<string, unknown>)[index.keyPath];
+  return typeof value === 'string' || typeof value === 'number' ? String(value) : undefined;
+}
+
+/** Who currently holds each unique key, so a collision can be resolved rather than thrown. */
+function uniqueOwners(name: StoreName, records: readonly AnyRecord[]): Map<string, SyncFields> {
+  const owners = new Map<string, SyncFields>();
+
+  for (const record of records) {
+    const key = uniqueKeyOf(name, record);
+    if (key !== undefined) owners.set(key, record);
+  }
+
+  return owners;
 }
 
 function isSyncRecord(value: unknown): value is SyncFields {
