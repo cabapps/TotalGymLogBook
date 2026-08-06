@@ -88,6 +88,34 @@ check "service worker asset manifest"    "$WWWROOT/service-worker-assets.js"
 check "web manifest"                     "$WWWROOT/manifest.webmanifest"
 check "SWA config"                       "$WWWROOT/staticwebapp.config.json"
 
+# The unfingerprinted files, and what a pinned copy of each one costs.
+#
+#   index.html, service-worker*.js   a stale build, with no way out
+#   manifest.webmanifest, icon-*     the app NAME and ICON, which iOS copies once when
+#                                    somebody adds the app to their home screen and never
+#                                    reads again -- so a stale one at that moment freezes the
+#                                    old identity on their device until they delete and re-add
+no_cache() {
+  local route="$1"
+  if CONFIG="$WWWROOT/staticwebapp.config.json" ROUTE="$route" python3 -c '
+import json, os, sys
+config = json.load(open(os.environ["CONFIG"]))
+route = next((r for r in config["routes"] if r.get("route") == os.environ["ROUTE"]), None)
+sys.exit(0 if route and route["headers"].get("Cache-Control") == "no-cache" else 1)
+' 2>/dev/null; then
+    printf '  \033[32mPASS\033[0m  %-46s %s\n' "no-cache" "$route"
+    pass=$((pass + 1))
+  else
+    printf '  \033[31mFAIL\033[0m  %-46s %s\n' "no-cache missing" "$route"
+    fail=$((fail + 1))
+  fi
+}
+
+for route in /index.html /service-worker.js /service-worker-assets.js \
+             /manifest.webmanifest "/icon-*.png"; do
+  no_cache "$route"
+done
+
 echo
 echo "Wiring:"
 check_contains "index.html loads the shell bundle" "$WWWROOT/index.html" 'dist/shell.js'
