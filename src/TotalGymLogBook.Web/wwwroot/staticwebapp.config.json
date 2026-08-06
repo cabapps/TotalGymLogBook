@@ -10,8 +10,13 @@
     "    a SHA-256 per asset. That file is NOT fingerprinted, so it is now the file that must",
     "    never be stale-cached.",
     "",
-    "The three unfingerprinted entry points below are the whole recovery path. If a CDN pins",
-    "any of them, users are stuck on a stale build with no way out."
+    "The four unfingerprinted entry points below are the whole recovery path. If a CDN pins",
+    "any of them, users are stuck on a stale build with no way out.",
+    "",
+    "manifest.webmanifest is the fourth, and it is a different kind of stuck: it carries the",
+    "app's NAME and ICONS, which iOS copies once when somebody adds the app to their home",
+    "screen and never reads again. A stale manifest at that moment freezes the old identity on",
+    "their device until they delete the shortcut and add it back."
   ],
 
   "navigationFallback": {
@@ -35,6 +40,16 @@
     },
     {
       "route": "/service-worker-assets.js",
+      "headers": { "Cache-Control": "no-cache" }
+    },
+    {
+      "$comment": "Read once, at install, and then frozen on the device. Never serve a stale one.",
+      "route": "/manifest.webmanifest",
+      "headers": { "Cache-Control": "no-cache" }
+    },
+    {
+      "$comment": "Same: iOS copies the icon into the home screen at add time and never re-reads it.",
+      "route": "/icon-*.png",
       "headers": { "Cache-Control": "no-cache" }
     },
     {
