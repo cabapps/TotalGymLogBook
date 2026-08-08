@@ -155,6 +155,43 @@ async function main() {
     return text;
   };
 
+  /**
+   * Polls an ATTRIBUTE until it matches, for state a control carries without saying out loud.
+   *
+   * waitForText cannot stand in for this. A button's label is usually the same before and after
+   * the thing you are waiting for -- #side-right reads "Right" from its first render -- so
+   * waiting on the text matches instantly and hands back a DOM that has not moved yet. That is
+   * not a slow wait, it is no wait at all, and it reads as a passing check on a fast machine.
+   */
+  const waitForAttrOn = async (target, locator, attr, want, timeout = 10_000) => {
+    const deadline = Date.now() + timeout;
+    let value = null;
+    while (Date.now() < deadline) {
+      value = await locator.getAttribute(attr).catch(() => null);
+      if (value === want) return value;
+      await target.waitForTimeout(150);
+    }
+    return value;
+  };
+
+  /**
+   * Polls until a locator matches MORE elements than it did before.
+   *
+   * waitForSelector is the wrong tool for "a row was added": it is satisfied by the rows that
+   * were already there, so it returns at once and the read that follows sees the old top row.
+   * Take the count first, then wait for it to move.
+   */
+  const waitForMoreOn = async (target, locator, was, timeout = 10_000) => {
+    const deadline = Date.now() + timeout;
+    let count = was;
+    while (Date.now() < deadline) {
+      count = await locator.count().catch(() => was);
+      if (count > was) return count;
+      await target.waitForTimeout(150);
+    }
+    return count;
+  };
+
   const results = [];
   const check = (label, ok, detail = '') => {
     results.push({ label, ok, detail });
@@ -842,8 +879,9 @@ async function main() {
   const afterCorrection = Number(await phone.locator('tg-set-logger #reps').inputValue());
   check('correction is not overwritten', afterCorrection === corrected, `${afterCorrection} reps`);
 
+  const rowsBefore = await phone.locator('tg-session-list li').count();
   await phone.locator('tg-set-logger #log').click();
-  await phone.waitForSelector('tg-session-list li', { timeout: 10_000 });
+  await waitForMoreOn(phone, phone.locator('tg-session-list li'), rowsBefore);
   const loggedReps = await phone.locator('tg-session-list .reps').first().innerText();
   check('the counted set logs with the counted reps', loggedReps === String(corrected), loggedReps);
 
@@ -884,14 +922,23 @@ async function main() {
 
   await phone.locator('tg-set-logger #plus').click();
   await phone.locator('tg-set-logger #log').click();
-  await waitForTextOn(phone, phone.locator('tg-set-logger #side-right'), /Right/);
 
-  const nextSide = await phone
-    .locator('tg-set-logger #side-right')
-    .getAttribute('aria-pressed');
+  // Logging is four awaits deep -- write, re-read today, redraw the control, stop the counter --
+  // and only then does 'set-logged' reach the session list. Both reads below have to wait for
+  // the state they are asserting on, not for the click to resolve.
+  const nextSide = await waitForAttrOn(
+    phone,
+    phone.locator('tg-set-logger #side-right'),
+    'aria-pressed',
+    'true',
+  );
   check('offers the other side once one is done', nextSide === 'true');
 
-  const loggedSide = await phone.locator('tg-session-list li .detail').first().innerText();
+  const loggedSide = await waitForTextOn(
+    phone,
+    phone.locator('tg-session-list li .detail').first(),
+    /left/i,
+  );
   check('the logged set records which side', /left/i.test(loggedSide), loggedSide.trim());
 
   // Volume is per side: one set of a single-leg squat is half a set of quads, because the
